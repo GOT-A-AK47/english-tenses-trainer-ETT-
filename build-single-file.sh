@@ -1,13 +1,10 @@
 #!/bin/sh
-# Bouwt één zelfstandig HTML-bestand (dist/english-tenses-trainer.html) waarin
+# Bouwt één zelfstandig HTML-bestand (english-tenses-trainer.html in de root) waarin
 # alle CSS en JS zijn ingebed. Leerlingen downloaden enkel dat ene bestand.
 set -e
 cd "$(dirname "$0")"
 
-OUT="dist"
-mkdir -p "$OUT"
-
-node - "$OUT" <<'EOF'
+node - "." <<'EOF'
 const fs = require("fs");
 const path = require("path");
 

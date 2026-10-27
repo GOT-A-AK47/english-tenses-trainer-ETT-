@@ -5,7 +5,7 @@ Gebouwd als modulair systeem: tijden en oefentypes zijn losse modules die je mak
 
 ## Gebruiken
 
-**Als leerling (één bestand):** download `dist/english-tenses-trainer.html` en dubbelklik erop. Dat ene bestand bevat de hele app.
+**Als leerling (één bestand):** download `english-tenses-trainer.html` en dubbelklik erop. Dat ene bestand bevat de hele app.
 
 **Als ontwikkelaar:** open `index.html` in een browser, of bouw het losse bestand opnieuw met `./build-single-file.sh`. Dat is alles — geen installatie of server nodig.
 Je kunt de map ook op een USB-stick zetten of via GitHub Pages delen met je klas.
@@ -22,8 +22,10 @@ Je kunt de map ook op een USB-stick zetten of via GitHub Pages delen met je klas
 ## Mappenstructuur
 
 ```
-english-tenses-trainer/
-├── index.html            # pagina + laadt alle modules in de juiste volgorde
+english-tenses-trainer-ETT-/
+├── english-tenses-trainer.html   # ← DIT BESTAND GEBRUIKEN: de hele app in één bestand
+├── build-single-file.sh         # bouwt het losse bestand opnieuw
+├── index.html                   # ontwikkelaars-versie (laadt de losse modules)
 ├── css/style.css
 └── js/
     ├── core/
@@ -33,12 +35,11 @@ english-tenses-trainer/
     │   ├── table.js      # ConjugationTable: naslagtabellen
     │   └── store.js      # ProgressStore: voortgang bewaren (V1: vervang door server)
     ├── data/
+    │   ├── groups.js     # indeling Present/Past/Future voor het startscherm
     │   ├── verbs.js      # werkwoordenlijsten + spelfuncties (third person, -ed, -ing)
     │   └── templates.js  # zinsjablonen met context per tijd
     ├── tenses/           # ELKE TIJD = ÉÉN BESTAND
     │   ├── _shared.js
-    │   ├── present-simple.js
-    │   ├── past-simple.js
     │   └── ... (12 tijden)
     └── app.js            # koppelt UI aan de modules
 ```
