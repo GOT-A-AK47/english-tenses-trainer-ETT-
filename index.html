@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Tenses Trainer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <button id="home-btn" class="logo" title="Naar startscherm">
+        <span class="logo-badge">EN</span>
+        <h1>English Tenses Trainer</h1>
+      </button>
+    </header>
+
+    <main>
+      <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
+      <section id="view-home" class="view active">
+        <p class="lead">Kies een tijd:</p>
+
+        <div class="grid big" id="group-grid">
+          <button class="tile big-tile" data-group="present">
+            <span class="tile-name">Present</span>
+            <span class="tile-desc">Nu, gewoontes en bezig</span>
+          </button>
+          <button class="tile big-tile" data-group="past">
+            <span class="tile-name">Past</span>
+            <span class="tile-desc">Gisteren en vroeger</span>
+          </button>
+          <button class="tile big-tile" data-group="future">
+            <span class="tile-name">Future</span>
+            <span class="tile-desc">Morgen en straks</span>
+          </button>
+        </div>
+
+        <h2 class="section-title">Meer</h2>
+        <div class="grid">
+          <button class="tile" data-action="custom">
+            <span class="tile-name">Zelf kiezen</span>
+            <span class="tile-desc">Vink zelf aan welke tijden je door elkaar wilt oefenen</span>
+          </button>
+          <button class="tile" id="mistake-tile" data-action="repeat" style="display:none">
+            <span class="tile-name">Fouten herhalen <span class="badge" id="mistake-badge"></span></span>
+            <span class="tile-desc">Jouw foutieve antwoorden opnieuw</span>
+          </button>
+          <button class="tile" data-view="irregular">
+            <span class="tile-name">Onregelmatige werkwoorden</span>
+            <span class="tile-desc">Past simple + past participle</span>
+          </button>
+          <button class="tile" data-view="table">
+            <span class="tile-name">Naslagtabel</span>
+            <span class="tile-desc">Vervoegingen per tijd bekijken</span>
+          </button>
+          <button class="tile" data-view="progress">
+            <span class="tile-name">Voortgang</span>
+            <span class="tile-desc">Jouw scores per tijd</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SUBTIJDEN per groep -->
+      <section id="view-group" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <p class="lead" id="group-lead"></p>
+        <div class="grid" id="group-tense-grid"></div>
+
+        <h2 class="section-title">Alles door elkaar</h2>
+        <div class="grid" id="group-mix-grid"></div>
+      </section>
+
+      <!-- ZELF KIEZEN -->
+      <section id="view-custom" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <p class="lead">Vink aan wat je wilt oefenen:</p>
+        <div id="custom-groups"></div>
+        <div class="btnrow start-row">
+          <button id="start-custom">Start oefening</button>
+        </div>
+        <p id="custom-feedback" class="context"></p>
+      </section>
+
+      <!-- OEFENEN -->
+      <section id="view-practice" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+          <div class="controls">
+            <label for="tense-select">Tijd:</label>
+            <select id="tense-select"></select>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat"><span class="value" id="score">0</span><span class="label">Score</span></div>
+          <div class="stat"><span class="value" id="count">0</span><span class="label">Vragen</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <span class="chip" id="tense-info"></span>
+            <button id="share" class="link-btn" title="Deelbare link voor deze oefening">Deel</button>
+          </div>
+          <p id="sentence" class="sentence"></p>
+          <p id="context" class="context"></p>
+          <input type="text" id="answer" placeholder="Vul hier je antwoord in..." autocomplete="off" spellcheck="false">
+          <div class="btnrow">
+            <button id="check">Controleer</button>
+            <button id="next" class="secondary">Volgende</button>
+            <button id="show-hint" class="secondary">Hint</button>
+          </div>
+          <p id="feedback"></p>
+        </div>
+      </section>
+
+      <!-- ONREGELMATIGE WERKWOORDEN -->
+      <section id="view-irregular" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><span class="value" id="irr-score">0</span><span class="label">Goed</span></div>
+          <div class="stat"><span class="value" id="irr-total">0</span><span class="label">Pogingen</span></div>
+        </div>
+        <div class="card">
+          <p class="base-word">Base form <strong id="irr-base">—</strong></p>
+          <label>Past simple <input type="text" id="irr-past" autocomplete="off" spellcheck="false"></label>
+          <label>Past participle <input type="text" id="irr-pp" autocomplete="off" spellcheck="false"></label>
+          <div class="btnrow">
+            <button id="irr-check">Controleer</button>
+            <button id="irr-next" class="secondary">Volgende</button>
+          </div>
+          <p id="irr-feedback"></p>
+        </div>
+        <details>
+          <summary>Lijst bekijken</summary>
+          <table id="irr-table">
+            <thead><tr><th>Base</th><th>Past</th><th>Past participle</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </details>
+      </section>
+
+      <!-- NASLAGTABEL -->
+      <section id="view-table" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+          <div class="controls">
+            <label for="table-select">Tijd:</label>
+            <select id="table-select"></select>
+          </div>
+        </div>
+        <table id="conj-table">
+          <thead><tr><th>Onderwerp</th><th>Vervoeging (to walk)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- VOORTGANG -->
+      <section id="view-progress" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <div class="card">
+          <span class="chip">Jouw voortgang</span>
+          <p class="context">Wordt bewaard op dit toestel. In V1 synct dit met de server.</p>
+          <div id="progress-list"></div>
+          <div class="reset-row">
+            <button id="reset-progress" class="secondary">Voortgang wissen</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>English Tenses Trainer — schoolproject</footer>
+  </div>
+
+  <script src="js/data/groups.js"></script>
+  <script src="js/core/registry.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/data/verbs.js"></script>
+  <script src="js/data/templates.js"></script>
+  <script src="js/tenses/_shared.js"></script>
+  <script src="js/tenses/present-simple.js"></script>
+  <script src="js/tenses/past-simple.js"></script>
+  <script src="js/tenses/present-perfect.js"></script>
+  <script src="js/tenses/present-continuous.js"></script>
+  <script src="js/tenses/past-continuous.js"></script>
+  <script src="js/tenses/future-simple.js"></script>
+  <script src="js/tenses/past-perfect.js"></script>
+  <script src="js/tenses/future-continuous.js"></script>
+  <script src="js/tenses/present-perfect-continuous.js"></script>
+  <script src="js/tenses/past-perfect-continuous.js"></script>
+  <script src="js/tenses/future-perfect.js"></script>
+  <script src="js/tenses/future-perfect-continuous.js"></script>
+  <script src="js/core/engine.js"></script>
+  <script src="js/core/irregular.js"></script>
+  <script src="js/core/table.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/core/dev.js"></script>
+</body>
+</html>

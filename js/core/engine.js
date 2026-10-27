@@ -1,0 +1,47 @@
+// Oefen-engine: genereert invuloefeningen voor één tijd, een mix van tijden
+// of een specifieke combinatie (voor de fouten-herhaalmodus).
+// Zin en werkwoord worden samen gekozen, zodat de combinatie altijd klopt.
+const ExerciseEngine = {
+  capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  },
+
+  // Bouwt een oefening voor één concrete combinatie van tijd/onderwerp/werkwoord.
+  build(tenseId, subject, verbBase) {
+    const tense = TenseRegistry.get(tenseId);
+    const info = verbInfo(verbBase);
+    const answer = tense.conjugate(subject, info);
+    const tpl = pickTemplate(tenseId, verbBase);
+    let sentence = tpl.en(subject, verbBase);
+    sentence = this.capitalize(sentence.replace(/\s+/g, " ").trim());
+    return {
+      tense,
+      subject,
+      verb: verbBase,
+      answer,
+      sentence: sentence.replace("__blank__", "______"),
+      hint: tense.hint(),
+      check(input) {
+        const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ")
+          .replace(/[.!?,;]+$/, "");
+        return norm(input) === norm(answer);
+      }
+    };
+  },
+
+  // Genereert één oefenvraag: kiest eerst een sjabloon en daarna een
+  // werkwoord dat bij dat sjabloon past (andersom kan "They rain every day"
+  // ontstaan). mixIds = array van tense-ids (mix-modus).
+  generate(tenseId, mixIds) {
+    let actualId = tenseId;
+    if (mixIds && mixIds.length) {
+      actualId = mixIds[Math.floor(Math.random() * mixIds.length)];
+    }
+    const templates = TEMPLATES[actualId] || [];
+    const tpl = templates[Math.floor(Math.random() * templates.length)];
+    const verb = tpl.verbs
+      ? tpl.verbs[Math.floor(Math.random() * tpl.verbs.length)]
+      : randomVerb();
+    return this.build(actualId, randomSubject(), verb);
+  }
+};

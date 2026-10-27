@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Tenses Trainer</title>
+  <style>
+:root {
+  --bg: #f7f7f5;
+  --card: #ffffff;
+  --ink: #21201c;
+  --muted: #6e6a60;
+  --line: #e5e2da;
+  --accent: #2f6fed;
+  --accent-soft: #e8f0fe;
+  --ok: #1e8e5a;
+  --ok-bg: #e9f6ef;
+  --bad: #c94040;
+  --bad-bg: #faecec;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(33, 32, 28, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main { flex: 1; }
+
+/* Header */
+header { margin-bottom: 2rem; }
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.logo-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+/* Startscherm */
+.lead { font-size: 0.95rem; margin: 0 0 1rem; color: var(--muted); }
+
+.section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: 1.75rem 0 0.6rem;
+  font-weight: 700;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+
+.tile {
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.tile:hover { border-color: #c9c4b8; background: #fdfdfc; }
+
+.tile-name { font-weight: 600; font-size: 0.95rem; }
+
+.tile-desc { color: var(--muted); font-size: 0.8rem; line-height: 1.35; }
+
+.tile-score {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.tile-score.muted { color: var(--muted); }
+
+/* Grote groep-tegels */
+.grid.big { grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-top: 0.5rem; }
+
+.big-tile { padding: 1.1rem 1rem; gap: 0.25rem; }
+
+.big-tile .tile-name { font-size: 1.05rem; }
+
+/* Views */
+.view { display: none; animation: fadeUp 0.15s ease; }
+.view.active { display: block; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.view-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.back {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+
+.back:hover { color: var(--ink); }
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.controls label { font-weight: 600; white-space: nowrap; font-size: 0.85rem; color: var(--muted); }
+
+.controls select {
+  padding: 0.4rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.controls select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+/* Stats */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(100px, 150px));
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  justify-content: center;
+}
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.5rem;
+  text-align: center;
+}
+
+.stat .value {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.stat .label { color: var(--muted); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Card */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.25rem 0.7rem;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: #1d4fae;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.link-btn {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+}
+
+.link-btn:hover { color: var(--accent); }
+
+.sentence {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  margin: 0.25rem 0 0.2rem;
+  font-weight: 500;
+}
+
+.context { color: var(--muted); font-size: 0.85rem; margin: 0; min-height: 0; }
+
+/* Input */
+input[type="text"] {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+  font-size: 1.05rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 0.5rem 0 0.9rem;
+  transition: border-color 0.12s ease;
+  background: #fff;
+  color: var(--ink);
+}
+
+input[type="text"]:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+input.correct { border-color: var(--ok); background: var(--ok-bg); }
+input.wrong { border-color: var(--bad); background: var(--bad-bg); }
+
+/* Buttons */
+.btnrow { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.btnrow button {
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btnrow button:hover { background: #2560d4; }
+
+.btnrow button.secondary {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.btnrow button.secondary:hover { border-color: #c9c4b8; background: #fdfdfc; }
+
+/* Feedback */
+#feedback, #irr-feedback {
+  min-height: 1.4rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+  margin: 0.8rem 0 0;
+}
+
+#feedback.ok, #irr-feedback.ok { color: var(--ok); }
+#feedback.nok, #irr-feedback.nok { color: var(--bad); }
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+th, td { padding: 0.6rem 1rem; text-align: left; font-size: 0.92rem; }
+
+thead tr { background: #f2f0eb; }
+thead th { color: var(--ink); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+tbody tr:nth-child(even) { background: #faf9f7; }
+tbody tr:hover { background: var(--accent-soft); }
+
+/* Irregular */
+.base-word { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.5rem; font-weight: 600; }
+
+.base-word strong {
+  font-size: 1.5rem;
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+label { display: block; margin: 0.5rem 0; color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+
+details { margin-top: 1rem; }
+summary { cursor: pointer; font-weight: 600; color: var(--muted); font-size: 0.88rem; padding: 0.4rem 0; }
+summary:hover { color: var(--ink); }
+
+/* Progress */
+.progress-group { font-size: 0.85rem; margin: 1.1rem 0 0.4rem; color: var(--muted); font-weight: 600; }
+
+.progress-table { margin-top: 0; }
+
+.progress-table td {
+  padding: 0.45rem 0.6rem;
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+
+.progress-table .prog-name { font-weight: 600; }
+
+.progress-table .prog-bar { width: 45%; }
+
+.progress-table .prog-num { color: var(--muted); white-space: nowrap; }
+
+.progress-table .prog-pct { font-weight: 600; white-space: nowrap; text-align: right; }
+
+.progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progress-bar .fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ok);
+  transition: width 0.3s ease;
+}
+
+/* Zelf kiezen */
+.custom-group { margin-bottom: 1rem; }
+
+.custom-group-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.custom-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.4rem;
+}
+
+label.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.8rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+label.check:hover { border-color: #c9c4b8; }
+
+label.check input { accent-color: var(--accent); width: 1rem; height: 1rem; cursor: pointer; }
+
+.start-row { margin-top: 1.25rem; }
+
+#custom-feedback { min-height: 1.2rem; color: var(--bad); font-weight: 600; }
+
+.reset-row { text-align: center; margin-top: 1.25rem; }
+
+.reset-row button {
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--bad);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.3rem;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-top: 3rem;
+}
+
+/* Badge voor fouten */
+.badge {
+  display: inline-block;
+  min-width: 1.3rem;
+  background: var(--bad);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+  margin-left: 0.3rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.65rem 1.2rem;
+  border-radius: 8px;
+  animation: toastIn 0.2s ease;
+  z-index: 10;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@media (max-width: 560px) {
+  .app { padding: 1.25rem 0.85rem 2rem; }
+  .card { padding: 1.1rem; }
+  .grid { grid-template-columns: 1fr 1fr; }
+  .grid.big { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .stat .value { font-size: 1.1rem; }
+  .sentence { font-size: 1.1rem; }
+  .view-head { justify-content: flex-start; }
+}
+
+/* Dev-paneel (verborgen, Ctrl+Shift+D) */
+#dev-panel {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+  max-width: 340px;
+  width: calc(100vw - 2rem);
+}
+
+.dev-box {
+  background: #26241f;
+  color: #f0ede6;
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  font-size: 0.82rem;
+}
+
+.dev-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.dev-head strong { letter-spacing: 0.08em; font-size: 0.75rem; }
+
+.dev-x {
+  background: none;
+  border: none;
+  color: #b9b4a7;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.dev-x:hover { color: #fff; }
+
+.dev-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.dev-actions button {
+  background: #3a372f;
+  color: #f0ede6;
+  border: 1px solid #55503f;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.dev-actions button:hover { background: #4a463b; }
+
+.dev-out {
+  margin: 0.6rem 0 0;
+  max-height: 180px;
+  overflow: auto;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: #d6d2c6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <button id="home-btn" class="logo" title="Naar startscherm">
+        <span class="logo-badge">EN</span>
+        <h1>English Tenses Trainer</h1>
+      </button>
+    </header>
+
+    <main>
+      <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
+      <section id="view-home" class="view active">
+        <p class="lead">Kies een tijd:</p>
+
+        <div class="grid big" id="group-grid">
+          <button class="tile big-tile" data-group="present">
+            <span class="tile-name">Present</span>
+            <span class="tile-desc">Nu, gewoontes en bezig</span>
+          </button>
+          <button class="tile big-tile" data-group="past">
+            <span class="tile-name">Past</span>
+            <span class="tile-desc">Gisteren en vroeger</span>
+          </button>
+          <button class="tile big-tile" data-group="future">
+            <span class="tile-name">Future</span>
+            <span class="tile-desc">Morgen en straks</span>
+          </button>
+        </div>
+
+        <h2 class="section-title">Meer</h2>
+        <div class="grid">
+          <button class="tile" data-action="custom">
+            <span class="tile-name">Zelf kiezen</span>
+            <span class="tile-desc">Vink zelf aan welke tijden je door elkaar wilt oefenen</span>
+          </button>
+          <button class="tile" id="mistake-tile" data-action="repeat" style="display:none">
+            <span class="tile-name">Fouten herhalen <span class="badge" id="mistake-badge"></span></span>
+            <span class="tile-desc">Jouw foutieve antwoorden opnieuw</span>
+          </button>
+          <button class="tile" data-view="irregular">
+            <span class="tile-name">Onregelmatige werkwoorden</span>
+            <span class="tile-desc">Past simple + past participle</span>
+          </button>
+          <button class="tile" data-view="table">
+            <span class="tile-name">Naslagtabel</span>
+            <span class="tile-desc">Vervoegingen per tijd bekijken</span>
+          </button>
+          <button class="tile" data-view="progress">
+            <span class="tile-name">Voortgang</span>
+            <span class="tile-desc">Jouw scores per tijd</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SUBTIJDEN per groep -->
+      <section id="view-group" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <p class="lead" id="group-lead"></p>
+        <div class="grid" id="group-tense-grid"></div>
+
+        <h2 class="section-title">Alles door elkaar</h2>
+        <div class="grid" id="group-mix-grid"></div>
+      </section>
+
+      <!-- ZELF KIEZEN -->
+      <section id="view-custom" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <p class="lead">Vink aan wat je wilt oefenen:</p>
+        <div id="custom-groups"></div>
+        <div class="btnrow start-row">
+          <button id="start-custom">Start oefening</button>
+        </div>
+        <p id="custom-feedback" class="context"></p>
+      </section>
+
+      <!-- OEFENEN -->
+      <section id="view-practice" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+          <div class="controls">
+            <label for="tense-select">Tijd:</label>
+            <select id="tense-select"></select>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat"><span class="value" id="score">0</span><span class="label">Score</span></div>
+          <div class="stat"><span class="value" id="count">0</span><span class="label">Vragen</span></div>
+        </div>
+
+        <div class="card">
+          <div class="card-top">
+            <span class="chip" id="tense-info"></span>
+            <button id="share" class="link-btn" title="Deelbare link voor deze oefening">Deel</button>
+          </div>
+          <p id="sentence" class="sentence"></p>
+          <p id="context" class="context"></p>
+          <input type="text" id="answer" placeholder="Vul hier je antwoord in..." autocomplete="off" spellcheck="false">
+          <div class="btnrow">
+            <button id="check">Controleer</button>
+            <button id="next" class="secondary">Volgende</button>
+            <button id="show-hint" class="secondary">Hint</button>
+          </div>
+          <p id="feedback"></p>
+        </div>
+      </section>
+
+      <!-- ONREGELMATIGE WERKWOORDEN -->
+      <section id="view-irregular" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><span class="value" id="irr-score">0</span><span class="label">Goed</span></div>
+          <div class="stat"><span class="value" id="irr-total">0</span><span class="label">Pogingen</span></div>
+        </div>
+        <div class="card">
+          <p class="base-word">Base form <strong id="irr-base">—</strong></p>
+          <label>Past simple <input type="text" id="irr-past" autocomplete="off" spellcheck="false"></label>
+          <label>Past participle <input type="text" id="irr-pp" autocomplete="off" spellcheck="false"></label>
+          <div class="btnrow">
+            <button id="irr-check">Controleer</button>
+            <button id="irr-next" class="secondary">Volgende</button>
+          </div>
+          <p id="irr-feedback"></p>
+        </div>
+        <details>
+          <summary>Lijst bekijken</summary>
+          <table id="irr-table">
+            <thead><tr><th>Base</th><th>Past</th><th>Past participle</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </details>
+      </section>
+
+      <!-- NASLAGTABEL -->
+      <section id="view-table" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+          <div class="controls">
+            <label for="table-select">Tijd:</label>
+            <select id="table-select"></select>
+          </div>
+        </div>
+        <table id="conj-table">
+          <thead><tr><th>Onderwerp</th><th>Vervoeging (to walk)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- VOORTGANG -->
+      <section id="view-progress" class="view">
+        <div class="view-head">
+          <button class="back" data-view="home">← Startscherm</button>
+        </div>
+        <div class="card">
+          <span class="chip">Jouw voortgang</span>
+          <p class="context">Wordt bewaard op dit toestel. In V1 synct dit met de server.</p>
+          <div id="progress-list"></div>
+          <div class="reset-row">
+            <button id="reset-progress" class="secondary">Voortgang wissen</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>English Tenses Trainer — schoolproject</footer>
+  </div>
+
+  <script>
+// Groepering van tijden voor het startscherm: eerst Present/Past/Future,
+// daaronder pas de subtijden. Nieuwe tijd in een groep zetten = hier aanpassen.
+const TENSE_GROUPS = [
+  {
+    id: "present",
+    name: "Present",
+    icon: "⏱",
+    desc: "Nu, gewoontes en bezig",
+    tenses: ["present-simple", "present-continuous", "present-perfect", "present-perfect-continuous"]
+  },
+  {
+    id: "past",
+    name: "Past",
+    icon: "🕰",
+    desc: "Gisteren en vroeger",
+    tenses: ["past-simple", "past-continuous", "past-perfect", "past-perfect-continuous"]
+  },
+  {
+    id: "future",
+    name: "Future",
+    icon: "🚀",
+    desc: "Morgen en straks",
+    tenses: ["future-simple", "future-continuous", "future-perfect", "future-perfect-continuous"]
+  }
+];
+
+;
+// Registry voor tijden. Elk tijd-bestand registreert zichzelf hier.
+const TenseRegistry = {
+  tenses: [],
+  register(tense) {
+    const existing = this.tenses.findIndex(t => t.id === tense.id);
+    if (existing >= 0) this.tenses[existing] = tense;
+    else this.tenses.push(tense);
+  },
+  get(id) { return this.tenses.find(t => t.id === id); },
+  all() { return this.tenses; }
+};
+
+;
+// ProgressStore: de enige plek waar voortgang bewaard wordt.
+// V0 bewaart lokaal (localStorage). Voor V1 (server) hoef je alleen
+// het "backend"-object hieronder te vervangen door fetch()-calls —
+// de rest van de app merkt daar niets van.
+
+const ProgressStore = {
+  KEY: "english-tenses-progress-v0",
+
+  // Data-laag: vervang dit object in V1 door een server-backend.
+  backend: {
+    load() {
+      try { return JSON.parse(localStorage.getItem(ProgressStore.KEY)) || {}; }
+      catch { return {}; }
+    },
+    save(data) {
+      localStorage.setItem(ProgressStore.KEY, JSON.stringify(data));
+    }
+  },
+
+  _cache: null,
+
+  _data() {
+    if (!this._cache) this._cache = this.backend.load();
+    return this._cache;
+  },
+
+  _stats(tenseId) {
+    const d = this._data();
+    if (!d[tenseId]) d[tenseId] = { correct: 0, total: 0 };
+    return d[tenseId];
+  },
+
+  record(tenseId, correct) {
+    const s = this._stats(tenseId);
+    s.total++;
+    if (correct) s.correct++;
+    this.backend.save(this._data());
+  },
+
+  get(tenseId) {
+    return this._stats(tenseId);
+  },
+
+  all() {
+    return this._data();
+  },
+
+  reset() {
+    this._cache = {};
+    localStorage.removeItem(this.KEY);
+  },
+
+  // V1: sync met de server. In V0 lokaal; later bv.:
+  // fetch("/api/progress", { method: "POST", body: JSON.stringify(this._data()) })
+  sync() {
+    return Promise.resolve(this.all());
+  }
+};
+
+// MistakeStore: foutieve antwoorden om later te herhalen.
+// Per fout wordt de combinatie (tijd, onderwerp, werkwoord) bewaard,
+// max. MAX_PER_COMB keer — daarna is de fout blijkbaar geleerd.
+const MistakeStore = {
+  KEY: "english-tenses-mistakes-v0",
+  MAX_PER_COMB: 3,
+
+  _list: null,
+
+  load() {
+    if (!this._list) {
+      try { this._list = JSON.parse(localStorage.getItem(this.KEY)) || []; }
+      catch { this._list = []; }
+    }
+    return this._list;
+  },
+
+  save() {
+    localStorage.setItem(this.KEY, JSON.stringify(this.load()));
+  },
+
+  add(tenseId, subject, verb) {
+    const list = this.load();
+    const same = list.filter(m =>
+      m.tenseId === tenseId && m.subject === subject && m.verb === verb).length;
+    if (same < this.MAX_PER_COMB) {
+      list.push({ tenseId, subject, verb });
+      this.save();
+    }
+  },
+
+  remove(tenseId, subject, verb) {
+    this._list = this.load().filter(m =>
+      !(m.tenseId === tenseId && m.subject === subject && m.verb === verb));
+    this.save();
+  },
+
+  count() {
+    return this.load().length;
+  },
+
+  // Haalt de volgende te herhalen fout op en verwijdert hem uit de lijst.
+  takeNext() {
+    const list = this.load();
+    if (!list.length) return null;
+    const item = list.shift();
+    this.save();
+    return item;
+  },
+
+  clear() {
+    this._list = [];
+    localStorage.removeItem(this.KEY);
+  }
+};
+
+;
+// Werkwoorden-data: regelmatig + onregelmatig.
+// vorm: { base, past, pastParticiple, third (optioneel, voor onregelmatige -s) }
+
+const REGULAR_VERBS = [
+  "walk", "play", "work", "jump", "clean", "cook", "watch", "talk",
+  "listen", "help", "open", "close", "study", "visit", "arrive", "borrow",
+  "call", "dance", "decide", "deliver", "enjoy", "explain", "follow",
+  "gather", "happen", "hurry", "improve", "jog", "kick", "laugh", "look",
+  "move", "notice", "offer", "paint", "question", "rain", "smile", "start",
+  "travel", "type", "use", "wait", "walk", "wash", "yell", "shout", "cook"
+];
+
+const IRREGULAR_VERBS = [
+  { base: "be",     past: "was/were", pastParticiple: "been",     third: "is" },
+  { base: "go",     past: "went",     pastParticiple: "gone",     third: "goes" },
+  { base: "eat",    past: "ate",      pastParticiple: "eaten",    third: "eats" },
+  { base: "see",    past: "saw",      pastParticiple: "seen",     third: "sees" },
+  { base: "do",     past: "did",      pastParticiple: "done",     third: "does" },
+  { base: "have",   past: "had",      pastParticiple: "had",      third: "has" },
+  { base: "make",   past: "made",     pastParticiple: "made",     third: "makes" },
+  { base: "take",   past: "took",     pastParticiple: "taken",    third: "takes" },
+  { base: "come",   past: "came",     pastParticiple: "come",     third: "comes" },
+  { base: "give",   past: "gave",     pastParticiple: "given",    third: "gives" },
+  { base: "write",  past: "wrote",    pastParticiple: "written",  third: "writes" },
+  { base: "speak",  past: "spoke",    pastParticiple: "spoken",   third: "speaks" },
+  { base: "swim",   past: "swam",     pastParticiple: "swum",     third: "swims" },
+  { base: "sing",   past: "sang",     pastParticiple: "sung",     third: "sings" },
+  { base: "drink",  past: "drank",    pastParticiple: "drunk",    third: "drinks" },
+  { base: "run",    past: "ran",     pastParticiple: "run",      third: "runs" },
+  { base: "read",   past: "read",     pastParticiple: "read",     third: "reads" },
+  { base: "sleep",  past: "slept",    pastParticiple: "slept",    third: "sleeps" },
+  { base: "buy",    past: "bought",   pastParticiple: "bought",   third: "buys" },
+  { base: "bring",  past: "brought",  pastParticiple: "brought",  third: "brings" },
+  { base: "think",  past: "thought", pastParticiple: "thought",  third: "thinks" },
+  { base: "teach",  past: "taught",  pastParticiple: "taught",   third: "teaches" },
+  { base: "catch",  past: "caught",  pastParticiple: "caught",   third: "catches" },
+  { base: "fly",    past: "flew",    pastParticiple: "flown",    third: "flies" },
+  { base: "break",  past: "broke",   pastParticiple: "broken",   third: "breaks" },
+  { base: "begin",  past: "began",   pastParticiple: "begun",    third: "begins" },
+  { base: "choose", past: "chose",   pastParticiple: "chosen",   third: "chooses" },
+  { base: "drive",  past: "drove",   pastParticiple: "driven",   third: "drives" },
+  { base: "fall",   past: "fell",    pastParticiple: "fallen",   third: "falls" },
+  { base: "feel",   past: "felt",    pastParticiple: "felt",     third: "feels" },
+  { base: "find",   past: "found",   pastParticiple: "found",    third: "finds" },
+  { base: "forget", past: "forgot",  pastParticiple: "forgotten", third: "forgets" },
+  { base: "know",   past: "knew",    pastParticiple: "known",    third: "knows" },
+  { base: "leave",  past: "left",    pastParticiple: "left",     third: "leaves" },
+  { base: "lose",   past: "lost",    pastParticiple: "lost",     third: "loses" },
+  { base: "meet",   past: "met",     pastParticiple: "met",      third: "meets" },
+  { base: "pay",    past: "paid",    pastParticiple: "paid",     third: "pays" },
+  { base: "sell",   past: "sold",    pastParticiple: "sold",     third: "sells" },
+  { base: "send",   past: "sent",    pastParticiple: "sent",     third: "sends" },
+  { base: "sit",    past: "sat",     pastParticiple: "sat",      third: "sits" },
+  { base: "stand", past: "stood",   pastParticiple: "stood",     third: "stands" },
+  { base: "win",    past: "won",     pastParticiple: "won",      third: "wins" }
+];
+
+const IRREGULAR_MAP = Object.fromEntries(
+  IRREGULAR_VERBS.map(v => [v.base, v])
+);
+
+// Spelfuncties voor regelmatige werkwoorden
+function thirdPerson(base) {
+  if (/[^aeiou]y$/.test(base)) return base.slice(0, -1) + "ies";
+  if (/(s|sh|ch|x|z|o)$/.test(base)) return base + "es";
+  return base + "s";
+}
+
+// Werkwoorden waarvan de laatste medeklinker verdubbelt in de -ing vorm
+// (korte beklemtoonde lettergreep: stop -> stopping). Andere klinker-medeklinker
+// werkwoorden verdubbelen NIET: read -> reading, visit -> visiting.
+const DOUBLING_VERBS = ["stop", "jog", "sit", "run", "swim", "cut", "put", "get", "let", "plan", "drop", "win", "begin", "travel"]; 
+
+function pastSimple(base) {
+  if (/[^aeiou]y$/.test(base)) return base.slice(0, -1) + "ied";
+  if (/e$/.test(base)) return base + "d";
+  if (DOUBLING_VERBS.includes(base)) return base + base.slice(-1) + "ed";
+  return base + "ed";
+}
+
+function ing(base) {
+  if (/ie$/.test(base)) return base.slice(0, -2) + "ying";
+  if (/e$/.test(base)) return base.slice(0, -1) + "ing";
+  if (DOUBLING_VERBS.includes(base)) return base + base.slice(-1) + "ing";
+  return base + "ing";
+}
+
+function verbInfo(base) {
+  const irr = IRREGULAR_MAP[base];
+  if (irr) return {
+    base,
+    past: irr.past.split("/")[0],
+    pastParticiple: irr.pastParticiple,
+    third: irr.third || thirdPerson(base),
+    ing: ing(base),
+    irregular: true
+  };
+  return {
+    base,
+    past: pastSimple(base),
+    pastParticiple: pastSimple(base),
+    third: thirdPerson(base),
+    ing: ing(base),
+    irregular: false
+  };
+}
+
+function randomVerb() {
+  const all = REGULAR_VERBS.concat(IRREGULAR_VERBS.map(v => v.base));
+  return all[Math.floor(Math.random() * all.length)];
+}
+
+const SUBJECTS = ["I", "you", "he", "she", "it", "we", "they"];
+// Persoonlijke onderwerpen voor "normale" zinnen (geen "it" voor weer-achtige constructies)
+const PERSONAL_SUBJECTS = ["I", "you", "he", "she", "we", "they"];
+const SUBJECT_DATA = {
+  "I":     { person: 1, plural: false },
+  "you":   { person: 2, plural: true },
+  "he":    { person: 3, plural: false },
+  "she":   { person: 3, plural: false },
+  "it":    { person: 3, plural: false },
+  "we":    { person: 1, plural: true },
+  "they":  { person: 3, plural: true }
+};
+
+function randomSubject() {
+  return PERSONAL_SUBJECTS[Math.floor(Math.random() * PERSONAL_SUBJECTS.length)];
+}
+
+;
+// Zinsjablonen per tijd, met optionele werkwoordenlijst voor goede combinaties.
+// "verbs" weglaten = de zin past bij elk persoonlijk werkwoord.
+// "__blank__" markeert het antwoord; "(to + werkwoord)" toont de infinitief.
+
+const TEMPLATES = {
+  "present-simple": [
+    { verbs: ["play", "study", "work", "read", "cook", "clean", "jog", "walk", "swim", "sing", "dance", "listen"], en: (s, v) => `${s} __blank__ (to ${v}) every day.` },
+    { verbs: ["play", "watch", "enjoy", "study", "read", "cook"], en: (s, v) => `On Sundays, ${s} __blank__ (to ${v}).` },
+    { verbs: ["play", "watch", "enjoy", "study"], en: (s, v) => `${s} __blank__ (to ${v}) football after school.` },
+    { verbs: ["go", "walk", "run", "drive", "travel", "hurry", "arrive"], en: (s, v) => `${s} __blank__ (to ${v}) to school every morning.` }
+  ],
+  "past-simple": [
+    { verbs: ["play", "study", "work", "read", "cook", "clean", "jog", "walk", "swim", "sing", "dance", "listen", "call", "help"], en: (s, v) => `Yesterday, ${s} __blank__ (to ${v}).` },
+    { verbs: ["watch", "see", "enjoy"], en: (s, v) => `${s} __blank__ (to ${v}) a beautiful film last night.` },
+    { verbs: ["go", "walk", "run", "drive", "travel", "hurry"], en: (s, v) => `${s} __blank__ (to ${v}) to the park yesterday.` },
+    { verbs: ["buy", "read", "find", "choose", "lose"], en: (s, v) => `Last week, ${s} __blank__ (to ${v}) a book.` }
+  ],
+  "present-perfect": [
+    { verbs: ["read", "study", "cook", "clean", "work", "write", "buy"], en: (s, v) => `This week, ${s} __blank__ (to ${v}) twice.` },
+    { verbs: ["sleep", "eat", "drink", "work", "study", "read", "run"], en: (s, v) => `Since this morning, ${s} __blank__ (to ${v}).` },
+    { verbs: ["go", "travel", "fly", "drive"], en: (s, v) => `${s} __blank__ (to ${v}) to London three times.` },
+    { verbs: ["read", "buy", "finish"], en: (s, v) => `${s} __blank__ (to ${v}) the book already.` }
+  ],
+  "present-continuous": [
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play"], en: (s, v) => `Look! ${s} __blank__ (to ${v}) right now.` },
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play"], en: (s, v) => `At the moment, ${s} __blank__ (to ${v}).` },
+    { verbs: ["write", "read", "send", "open", "deliver", "type"], en: (s, v) => `${s} __blank__ (to ${v}) a letter at the moment.` }
+  ],
+  "past-continuous": [
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play", "walk", "run", "sleep"], en: (s, v) => `At 8 o'clock last night, ${s} __blank__ (to ${v}).` },
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play", "walk", "run", "sleep"], en: (s, v) => `While ${s} __blank__ (to ${v}), the phone rang.` },
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play", "walk", "run", "sleep"], en: (s, v) => `When I arrived, ${s} __blank__ (to ${v}).` }
+  ],
+  "future-simple": [
+    { verbs: ["play", "study", "work", "read", "cook", "clean", "jog", "walk", "swim", "sing", "dance", "call", "help"], en: (s, v) => `Tomorrow, ${s} __blank__ (to ${v}).` },
+    { verbs: ["play", "study", "work", "read", "cook", "clean", "jog", "walk", "swim", "sing", "dance", "call", "help"], en: (s, v) => `Next week, ${s} __blank__ (to ${v}).` },
+    { verbs: ["watch", "win", "play", "see"], en: (s, v) => `I think ${s} __blank__ (to ${v}) the match next week.` },
+    { verbs: ["meet", "call", "help", "join"], en: (s, v) => `${s} __blank__ (to ${v}) you at the station tomorrow.` }
+  ],
+  "past-perfect": [
+    { verbs: ["read", "study", "work", "cook", "clean", "write", "buy", "sleep", "eat"], en: (s, v) => `Before the film started, ${s} __blank__ (to ${v}).` },
+    { verbs: ["read", "study", "work", "cook", "clean", "write", "buy", "sleep", "eat"], en: (s, v) => `By the time I arrived, ${s} __blank__ (to ${v}).` },
+    { verbs: ["go", "walk", "run", "drive", "travel", "hurry", "leave"], en: (s, v) => `${s} __blank__ (to ${v}) home before it started to rain.` }
+  ],
+  "future-continuous": [
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play", "walk", "run", "sleep"], en: (s, v) => `At 9 o'clock tomorrow, ${s} __blank__ (to ${v}).` },
+    { verbs: ["read", "write", "study", "work", "cook", "clean", "listen", "sing", "dance", "play", "walk", "run", "sleep"], en: (s, v) => `This time tomorrow, ${s} __blank__ (to ${v}).` }
+  ],
+  "present-perfect-continuous": [
+    { verbs: ["read", "study", "work", "cook", "clean", "write", "walk", "run", "play", "sleep"], en: (s, v) => `${s} __blank__ (to ${v}) for two hours.` },
+    { verbs: ["read", "study", "work", "cook", "clean", "write", "walk", "run", "play", "sleep"], en: (s, v) => `${s} __blank__ (to ${v}) all morning.` }
+  ],
+  "past-perfect-continuous": [
+    { verbs: ["read", "study", "work", "cook", "clean", "write", "walk", "run", "play", "sleep"], en: (s, v) => `${s} __blank__ (to ${v}) for an hour when I called.` }
+  ],
+  "future-perfect": [
+    { verbs: ["read", "study", "work", "cook", "clean", "write", "buy", "sleep", "eat"], en: (s, v) => `By the end of the day, ${s} __blank__ (to ${v}).` },
+    { verbs: ["read", "buy", "write", "study"], en: (s, v) => `By next year, ${s} __blank__ (to ${v}) ten books.` }
+  ],
+  "future-perfect-continuous": [
+    { verbs: ["work", "study", "teach", "live", "play"], en: (s, v) => `By June, ${s} __blank__ (to ${v}) for five years.` }
+  ]
+};
+
+// Kiest een sjabloon dat past bij het opgegeven werkwoord.
+function pickTemplate(tenseId, verb) {
+  const all = TEMPLATES[tenseId] || [];
+  const list = all.filter(t => !t.verbs || t.verbs.includes(verb));
+  const pool = list.length ? list : all;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+;
+// Gedeelde hulpfuncties voor alle tijd-modules
+function isThird(subj) { return subj === "he" || subj === "she" || subj === "it"; }
+
+;
+// Present Simple: gewoontes en feiten
+var TENSE = {
+  id: "present-simple",
+  name: "Present Simple",
+  color: "#3498db",
+  conjugate: (subj, v) => isThird(subj) ? v.third : v.base,
+  hint: () => "He/she/it + werkwoord + s (of -es/-ies). Zie tabel."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Past Simple: afgeronde handelingen in het verleden
+var TENSE = {
+  id: "past-simple",
+  name: "Past Simple",
+  color: "#9b59b6",
+  conjugate: (subj, v) => v.past,
+  hint: () => "Werkwoord + ed, of de onregelmatige vorm (2e kolom)."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Present Perfect: hebben + voltooid deelwoord
+var TENSE = {
+  id: "present-perfect",
+  name: "Present Perfect",
+  color: "#1abc9c",
+  conjugate: (subj, v) => `${isThird(subj) ? "has" : "have"} ${v.pastParticiple}`,
+  hint: () => "have/has + voltooid deelwoord (3e kolom)."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Present Continuous: nu bezig
+var TENSE = {
+  id: "present-continuous",
+  name: "Present Continuous",
+  color: "#e67e22",
+  conjugate: (subj, v) => `${subj === "I" ? "am" : isThird(subj) ? "is" : "are"} ${v.ing}`,
+  hint: () => "am/is/are + werkwoord + ing."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Past Continuous: bezig in het verleden
+var TENSE = {
+  id: "past-continuous",
+  name: "Past Continuous",
+  color: "#e74c3c",
+  conjugate: (subj, v) => `${subj === "I" ? "was" : isThird(subj) ? "was" : "were"} ${v.ing}`,
+  hint: () => "was/were + werkwoord + ing."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Future Simple: will + basisvorm
+var TENSE = {
+  id: "future-simple",
+  name: "Future Simple",
+  color: "#2ecc71",
+  conjugate: (subj, v) => `will ${v.base}`,
+  hint: () => "will + werkwoord (basisvorm)."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Past Perfect: had + voltooid deelwoord, vóór iets anders in verleden
+var TENSE = {
+  id: "past-perfect",
+  name: "Past Perfect",
+  color: "#34495e",
+  conjugate: (subj, v) => `had ${v.pastParticiple}`,
+  hint: () => "had + voltooid deelwoord."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Future Continuous: will be + ing
+var TENSE = {
+  id: "future-continuous",
+  name: "Future Continuous",
+  color: "#16a085",
+  conjugate: (subj, v) => `will be ${v.ing}`,
+  hint: () => "will be + werkwoord + ing."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Present Perfect Continuous: have/has been + ing
+var TENSE = {
+  id: "present-perfect-continuous",
+  name: "Present Perfect Continuous",
+  color: "#d35400",
+  conjugate: (subj, v) => `${isThird(subj) ? "has" : "have"} been ${v.ing}`,
+  hint: () => "have/has been + werkwoord + ing."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Past Perfect Continuous: had been + ing
+var TENSE = {
+  id: "past-perfect-continuous",
+  name: "Past Perfect Continuous",
+  color: "#7f8c8d",
+  conjugate: (subj, v) => `had been ${v.ing}`,
+  hint: () => "had been + werkwoord + ing."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Future Perfect: will have + voltooid deelwoord
+var TENSE = {
+  id: "future-perfect",
+  name: "Future Perfect",
+  color: "#27ae60",
+  conjugate: (subj, v) => `will have ${v.pastParticiple}`,
+  hint: () => "will have + voltooid deelwoord."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Future Perfect Continuous: will have been + ing
+var TENSE = {
+  id: "future-perfect-continuous",
+  name: "Future Perfect Continuous",
+  color: "#f39c12",
+  conjugate: (subj, v) => `will have been ${v.ing}`,
+  hint: () => "will have been + werkwoord + ing."
+};
+TenseRegistry.register(TENSE);
+
+;
+// Oefen-engine: genereert invuloefeningen voor één tijd, een mix van tijden
+// of een specifieke combinatie (voor de fouten-herhaalmodus).
+// Zin en werkwoord worden samen gekozen, zodat de combinatie altijd klopt.
+const ExerciseEngine = {
+  capitalize(s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  },
+
+  // Bouwt een oefening voor één concrete combinatie van tijd/onderwerp/werkwoord.
+  build(tenseId, subject, verbBase) {
+    const tense = TenseRegistry.get(tenseId);
+    const info = verbInfo(verbBase);
+    const answer = tense.conjugate(subject, info);
+    const tpl = pickTemplate(tenseId, verbBase);
+    let sentence = tpl.en(subject, verbBase);
+    sentence = this.capitalize(sentence.replace(/\s+/g, " ").trim());
+    return {
+      tense,
+      subject,
+      verb: verbBase,
+      answer,
+      sentence: sentence.replace("__blank__", "______"),
+      hint: tense.hint(),
+      check(input) {
+        const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ")
+          .replace(/[.!?,;]+$/, "");
+        return norm(input) === norm(answer);
+      }
+    };
+  },
+
+  // Genereert één oefenvraag: kiest eerst een sjabloon en daarna een
+  // werkwoord dat bij dat sjabloon past (andersom kan "They rain every day"
+  // ontstaan). mixIds = array van tense-ids (mix-modus).
+  generate(tenseId, mixIds) {
+    let actualId = tenseId;
+    if (mixIds && mixIds.length) {
+      actualId = mixIds[Math.floor(Math.random() * mixIds.length)];
+    }
+    const templates = TEMPLATES[actualId] || [];
+    const tpl = templates[Math.floor(Math.random() * templates.length)];
+    const verb = tpl.verbs
+      ? tpl.verbs[Math.floor(Math.random() * tpl.verbs.length)]
+      : randomVerb();
+    return this.build(actualId, randomSubject(), verb);
+  }
+};
+
+;
+// Irregular verbs oefenmodule: geef de past simple en het past participle.
+const IrregularTrainer = {
+  pool: [],
+  index: 0,
+  score: 0,
+  total: 0,
+
+  init() {
+    this.pool = [...IRREGULAR_VERBS].sort(() => Math.random() - 0.5);
+    this.index = 0;
+    this.score = 0;
+    this.total = 0;
+  },
+
+  current() { return this.pool[this.index]; },
+
+  next() {
+    if (this.index >= this.pool.length - 1) {
+      this.pool.sort(() => Math.random() - 0.5);
+      this.index = 0;
+    } else {
+      this.index++;
+    }
+    return this.current();
+  },
+
+  // Checkt beide velden; geeft per veld correct/fout terug.
+  check(pastInput, ppInput) {
+    const v = this.current();
+    const norm = s => s.trim().toLowerCase();
+    const pastOk = norm(pastInput) === v.past;
+    const ppOk = norm(ppInput) === v.pastParticiple;
+    this.total += 2;
+    if (pastOk) this.score++;
+    if (ppOk) this.score++;
+    return { pastOk, ppOk, past: v.past, pp: v.pastParticiple };
+  }
+};
+
+;
+// Naslagmodule: toont een vervoegingstabel per tijd en onderwerp.
+const ConjugationTable = {
+  build(tenseId) {
+    const tense = TenseRegistry.get(tenseId);
+    if (!tense) return null;
+    return SUBJECTS.map(subj => ({
+      subject: subj,
+      form: tense.conjugate(subj, verbInfo("walk"))
+    }));
+  }
+};
+
+;
+// App: eenvoudig startscherm (Present/Past/Future), subtijden per groep, mix-oefeningen.
+let currentExercise = null;
+let currentMix = null; // array van tense-ids bij mix-modus, anders null
+let repeatNext = null; // combinatie (tenseId, subject, verb) die als volgende moet komen uit de foutenlijst
+let score = 0, count = 0;
+
+const $ = id => document.getElementById(id);
+
+function init() {
+  initTenseSelectors();
+  IrregularTrainer.init();
+  renderIrregularList();
+  bindNavigation();
+  handleTaskLink();
+}
+
+// ---- Navigatie ----
+function showView(id) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  $("view-" + id).classList.add("active");
+  window.scrollTo(0, 0);
+  if (id === "practice") $("answer").focus();
+  if (id === "irregular") $("irr-past").focus();
+  if (id === "progress") renderProgress();
+  if (id === "table") renderTable();
+}
+
+function bindNavigation() {
+  document.querySelectorAll("[data-view]").forEach(el => {
+    el.addEventListener("click", () => showView(el.dataset.view));
+  });
+  document.querySelectorAll("[data-group]").forEach(el => {
+    el.addEventListener("click", () => openGroup(el.dataset.group));
+  });
+  const repeatTile = document.querySelector('[data-action="repeat"]');
+  if (repeatTile) repeatTile.addEventListener("click", repeatPractice);
+  const customTile = document.querySelector('[data-action="custom"]');
+  if (customTile) customTile.addEventListener("click", () => { renderCustom(); showView("custom"); });
+  const startBtn = document.getElementById("start-custom");
+  if (startBtn) startBtn.addEventListener("click", startCustom);
+}
+
+// ---- Groepen (Present/Past/Future) ----
+function openGroup(groupId) {
+  const group = TENSE_GROUPS.find(g => g.id === groupId);
+  if (!group) return;
+  $("group-lead").textContent = `${group.name}: kies wat je wilt oefenen`;
+  $("group-tense-grid").innerHTML = group.tenses.map(id => {
+    const t = TenseRegistry.get(id);
+    if (!t) return "";
+    const s = ProgressStore.get(id);
+    const pct = s.total ? Math.round((s.correct / s.total) * 100) : null;
+    const badge = pct === null
+      ? `<span class="tile-score muted">nog niet geoefend</span>`
+      : `<span class="tile-score">${s.correct}/${s.total} · ${pct}%</span>`;
+    return `<button class="tile tense-tile" style="--tile:${t.color}" data-tense="${id}">
+      <span class="tile-name">${t.name}</span>
+      <span class="tile-desc">${t.hint()}</span>
+      ${badge}
+    </button>`;
+  }).join("");
+  $("group-mix-grid").innerHTML =
+    `<button class="tile mix-tile" data-mix="${group.tenses.join(",")}">
+      <span class="tile-name">Mix: alle ${group.name}-tijden</span>
+      <span class="tile-desc">De 4 tijden door elkaar</span>
+    </button>`;
+  showView("group");
+}
+
+// tiles met losse tijd of mix: event delegation (grid wordt dynamisch gevuld)
+document.addEventListener("click", e => {
+  const tenseTile = e.target.closest("[data-tense]");
+  if (tenseTile && tenseTile.dataset.tense) {
+    startPractice(tenseTile.dataset.tense, null);
+    return;
+  }
+  const mixTile = e.target.closest("[data-mix]");
+  if (mixTile && mixTile.dataset.mix) {
+    startPractice("mix", mixTile.dataset.mix.split(","));
+  }
+});
+
+function startPractice(tenseId, mixIds) {
+  currentMix = mixIds;
+  if (mixIds) {
+    $("tense-select").value = "mix";
+  } else {
+    $("tense-select").value = tenseId;
+  }
+  newExercise();
+  showView("practice");
+}
+
+// ---- Selects ----
+function initTenseSelectors() {
+  let opts = `<option value="mix">Mix (alle tijden)</option>`;
+  TENSE_GROUPS.forEach(g => {
+    opts += `<optgroup label="${g.name}">` +
+      g.tenses.map(id => {
+        const t = TenseRegistry.get(id);
+        return t ? `<option value="${id}">${t.name}</option>` : "";
+      }).join("") + `</optgroup>`;
+  });
+  $("tense-select").innerHTML = opts;
+  $("table-select").innerHTML =
+    TenseRegistry.all().map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+  $("tense-select").addEventListener("change", () => {
+    currentMix = $("tense-select").value === "mix"
+      ? TenseRegistry.all().map(t => t.id)
+      : null;
+    newExercise();
+  });
+  $("table-select").addEventListener("change", renderTable);
+}
+
+// ---- Oefenen ----
+function newExercise() {
+  if (repeatNext) {
+    const m = repeatNext;
+    repeatNext = null;
+    currentExercise = ExerciseEngine.build(m.tenseId, m.subject, m.verb);
+    currentExercise.isRepeat = true;
+    $("tense-select").value = m.tenseId;
+    currentMix = null;
+  } else {
+    const sel = $("tense-select").value;
+    let mixIds = null;
+    if (sel === "mix") {
+      mixIds = currentMix && currentMix.length
+        ? currentMix
+        : TenseRegistry.all().map(t => t.id);
+    }
+    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds);
+    currentExercise.isRepeat = false;
+  }
+  $("tense-info").textContent = currentExercise.tense.name;
+  $("sentence").textContent = currentExercise.sentence;
+  $("context").textContent = "";
+  $("answer").value = "";
+  $("answer").classList.remove("correct", "wrong");
+  $("answer").focus();
+  $("feedback").textContent = "";
+  $("feedback").className = "";
+}
+
+function checkAnswer() {
+  if (!currentExercise) return;
+  const isRepeat = !!currentExercise.isRepeat;
+  const input = $("answer");
+  const ok = currentExercise.check(input.value);
+  count++;
+  if (ok) {
+    score++;
+    input.classList.add("correct");
+    $("feedback").textContent = `Juist! "${currentExercise.answer}"`;
+    $("feedback").className = "ok";
+  } else {
+    input.classList.add("wrong");
+    $("feedback").textContent = `Fout. Het juiste antwoord is "${currentExercise.answer}".`;
+    $("feedback").className = "nok";
+  }
+  ProgressStore.record(currentExercise.tense.id, ok);
+  if (!ok) {
+    MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);
+  } else if (isRepeat) {
+    MistakeStore.remove(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);
+    const next = MistakeStore.takeNext();
+    if (next) {
+      repeatNext = next;
+    } else {
+      toast("Alle fouten zijn herhaald! ");
+    }
+  }
+  updateMistakeBadge();
+  $("score").textContent = score;
+  $("count").textContent = count;
+}
+
+function showHint() {
+  if (!currentExercise) return;
+  $("feedback").textContent = `Hint: ${currentExercise.hint}`;
+  $("feedback").className = "";
+}
+
+// ---- Taken delen ----
+function shareTask() {
+  const url = new URL(location.href);
+  url.search = "";
+  url.hash = "";
+  const mixStr = currentMix ? currentMix.join(",") : null;
+  if (mixStr) url.searchParams.set("mix", mixStr);
+  else if ($("tense-select").value !== "mix") url.searchParams.set("tense", $("tense-select").value);
+  url.searchParams.set("task", "practice");
+  const link = url.toString();
+  navigator.clipboard.writeText(link)
+    .then(() => toast("Link gekopieerd — deel hem met je klas! "))
+    .catch(() => prompt("Kopieer deze link:", link));
+}
+
+function handleTaskLink() {
+  const params = new URLSearchParams(location.search);
+  const tense = params.get("tense");
+  const mix = params.get("mix");
+  const task = params.get("task");
+  if (task === "irregular") return showView("irregular");
+  if (task === "table") return showView("table");
+  if (mix && mix.split(",").every(id => TenseRegistry.get(id))) {
+    startPractice("mix", mix.split(","));
+  } else if (tense && TenseRegistry.get(tense)) {
+    startPractice(tense, null);
+  }
+}
+
+// ---- Naslagtabel ----
+function renderTable() {
+  const rows = ConjugationTable.build($("table-select").value);
+  if (!rows) return;
+  $("conj-table").querySelector("tbody").innerHTML = rows.map(r =>
+    `<tr><td>${r.subject}</td><td>${r.form}</td></tr>`).join("");
+}
+
+// ---- Onregelmatige werkwoorden ----
+function renderIrregularList() {
+  const rows = IRREGULAR_VERBS.map(v =>
+    `<tr><td>${v.base}</td><td>${v.past}</td><td>${v.pastParticiple}</td></tr>`).join("");
+  $("irr-table").querySelector("tbody").innerHTML = rows;
+}
+
+function nextIrregular() {
+  IrregularTrainer.next();
+  $("irr-base").textContent = IrregularTrainer.current().base;
+  $("irr-past").value = "";
+  $("irr-pp").value = "";
+  $("irr-past").classList.remove("correct", "wrong");
+  $("irr-pp").classList.remove("correct", "wrong");
+  $("irr-feedback").textContent = "";
+  $("irr-feedback").className = "";
+  $("irr-past").focus();
+}
+
+function checkIrregular() {
+  const result = IrregularTrainer.check($("irr-past").value, $("irr-pp").value);
+  $("irr-past").classList.add(result.pastOk ? "correct" : "wrong");
+  $("irr-pp").classList.add(result.ppOk ? "correct" : "wrong");
+  if (result.pastOk && result.ppOk) {
+    $("irr-feedback").textContent = "Allebei juist! ";
+    $("irr-feedback").className = "ok";
+  } else {
+    $("irr-feedback").textContent =
+      `Juist is: ${IrregularTrainer.current().base} — ${result.past} — ${result.pp}`;
+    $("irr-feedback").className = "nok";
+  }
+  $("irr-score").textContent = IrregularTrainer.score;
+  $("irr-total").textContent = IrregularTrainer.total;
+}
+
+// ---- Zelf kiezen ----
+function renderCustom() {
+  $("custom-groups").innerHTML = TENSE_GROUPS.map(g => `
+    <div class="custom-group">
+      <div class="custom-group-title">${g.name}</div>
+      <div class="custom-options">
+        ${g.tenses.map(id => {
+          const t = TenseRegistry.get(id);
+          if (!t) return "";
+          return `<label class="check"><input type="checkbox" value="${id}"> ${t.name}</label>`;
+        }).join("")}
+      </div>
+    </div>`).join("");
+  $("custom-feedback").textContent = "";
+}
+
+function startCustom() {
+  const checked = [...document.querySelectorAll("#custom-groups input:checked")]
+    .map(i => i.value).filter(id => TenseRegistry.get(id));
+  if (!checked.length) {
+    $("custom-feedback").textContent = "Vink minstens één tijd aan.";
+    return;
+  }
+  startPractice("mix", checked);
+}
+
+// ---- Fouten herhalen ----
+function repeatPractice() {
+  const next = MistakeStore.takeNext();
+  if (!next) {
+    toast("Geen fouten om te herhalen! ");
+    return;
+  }
+  repeatNext = next;
+  currentMix = null;
+  score = 0;
+  count = 0;
+  $("score").textContent = "0";
+  $("count").textContent = "0";
+  newExercise();
+  showView("practice");
+}
+
+function updateMistakeBadge() {
+  const n = MistakeStore.count();
+  const el = $("mistake-badge");
+  if (el) el.textContent = n > 0 ? n : "";
+  const tile = document.getElementById("mistake-tile");
+  if (tile) tile.style.display = n > 0 ? "flex" : "none";
+}
+
+// ---- Voortgang ----
+function renderProgress() {
+  $("progress-list").innerHTML = TENSE_GROUPS.map(g => {
+    const rows = g.tenses.map(id => {
+      const t = TenseRegistry.get(id);
+      if (!t) return "";
+      const s = ProgressStore.get(id);
+      const pct = s.total ? Math.round((s.correct / s.total) * 100) : 0;
+      return `<tr>
+        <td class="prog-name">${t.name}</td>
+        <td class="prog-bar"><div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div></td>
+        <td class="prog-num">${s.correct}/${s.total}</td>
+        <td class="prog-pct">${pct}%</td>
+      </tr>`;
+    }).join("");
+    return `<h3 class="progress-group">${g.name}</h3>
+      <table class="progress-table"><tbody>${rows}</tbody></table>`;
+  }).join("");
+}
+
+// ---- Toast ----
+function toast(msg) {
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+  updateMistakeBadge();
+  $("check").addEventListener("click", checkAnswer);
+  $("next").addEventListener("click", newExercise);
+  $("show-hint").addEventListener("click", showHint);
+  $("share").addEventListener("click", shareTask);
+  $("repeat-btn") && $("repeat-btn").addEventListener("click", repeatPractice);
+  $("irr-check").addEventListener("click", checkIrregular);
+  $("irr-next").addEventListener("click", nextIrregular);
+  $("reset-progress").addEventListener("click", () => {
+    ProgressStore.reset();
+    renderProgress();
+    toast("Voortgang gewist");
+  });
+  $("answer").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); checkAnswer(); newExercise(); }
+  });
+  ["irr-past", "irr-pp"].forEach(id => {
+    $(id).addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); checkIrregular(); nextIrregular(); }
+    });
+  });
+  nextIrregular();
+});
+
+;
+// Dev-paneel: verborgen testgereedschap. NIET bedoeld voor leerlingen.
+// Openen: Ctrl+Shift+D of URL-parameter ?dev=1. Sluiten: Escape of kruisje.
+const DevPanel = {
+  open: false,
+  seeded: false,
+  _origRandom: Math.random,
+
+  init() {
+    if (new URLSearchParams(location.search).get("dev") === "1") this.toggle(true);
+    document.addEventListener("keydown", e => {
+      if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
+        e.preventDefault();
+        this.toggle();
+      }
+      if (e.key === "Escape" && this.open) this.toggle(false);
+    });
+  },
+
+  toggle(force) {
+    this.open = force !== undefined ? force : !this.open;
+    const el = document.getElementById("dev-panel");
+    if (el) el.style.display = this.open ? "block" : "none";
+  },
+
+  // Deterministische random (seeded LCG) voor reproduceerbare tests.
+  setSeed(on, seed) {
+    if (on && !this.seeded) {
+      this._origRandom = Math.random;
+      let s = seed || 42;
+      Math.random = () => {
+        s = (s * 1664525 + 1013904223) % 4294967296;
+        return s / 4294967296;
+      };
+      this.seeded = true;
+    } else if (!on && this.seeded) {
+      Math.random = this._origRandom;
+      this.seeded = false;
+    }
+  },
+
+  // --- Acties ---
+  showAnswer() {
+    const input = document.getElementById("answer");
+    if (input && typeof currentExercise !== "undefined" && currentExercise) {
+      input.value = currentExercise.answer;
+      input.classList.remove("wrong");
+      input.classList.add("correct");
+      return currentExercise.answer;
+    }
+    return null;
+  },
+
+  injectMistake(tenseId, subject, verb) {
+    const t = tenseId || (TenseRegistry.all()[0] && TenseRegistry.all()[0].id);
+    MistakeStore.add(t, subject || "he", verb || "go");
+    if (typeof updateMistakeBadge === "function") updateMistakeBadge();
+    return MistakeStore.count();
+  },
+
+  wipeStorage() {
+    ProgressStore.reset();
+    MistakeStore.clear();
+    if (typeof updateMistakeBadge === "function") updateMistakeBadge();
+    if (typeof renderProgress === "function") {
+      const list = document.getElementById("progress-list");
+      if (list && document.getElementById("view-progress").classList.contains("active")) renderProgress();
+    }
+    return true;
+  },
+
+  dumpStorage() {
+    return JSON.stringify({
+      progress: ProgressStore.all(),
+      mistakes: MistakeStore.load()
+    }, null, 2);
+  },
+
+  // Ingebouwde zelftest: engine + conjugaties over alle tijden.
+  selfTest() {
+    let fails = 0;
+    const msgs = [];
+    const cases = [
+      ["present-simple", "he", "go", "goes"],
+      ["past-simple", "she", "go", "went"],
+      ["present-perfect", "he", "go", "has gone"],
+      ["present-continuous", "I", "go", "am going"],
+      ["past-continuous", "they", "go", "were going"],
+      ["future-simple", "it", "go", "will go"],
+      ["past-perfect", "we", "go", "had gone"],
+      ["future-continuous", "she", "go", "will be going"],
+      ["present-perfect-continuous", "he", "go", "has been going"],
+      ["past-perfect-continuous", "you", "go", "had been going"],
+      ["future-perfect", "I", "go", "will have gone"],
+      ["future-perfect-continuous", "they", "go", "will have been going"]
+    ];
+    cases.forEach(([tid, subj, verb, expected]) => {
+      const t = TenseRegistry.get(tid);
+      const got = t.conjugate(subj, verbInfo(verb));
+      if (got !== expected) { fails++; msgs.push(`conjugate ${tid}/${subj}: "${got}" != "${expected}"`); }
+    });
+    for (let i = 0; i < 120; i++) {
+      const t = TenseRegistry.all()[i % TenseRegistry.all().length];
+      const ex = ExerciseEngine.generate(t.id, null);
+      if (!ex.answer || !ex.check(ex.answer)) { fails++; msgs.push(`exercise broken: ${t.id}`); }
+      if (!ex.sentence.startsWith(ex.sentence.charAt(0).toUpperCase())) { fails++; msgs.push(`geen hoofdletter: ${ex.sentence}`); }
+      if (!/\(to [a-z]+\)/.test(ex.sentence)) { fails++; msgs.push(`geen infinitief: ${ex.sentence}`); }
+    }
+    return fails === 0
+      ? `SELFTEST OK — ${cases.length} vervoegingen + 120 oefeningen in orde`
+      : `SELFTEST FAALT — ${fails} fouten:\n` + msgs.slice(0, 10).join("\n");
+  },
+
+  // Bouwt het paneel in de DOM (verborgen).
+  mount() {
+    const panel = document.createElement("div");
+    panel.id = "dev-panel";
+    panel.style.display = "none";
+    panel.innerHTML = `
+      <div class="dev-box">
+        <div class="dev-head">
+          <strong>DEV</strong>
+          <button id="dev-close" class="dev-x">✕</button>
+        </div>
+        <div class="dev-actions">
+          <button data-dev="answer">Toon antwoord</button>
+          <button data-dev="mistake">Injecteer fout</button>
+          <button data-dev="wipe">Wis opslag</button>
+          <button data-dev="dump">Toon opslag</button>
+          <button data-dev="seed">Random: normaal</button>
+          <button data-dev="test">Zelftest</button>
+        </div>
+        <pre id="dev-out" class="dev-out"></pre>
+      </div>`;
+    document.body.appendChild(panel);
+    panel.addEventListener("click", e => {
+      const btn = e.target.closest("[data-dev]");
+      if (!btn) return;
+      const out = panel.querySelector("#dev-out");
+      if (btn.id === "dev-close") return this.toggle(false);
+      switch (btn.dataset.dev) {
+        case "answer": {
+          const a = this.showAnswer();
+          out.textContent = a ? `Antwoord: ${a}` : "Geen actieve oefening.";
+          break;
+        }
+        case "mistake": {
+          const n = this.injectMistake();
+          out.textContent = `Fout geïnjecteerd. Fouten in wachtrij: ${n}`;
+          break;
+        }
+        case "wipe":
+          this.wipeStorage();
+          out.textContent = "Voortgang en fouten gewist.";
+          break;
+        case "dump":
+          out.textContent = this.dumpStorage();
+          break;
+        case "seed": {
+          const on = !this.seeded;
+          this.setSeed(on, 42);
+          btn.textContent = `Random: ${on ? "seeded (42)" : "normaal"}`;
+          out.textContent = on ? "Math.random vervangen door seeded LCG (42)." : "Originele Math.random hersteld.";
+          break;
+        }
+        case "test":
+          out.textContent = this.selfTest();
+          break;
+      }
+    });
+  }
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+  DevPanel.mount();
+  DevPanel.init();
+});
+
+</script>
+</body>
+</html>
