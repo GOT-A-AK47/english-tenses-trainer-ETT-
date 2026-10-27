@@ -71,67 +71,8 @@ TenseRegistry.register(TENSE);
 
 Dat is alles — de UI (dropdown, tab, tabel) pikt de nieuwe tijd automatisch op.
 
-## Nieuw oefentype toevoegen
+## V1 (later): opslag op de server
 
-Oefentypes zijn ook modules (zoals `IrregularTrainer` in `js/core/irregular.js`):
-maak een nieuw bestand met een object met `init()` / `next()` / `check()`-achtige functies,
-voeg een tab toe in `index.html` en hang er in `js/app.js` event listeners aan.
-
-## Vanilla JavaScript vs. Node.js backend
-
-**Vanilla JavaScript (deze app):**
-- De app draait volledig **in de browser** van de gebruiker.
-- Je hebt alleen HTML, CSS en JS-bestanden. Openen = werken.
-- Geen server, geen installatie, geen kosten. Ideaal om te delen (USB, GitHub Pages, schoolnetwerk-schijf).
-- Beperking: er is geen gedeeld geheugen. Scores staan op het toestel van de leerling (of verdwijnen na een refresh — deze versie bewaart ze nog niet eens).
-
-**Node.js backend:**
-- Een serverprogramma (bv. Node/Express) draait op een computer die altijd aanstaat.
-- De browser praat er via HTTP mee. Hierdoor kun je:
-  - scores en voortgang **opslaan in een database** en opvolgen;
-  - leerlingen laten **inloggen**;
-  - een **klassepaneel** maken voor je leekracht;
-  - gedeelde oefenlijsten centraal beheren.
-- Nadeel: iemand moet de server hosten en onderhouden. Voor een schoolproject zonder hosting-budget is dat vaak te veel van het goede.
-
-**Vuistregel:** begin vanilla. Als scores opslaan later echt nodig is, kun je de app uitbreiden met een backend — de modulaire opbouw verandert daar niet van mee.
-
-## Dev-paneel (verborgen)
-
-Testgereedschap voor de ontwikkelaar, niet voor leerlingen:
-- Openen: **Ctrl+Shift+D** (of URL-parameter `?dev=1`), sluiten met Escape
-- **Toon antwoord**: vult het juiste antwoord in de actieve oefening
-- **Injecteer fout**: zet een fout in de herhaalwachtrij om die flow te testen
-- **Wis opslag / Toon opslag**: localStorage (voortgang + fouten) bekijken of resetten
-- **Random seeded/normaal**: vervangt Math.random door een seed (42) voor reproduceerbare oefeningen
-- **Zelftest**: controleert alle 12 vervoegingen + 120 gegenereerde oefeningen (hoofdletter, infinitief, check)
-
-## Testen
-
-De logica (niet de UI) kun je testen met Node:
-
-```bash
-node -e "..."   # laadt js/core + js/data + js/tenses en checkt vervoegingen
-```
-
-Alle 12 tijden, de spelfuncties (studies/watched/studied/stopping/making) en de engine zijn getest.
-
-## V0 → V1: klaar voor de server
-
-Dit is V0 (puur front-end, alles in de browser). De overstap naar V1 (met Node-backend) is bewust makkelijk gehouden:
-
-- **Alle voortgang loopt via `ProgressStore`** (`js/core/store.js`). Dat is de enige plek die bewaart.
-- De app gebruikt alleen `ProgressStore.record()`, `.get()` en `.all()` — nooit `localStorage` rechtstreeks.
-- Vervang in `store.js` het `backend`-object door server-calls, bv.:
-
-```js
-backend: {
-  load: () => fetch("/api/progress").then(r => r.json()),
-  save: (data) => fetch("/api/progress", { method: "POST", body: JSON.stringify(data) })
-}
-```
-
-- De rest van de app hoeft daarna niets te veranderen.
-- Oefentypes en tijden zijn al losse modules; een backend voegt daar niets aan toe.
-
-Vuistregel: begin vanilla (V0). Als scores opvolgen nodig is, voeg je alleen de server + het nieuwe `backend`-object toe.
+Dit is V0: alles draait in de browser en voortgang staat op het toestel van de leerling.
+Alle voortgang loopt via `ProgressStore` (`js/core/store.js`) — de enige plek die bewaart.
+Voor een server-backend hoef je daar alleen het `backend`-object te vervangen door `fetch()`-calls; de rest van de app blijft ongewijzigd.
