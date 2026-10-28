@@ -1,0 +1,40 @@
+name: Deploy naar TrueNAS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verbind met tailnet
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: github-deploy
+
+      - name: Wacht tot node verbonden is
+        run: |
+          for i in $(seq 1 30); do
+            if tailscale status >/dev/null 2>&1; then
+              echo "Verbonden met tailnet"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Kon niet verbinden met tailnet" >&2
+          exit 1
+
+      - name: Rsync naar TrueNAS
+        run: |
+          rsync -az --delete \
+            --exclude '.git/' \
+            -e "ssh -o StrictHostKeyChecking=accept-new" \
+            ./ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/
