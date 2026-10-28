@@ -12,13 +12,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: SSH-key klaarzetten
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
-
       - name: Verbind met tailnet
         uses: tailscale/github-action@v3
         with:
@@ -38,6 +31,12 @@ jobs:
           echo "Kon niet verbinden met tailnet" >&2
           exit 1
 
+      - name: SSH-key klaarzetten
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
       - name: Rsync naar TrueNAS
         run: |
           rsync -az --delete \
@@ -49,5 +48,6 @@ jobs:
 
       - name: Leesrechten voor nginx
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
             "chmod -R a+rX ${{ secrets.DEPLOY_PATH }}"
