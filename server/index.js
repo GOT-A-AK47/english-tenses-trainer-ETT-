@@ -8,7 +8,9 @@ const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
-const DATA_DIR = path.join(__dirname, "data");
+// Data-map: via omgevingsvariabele te overschrijven (container-mount),
+// default lokaal naast het script.
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const PROGRESS_FILE = path.join(DATA_DIR, "progress.json");
 const PORT = process.env.PORT || 3000;
 
