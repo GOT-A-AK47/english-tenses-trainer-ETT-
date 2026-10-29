@@ -65,7 +65,7 @@ function loadTasks() {
       if (!tasks || !tasks.length) { wrap.style.display = "none"; return; }
       wrap.style.display = "block";
       grid.innerHTML = tasks.map(t => `
-        <button class="tile" data-task-mix="${t.tenseIds.join(",")}">
+        <button class="tile task-tile" data-task-mix="${t.tenseIds.join(",")}">
           <span class="tile-name">${t.title}</span>
           <span class="tile-desc">${t.tenseIds.length} tijd${t.tenseIds.length === 1 ? "" : "en"} door elkaar</span>
         </button>`).join("");
