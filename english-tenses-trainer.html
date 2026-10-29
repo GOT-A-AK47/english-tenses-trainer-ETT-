@@ -2505,8 +2505,7 @@ function renderSkinPicker() {
   const holder = $("skin-picker");
   if (!holder) return;
   const cur = Whiskers.getSkin().id;
-  const lvl = Gamification.level();
-  const lvlIndex = Gamification.LEVELS.indexOf(lvl) + 1;
+  const lvlIndex = (Gamification.LEVELS_REF || []).indexOf(Gamification.level()) + 1;
   holder.innerHTML = Whiskers.SKINS.map(s => {
     const unlocked = lvlIndex >= s.level;
     return `<button class="skin-swatch ${s.id === cur ? "selected" : ""} ${unlocked ? "" : "locked"}"
