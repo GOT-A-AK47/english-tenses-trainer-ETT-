@@ -72,8 +72,19 @@ TenseRegistry.register(TENSE);
 
 Dat is alles — de UI (dropdown, tab, tabel) pikt de nieuwe tijd automatisch op.
 
-## V1 (later): opslag op de server
+## V1: server met centrale opslag (server/)
 
-Dit is V0: alles draait in de browser en voortgang staat op het toestel van de leerling.
-Alle voortgang loopt via `ProgressStore` (`js/core/store.js`) — de enige plek die bewaart.
-Voor een server-backend hoef je daar alleen het `backend`-object te vervangen door `fetch()`-calls; de rest van de app blijft ongewijzigd.
+Naast de statische site draait er een kleine pure-Node server (`server/index.js`, geen dependencies):
+
+- **`POST /api/progress`** — leerlingen (naam + klas, zie het identiteitsvenster bij eerste gebruik) sturen hun voortgang; de server bewaart die in `server/data/progress.json`
+- **`GET /api/classes`** — voortgang per klas/leerling, gebruikt door het dashboard
+- **`/teacher`** — leerkrachtdashboard: per klas de leerlingen met aantal vragen, totaalscore, zwakste tijd en laatst gezien
+
+De front-end valt automatisch terug op localStorage als de API niet beschikbaar is (bv. de statische versie op GitHub Pages of het single-file bestand). `ProgressStore` (`js/core/store.js`) blijft de enige plek die opslaat; `MistakeStore` (fouten herhalen) blijft bewust lokaal per toestel.
+
+Starten op de server:
+
+```bash
+node server/index.js        # poort 3000, of via PORT=8080
+```
+

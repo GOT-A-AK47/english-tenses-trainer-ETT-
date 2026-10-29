@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leerkrachtdashboard — English Tenses Trainer</title>
+  <style>
+    :root {
+      --bg: #f7f7f5; --card: #fff; --ink: #21201c; --muted: #6e6a60;
+      --line: #e5e2da; --accent: #2f6fed; --accent-soft: #e8f0fe;
+      --ok: #1e8e5a; --bad: #c94040; --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      margin: 0; background: var(--bg); color: var(--ink); line-height: 1.5;
+    }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 { font-size: 1.3rem; margin: 0 0 0.25rem; }
+    .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 1.5rem; }
+    .card {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem;
+    }
+    .klas-title { font-size: 1.05rem; margin: 0 0 0.75rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 0.45rem 0.6rem; text-align: left; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .pct { font-weight: 700; }
+    .pct.good { color: var(--ok); }
+    .pct.warn { color: #c77f1e; }
+    .pct.bad { color: var(--bad); }
+    .bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; min-width: 80px; }
+    .bar .fill { height: 100%; background: var(--ok); border-radius: 999px; }
+    .last { color: var(--muted); font-size: 0.78rem; }
+    .refresh {
+      font: inherit; font-weight: 600; background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer;
+    }
+    .empty { color: var(--muted); font-style: italic; }
+    .legend { font-size: 0.78rem; color: var(--muted); margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Leerkrachtdashboard</h1>
+    <p class="sub">Voortgang per klas en leerling — live uit de serverdata.</p>
+    <button class="refresh" onclick="load()">Verversen</button>
+    <div id="content"><p class="empty">Laden…</p></div>
+    <p class="legend">Score = percentage goede antwoorden per tijd, samengevoegd over alle sessies. Gekleurd: groen ≥ 75%, oranje 50–74%, rood &lt; 50%.</p>
+  </div>
+
+  <script>
+    async function load() {
+      const content = document.getElementById("content");
+      try {
+        const res = await fetch("/api/classes");
+        if (!res.ok) throw new Error("API onbereikbaar");
+        const classes = await res.json();
+        render(classes);
+      } catch (e) {
+        content.innerHTML = '<p class="empty">Kan de serverdata niet laden. Draait de server wel?</p>';
+      }
+    }
+
+    function render(classes) {
+      const content = document.getElementById("content");
+      const klasNamen = Object.keys(classes).sort();
+      if (!klasNamen.length) {
+        content.innerHTML = '<p class="empty">Nog geen leerlingen hebben geoefend.</p>';
+        return;
+      }
+      content.innerHTML = klasNamen.map(klas => {
+        const students = classes[klas]
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name));
+        const rows = students.map(s => {
+          const totals = Object.values(s.progress)
+            .reduce((acc, t) => ({ correct: acc.correct + (t.correct || 0), total: acc.total + (t.total || 0) }), { correct: 0, total: 0 });
+          const pct = totals.total ? Math.round((totals.correct / totals.total) * 100) : null;
+          const weak = weakestTense(s.progress);
+          const pctClass = pct === null ? "" : pct >= 75 ? "good" : pct >= 50 ? "warn" : "bad";
+          const last = s.lastSeen ? new Date(s.lastSeen).toLocaleString("nl-NL") : "—";
+          return `<tr>
+            <td>${esc(s.name)}</td>
+            <td>${totals.total}</td>
+            <td><span class="pct ${pctClass}">${pct === null ? "—" : pct + "%"}</span></td>
+            <td>${weak ? esc(weak.name) : "—"}</td>
+            <td class="last">${last}</td>
+          </tr>`;
+        }).join("");
+        return `<div class="card">
+          <h2 class="klas-title">Klas ${esc(klas)} <span class="last">(${students.length} leerling${students.length === 1 ? "" : "en"})</span></h2>
+          <table>
+            <thead><tr><th>Naam</th><th>Vragen</th><th>Score</th><th>Zwakste tijd</th><th>Laatst gezien</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      }).join("");
+    }
+
+    function weakestTense(progress) {
+      let worst = null;
+      for (const [tenseId, t] of Object.entries(progress)) {
+        if (!t.total || t.total < 5) continue;
+        const pct = (t.correct || 0) / t.total;
+        if (!worst || pct < worst.pct) worst = { name: tenseId, pct };
+      }
+      return worst;
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    load();
+  </script>
+</body>
+</html>

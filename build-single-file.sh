@@ -12,6 +12,7 @@ const SCRIPT_ORDER = [
   "js/data/groups.js",
   "js/core/registry.js",
   "js/core/store.js",
+  "js/core/identity.js",
   "js/data/verbs.js",
   "js/data/templates.js",
   "js/tenses/_shared.js",
@@ -30,8 +31,7 @@ const SCRIPT_ORDER = [
   "js/core/engine.js",
   "js/core/irregular.js",
   "js/core/table.js",
-  "js/app.js",
-  "js/core/dev.js"
+  "js/app.js"
 ];
 
 let html = fs.readFileSync("index.html", "utf8");
@@ -43,7 +43,7 @@ html = html.replace(
 
 let js = SCRIPT_ORDER.map(f => fs.readFileSync(f, "utf8")).join("\n;\n");
 html = html.replace(
-  /<script src="js\/data\/groups.js"><\/script>[\s\S]*<script src="js\/core\/dev.js"><\/script>/,
+  /<script src="js\/data\/groups.js"><\/script>[\s\S]*<script src="js\/app.js"><\/script>/,
   `<script>\n${js}\n</script>`
 );
 

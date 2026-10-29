@@ -176,12 +176,31 @@
       </section>
     </main>
 
+    <!-- IDENTITEIT (V1. naam + klas) -->
+    <div id="identity-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">Wie ben jij?</span>
+        <p class="context">Vul je naam en klas in, zodat je voortgang bewaard blijft.</p>
+        <label>Naam
+          <input type="text" id="id-name" placeholder="bv. Anna" autocomplete="off" spellcheck="false">
+        </label>
+        <label>Klas
+          <input type="text" id="id-klas" placeholder="bv. 7B" autocomplete="off" spellcheck="false">
+        </label>
+        <div class="btnrow">
+          <button id="id-save">Beginnen</button>
+        </div>
+        <p id="id-feedback" class="context"></p>
+      </div>
+    </div>
+
     <footer>English Tenses Trainer — schoolproject</footer>
   </div>
 
   <script src="js/data/groups.js"></script>
   <script src="js/core/registry.js"></script>
   <script src="js/core/store.js"></script>
+  <script src="js/core/identity.js"></script>
   <script src="js/data/verbs.js"></script>
   <script src="js/data/templates.js"></script>
   <script src="js/tenses/_shared.js"></script>
@@ -201,6 +220,5 @@
   <script src="js/core/irregular.js"></script>
   <script src="js/core/table.js"></script>
   <script src="js/app.js"></script>
-  <script src="js/core/dev.js"></script>
 </body>
 </html>

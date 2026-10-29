@@ -492,67 +492,29 @@ footer {
   .view-head { justify-content: flex-start; }
 }
 
-/* Dev-paneel (verborgen, Ctrl+Shift+D) */
-#dev-panel {
+@media (max-width: 560px) {
+  .app { padding: 1.25rem 0.85rem 2rem; }
+  .card { padding: 1.1rem; }
+  .grid { grid-template-columns: 1fr 1fr; }
+  .grid.big { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .stat .value { font-size: 1.1rem; }
+  .sentence { font-size: 1.1rem; }
+  .view-head { justify-content: flex-start; }
+}
+
+/* Identity-modal (V1: naam + klas) */
+#identity-modal {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 100;
-  max-width: 340px;
-  width: calc(100vw - 2rem);
-}
-
-.dev-box {
-  background: #26241f;
-  color: #f0ede6;
-  border-radius: 10px;
-  padding: 0.75rem 0.9rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  font-size: 0.82rem;
-}
-
-.dev-head {
+  inset: 0;
+  background: rgba(33, 32, 28, 0.45);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
 }
 
-.dev-head strong { letter-spacing: 0.08em; font-size: 0.75rem; }
+.identity-card { max-width: 400px; width: 100%; }
 
-.dev-x {
-  background: none;
-  border: none;
-  color: #b9b4a7;
-  cursor: pointer;
-  font-size: 0.85rem;
-  padding: 0.1rem 0.3rem;
-}
-
-.dev-x:hover { color: #fff; }
-
-.dev-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-
-.dev-actions button {
-  background: #3a372f;
-  color: #f0ede6;
-  border: 1px solid #55503f;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.35rem 0.6rem;
-  cursor: pointer;
-}
-
-.dev-actions button:hover { background: #4a463b; }
-
-.dev-out {
-  margin: 0.6rem 0 0;
-  max-height: 180px;
-  overflow: auto;
-  font-size: 0.72rem;
-  line-height: 1.4;
-  color: #d6d2c6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
+#identity-modal label input { margin-top: 0.3rem; }

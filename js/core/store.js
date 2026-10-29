@@ -1,12 +1,11 @@
 // ProgressStore: de enige plek waar voortgang bewaard wordt.
-// V0 bewaart lokaal (localStorage). Voor V1 (server) hoef je alleen
-// het "backend"-object hieronder te vervangen door fetch()-calls —
-// de rest van de app merkt daar niets van.
+// V1: synchroniseert met de server (server/index.js) als die beschikbaar is;
+// anders valt hij terug op localStorage. De rest van de app merkt daar niets van.
 
 const ProgressStore = {
   KEY: "english-tenses-progress-v0",
 
-  // Data-laag: vervang dit object in V1 door een server-backend.
+  // Data-laag: localStorage als cache/fallback, server als bron van waarheid.
   backend: {
     load() {
       try { return JSON.parse(localStorage.getItem(ProgressStore.KEY)) || {}; }
@@ -50,16 +49,40 @@ const ProgressStore = {
     localStorage.removeItem(this.KEY);
   },
 
-  // V1: sync met de server. In V0 lokaal; later bv.:
-  // fetch("/api/progress", { method: "POST", body: JSON.stringify(this._data()) })
+  // V1: sync met de server. Stuurt naam + klas + voortgang naar /api/progress
+  // en vervangt de lokale cache door het serverantwoord. Faalt de server
+  // (offline, of static-only hosting), dan blijft de lokale opslag werken.
   sync() {
-    return Promise.resolve(this.all());
+    const identity = typeof Identity !== "undefined" ? Identity.get() : null;
+    if (!identity) return Promise.resolve(this.all());
+    const payload = {
+      identity,
+      progress: this.all()
+    };
+    return fetch("/api/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+      .then(r => {
+        if (!r.ok) throw new Error("sync mislukt: " + r.status);
+        return r.json();
+      })
+      .then(data => {
+        if (data && data.progress) {
+          this._cache = data.progress;
+          this.backend.save(this._cache);
+        }
+        return this.all();
+      })
+      .catch(() => this.all());
   }
 };
 
 // MistakeStore: foutieve antwoorden om later te herhalen.
 // Per fout wordt de combinatie (tijd, onderwerp, werkwoord) bewaard,
 // max. MAX_PER_COMB keer — daarna is de fout blijkbaar geleerd.
+// Bewust lokaal (per device): fouten herhalen hoort bij de sessie van de leerling.
 const MistakeStore = {
   KEY: "english-tenses-mistakes-v0",
   MAX_PER_COMB: 3,

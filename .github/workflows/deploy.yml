@@ -42,6 +42,7 @@ jobs:
           rsync -az --delete \
             --exclude '.git/' \
             --exclude '.github/' \
+            --exclude 'server/data/' \
             -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
             ./ \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/

@@ -6,12 +6,50 @@ let score = 0, count = 0;
 
 const $ = id => document.getElementById(id);
 
+// ---- Identiteit (V1.1: naam + klas) ----
+function ensureIdentity() {
+  if (Identity.get()) {
+    updateIdentityLabel();
+    return;
+  }
+  const modal = $("identity-modal");
+  modal.style.display = "block";
+  $("id-name").focus();
+}
+
+function updateIdentityLabel() {
+  const id = Identity.get();
+  const home = document.querySelector("#view-home .lead");
+  if (id && home) home.textContent = `Kies een tijd, ${id.name} (${id.klas}):`;
+}
+
+function saveIdentity() {
+  const name = $("id-name").value;
+  const klas = $("id-klas").value;
+  if (!name.trim() || !klas.trim()) {
+    $("id-feedback").textContent = "Vul beide velden in.";
+    return;
+  }
+  Identity.save(name, klas);
+  $("identity-modal").style.display = "none";
+  updateIdentityLabel();
+  ProgressStore.sync();
+  toast(`Welkom, ${name.trim()}!`);
+}
+
 function init() {
   initTenseSelectors();
   IrregularTrainer.init();
   renderIrregularList();
   bindNavigation();
   handleTaskLink();
+  ensureIdentity();
+  $("id-save").addEventListener("click", saveIdentity);
+  ["id-name", "id-klas"].forEach(id => {
+    $(id).addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
+    });
+  });
 }
 
 // ---- Navigatie ----
@@ -160,6 +198,7 @@ function checkAnswer() {
     $("feedback").className = "nok";
   }
   ProgressStore.record(currentExercise.tense.id, ok);
+  ProgressStore.sync();
   if (!ok) {
     MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);
   } else if (isRepeat) {
