@@ -583,3 +583,79 @@ header h1::after {
 
 .stat { border-bottom: 3px solid var(--accent-soft); }
 .stat:nth-child(1) { border-bottom-color: var(--accent); }
+
+
+/* Whiskers & gamification (V1.7) */
+.whiskers-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.whiskers-cat {
+  width: 96px;
+  height: 88px;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.whiskers-cat svg { transform: scale(var(--cat-scale, 0.9)); transform-origin: center; transition: transform 0.4s; }
+
+.xp-track { flex: 1; min-width: 0; }
+.xp-top { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.35rem; flex-wrap: wrap; }
+
+.xp-bar {
+  height: 12px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.xp-bar #xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  border-radius: 999px;
+  transition: width 0.4s;
+}
+.xp-label { font-size: 0.75rem; color: var(--muted); display: block; margin-top: 0.25rem; }
+
+.quest-chip { background: #fff3d6; color: #8a6116; }
+
+.whiskers-link { position: absolute; right: 1.25rem; top: 5.2rem; }
+
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+
+.badge {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.6rem;
+  text-align: center;
+  font-size: 0.72rem;
+  background: #fff;
+}
+.badge-icon { font-size: 1.4rem; display: block; margin-bottom: 0.2rem; }
+.badge.locked { opacity: 0.45; filter: grayscale(1); }
+
+/* Muis-mini-game */
+#bonus-mouse {
+  position: fixed;
+  bottom: 18px;
+  font-size: 2rem;
+  cursor: pointer;
+  z-index: 60;
+  user-select: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25));
+  left: 0;
+}
+@keyframes mouseRun {
+  from { left: -60px; }
+  to   { left: 100vw; }
+}

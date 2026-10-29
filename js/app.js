@@ -134,6 +134,12 @@ function restoreSession() {
   } catch { /* geen sessie */ }
 }
 
+// ---- Whiskers & gamification (V1.7) ----
+function showBadges() {
+  Gamification.renderBadges();
+  $("badges-modal").style.display = "block";
+}
+
 function init() {
   initTenseSelectors();
   IrregularTrainer.init();
@@ -150,6 +156,9 @@ function init() {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendFeedback(); }
   });
   window.addEventListener("beforeunload", saveSession);
+  Gamification.init();
+  $("whiskers-btn").addEventListener("click", showBadges);
+  $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -307,6 +316,7 @@ function checkAnswer() {
   }
   ProgressStore.record(currentExercise.tense.id, ok);
   ProgressStore.queueAnswer(currentExercise.tense.id, ok);
+  Gamification.onAnswer(currentExercise.tense.id, ok);
   ProgressStore.sync();
   if (!ok) {
     MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);

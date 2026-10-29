@@ -14,6 +14,7 @@
         <h1>English Tenses Trainer</h1>
       </button>
       <button id="feedback-btn" class="link-btn feedback-link" title="Stuur feedback naar de beheerder">💬 Feedback</button>
+      <button id="whiskers-btn" class="link-btn whiskers-link" title="Whiskers & jouw beloningen">🐱 Whiskers</button>
     </header>
 
     <main>
@@ -36,7 +37,19 @@
           </button>
         </div>
 
-        <div id="home-tasks" style="display:none">
+        <div class="whiskers-row">
+      <div id="whiskers" class="whiskers-cat" title="Whiskers"></div>
+      <div class="xp-track">
+        <div class="xp-top">
+          <span id="level-badge" class="chip">Katje</span>
+          <span id="quest-chip" class="chip quest-chip" style="display:none"></span>
+        </div>
+        <div class="xp-bar"><div id="xp-fill"></div></div>
+        <span id="xp-label" class="xp-label">0 XP</span>
+      </div>
+    </div>
+
+    <div id="home-tasks" style="display:none">
           <h2 class="section-title">Taken van je leerkracht</h2>
           <div class="grid" id="task-grid"></div>
         </div>
@@ -182,6 +195,18 @@
       </section>
     </main>
 
+    <!-- WHISKERS / BADGES (V1.7) -->
+    <div id="badges-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">🐱 Whiskers</span>
+        <p id="badges-xp" class="context"></p>
+        <div id="badges-grid" class="badges-grid"></div>
+        <div class="btnrow">
+          <button id="badges-close" class="secondary">Sluiten</button>
+        </div>
+      </div>
+    </div>
+
     <!-- FEEDBACK (V1.5) -->
     <div id="feedback-modal" style="display:none">
       <div class="card identity-card">
@@ -231,6 +256,7 @@
   <script src="js/core/registry.js"></script>
   <script src="js/core/store.js"></script>
   <script src="js/core/identity.js"></script>
+  <script src="js/core/gamification.js"></script>
   <script src="js/data/verbs.js"></script>
   <script src="js/data/templates.js"></script>
   <script src="js/tenses/_shared.js"></script>

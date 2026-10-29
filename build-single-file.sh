@@ -13,6 +13,7 @@ const SCRIPT_ORDER = [
   "js/core/registry.js",
   "js/core/store.js",
   "js/core/identity.js",
+  "js/core/gamification.js",
   "js/data/verbs.js",
   "js/data/templates.js",
   "js/tenses/_shared.js",
