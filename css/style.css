@@ -740,3 +740,41 @@ header h1::after {
 .energy-chip { background: #e6f4ea; color: #1e8e5a; }
 .energy-chip.energy-warn { background: #fff3d6; color: #8a6116; }
 .energy-chip.energy-bad { background: #fdeaea; color: #c94040; }
+
+
+/* V2.2: kalender */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 3px;
+  margin-top: 0.5rem;
+}
+.cal-day { aspect-ratio: 1; border-radius: 3px; background: var(--line); }
+.cal-day.cal-low { background: #cfe0fb; }
+.cal-day.cal-mid { background: #7fa8f0; }
+.cal-day.cal-high { background: #1d4fae; }
+
+/* V2.2: vrienden & duels */
+.friends-list .friend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.friends-list .friend-row:last-child { border-bottom: none; }
+.duel-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  background: #fff;
+}
+.duel-item .vs { font-weight: 800; font-size: 0.8rem; }
+.duel-score { font-weight: 800; }
+.duel-won { border-color: #1e8e5a; background: #e9f7f0; }
+.duel-lost { border-color: #c94040; background: #fdefef; }
+.duel-draw { border-color: #c77f1e; background: #fdf5e6; }

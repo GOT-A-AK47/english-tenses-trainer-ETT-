@@ -14,7 +14,18 @@ const CLASSES_FILE = path.join(DATA_DIR, "classes.json");
 const TASKS_FILE = path.join(DATA_DIR, "tasks.json");
 const FEEDBACK_FILE = path.join(DATA_DIR, "feedback.json");
 const USAGE_FILE = path.join(DATA_DIR, "usage.json");
+const FRIENDS_FILE = path.join(DATA_DIR, "friends.json");
+const DUELS_FILE = path.join(DATA_DIR, "duels.json");
+const CALENDAR_FILE = path.join(DATA_DIR, "calendar.json");
 const PORT = process.env.PORT || 3000;
+
+// V2.2: basislijsten voor duel-vragen (gesynchroniseerd met de client-engine)
+const TENSE_IDS = [
+  "present-simple", "present-continuous", "present-perfect", "present-perfect-continuous",
+  "past-simple", "past-continuous", "past-perfect", "past-perfect-continuous",
+  "future-simple", "future-continuous", "future-perfect", "future-perfect-continuous"
+];
+const VERBS = ["work", "play", "study", "watch", "go", "do", "make", "take", "write", "read", "eat", "speak"];
 
 // ---------- data-laag ----------
 
@@ -38,6 +49,12 @@ const loadFeedback = () => loadJson(FEEDBACK_FILE, []);
 const saveFeedback = d => saveJson(FEEDBACK_FILE, d);
 const loadUsage = () => loadJson(USAGE_FILE, {});
 const saveUsage = d => saveJson(USAGE_FILE, d);
+const loadFriends = () => loadJson(FRIENDS_FILE, {});
+const saveFriends = d => saveJson(FRIENDS_FILE, d);
+const loadDuels = () => loadJson(DUELS_FILE, []);
+const saveDuels = d => saveJson(DUELS_FILE, d);
+const loadCalendar = () => loadJson(CALENDAR_FILE, {});
+const saveCalendar = d => saveJson(CALENDAR_FILE, d);
 
 function studentKey(identity) {
   return `${identity.name}|${identity.klas}`;
@@ -149,6 +166,15 @@ async function handleApi(req, res) {
       return respond(res, 400, { error: "identity en progress zijn verplicht" });
     }
     const newAnswers = Array.isArray(payload.newAnswers) ? payload.newAnswers : [];
+    // V2.2: dagelijkse kalender per leerling
+    const today = new Date().toISOString().slice(0, 10);
+    const cal = loadCalendar();
+    const who = studentKey(identity);
+    if (!cal[who]) cal[who] = {};
+    if (!cal[who][today]) cal[who][today] = { answers: 0, correct: 0 };
+    cal[who][today].answers += newAnswers.length;
+    cal[who][today].correct += newAnswers.filter(a => a.correct).length;
+    saveCalendar(cal);
     const key = studentKey(identity);
     const all = loadProgress();
     all[key] = mergeProgress(all[key] || {}, progress);
@@ -389,6 +415,158 @@ async function handleApi(req, res) {
       "Content-Disposition": 'attachment; filename="voortgang.csv"'
     });
     return res.end("\uFEFF" + csv);
+  }
+
+  // ===== V2.2: vrienden =====
+  // vriendenlijst: friends.json = { "Anna|7B": ["Ben|7B", ...] }
+  if (req.method === "GET" && url === "/api/friends") {
+    const who = new URL(req.url, "http://x").searchParams.get("who");
+    if (!who) return respond(res, 400, { error: "who verplicht" });
+    const friends = loadFriends();
+    const list = friends[who] || [];
+    // verrijk met voortgang-samenvatting
+    const all = loadProgress();
+    const enriched = list.map(f => {
+      const entry = all[f];
+      let total = 0, correct = 0;
+      for (const [k, v] of Object.entries(entry || {})) {
+        if (k.startsWith("_")) continue;
+        total += v.total || 0; correct += v.correct || 0;
+      }
+      return { who: f, name: f.split("|")[0], total, correct };
+    });
+    return respond(res, 200, enriched);
+  }
+
+  // zoek klasgenoten (voor vriendschapsverzoeken)
+  if (req.method === "GET" && url === "/api/classmates") {
+    const klas = new URL(req.url, "http://x").searchParams.get("klas");
+    const name = new URL(req.url, "http://x").searchParams.get("name");
+    if (!klas || !name) return respond(res, 400, { error: "klas en name verplicht" });
+    const all = loadProgress();
+    const me = name + "|" + klas;
+    const mates = [];
+    for (const [key, entry] of Object.entries(all)) {
+      if (key === me || !entry._identity) continue;
+      if (entry._identity.klas !== klas) continue;
+      mates.push(entry._identity.name);
+    }
+    return respond(res, 200, mates.sort());
+  }
+
+  // vriend maken (wederzijds: beide krijgen elkaar)
+  if (req.method === "POST" && url === "/api/friends/add") {
+    const { me, friend } = JSON.parse(await readBody(req) || "{}") || {};
+    if (!me || !friend) return respond(res, 400, { error: "me en friend verplicht" });
+    if (me === friend) return respond(res, 400, { error: "jezelf toevoegen kan niet" });
+    const friends = loadFriends();
+    if (!friends[me]) friends[me] = [];
+    if (!friends[friend]) friends[friend] = [];
+    if (!friends[me].includes(friend)) friends[me].push(friend);
+    if (!friends[friend].includes(me)) friends[friend].push(me);
+    saveFriends(friends);
+    return respond(res, 200, { ok: true });
+  }
+
+  // vriend verwijderen (wederzijds)
+  if (req.method === "POST" && url === "/api/friends/remove") {
+    const { me, friend } = JSON.parse(await readBody(req) || "{}") || {};
+    if (!me || !friend) return respond(res, 400, { error: "me en friend verplicht" });
+    const friends = loadFriends();
+    if (friends[me]) friends[me] = friends[me].filter(f => f !== friend);
+    if (friends[friend]) friends[friend] = friends[friend].filter(f => f !== me);
+    saveFriends(friends);
+    return respond(res, 200, { ok: true });
+  }
+
+  // ===== V2.2: duels =====
+  // duels.json = [{ id, players: [whoA, whoB], tenseIds, questions: [...], scores: {whoA: null|n}, state }]
+  // vragen zijn combi-lijsten: [{tenseId, subject, verb}] die beide spelers
+  // via de bestaande engine identiek voorgeschoteld krijgen.
+  const DUEL_QUESTIONS = 10;
+
+  function genDuelQuestions() {
+    // deterministische random combinaties; de client bouwt de echte zinnen
+    const SUBJS = ["I", "you", "he", "she", "it", "we", "they"];
+    const qs = [];
+    for (let i = 0; i < DUEL_QUESTIONS; i++) {
+      qs.push({
+        tenseId: TENSE_IDS[i % TENSE_IDS.length],
+        subject: SUBJS[Math.floor(Math.random() * SUBJS.length)],
+        verb: VERBS[Math.floor(Math.random() * VERBS.length)]
+      });
+    }
+    return qs;
+  }
+
+  if (req.method === "POST" && url === "/api/duel/new") {
+    const { me, opponent } = JSON.parse(await readBody(req) || "{}") || {};
+    if (!me || !opponent) return respond(res, 400, { error: "me en opponent verplicht" });
+    if (me === opponent) return respond(res, 400, { error: "tegen jezelf kan niet" });
+    const duels = loadDuels();
+    const duel = {
+      id: "d" + Date.now().toString(36),
+      players: [me, opponent],
+      questions: genDuelQuestions(),
+      scores: { [me]: null, [opponent]: null },
+      state: "open",
+      createdAt: new Date().toISOString()
+    };
+    duels.push(duel);
+    saveDuels(duels);
+    return respond(res, 200, { duel });
+  }
+
+  // mijn duels (open + afgerond)
+  if (req.method === "GET" && url === "/api/duel/list") {
+    const who = new URL(req.url, "http://x").searchParams.get("who");
+    if (!who) return respond(res, 400, { error: "who verplicht" });
+    const duels = loadDuels().filter(d => d.players.includes(who));
+    return respond(res, 200, duels.map(d => ({
+      id: d.id,
+      opponent: d.players.find(p => p !== who),
+      state: d.state,
+      myScore: d.scores[who],
+      theirScore: d.scores[d.players.find(p => p !== who)],
+      createdAt: d.createdAt
+    })));
+  }
+
+  // duel-details (vragen ophalen om te spelen)
+  if (req.method === "GET" && url === "/api/duel/get") {
+    const id = new URL(req.url, "http://x").searchParams.get("id");
+    const duels = loadDuels();
+    const duel = duels.find(d => d.id === id);
+    if (!duel) return respond(res, 404, { error: "duel bestaat niet" });
+    return respond(res, 200, duel);
+  }
+
+  // score indienen
+  if (req.method === "POST" && url === "/api/duel/score") {
+    const { id, who, score } = JSON.parse(await readBody(req) || "{}") || {};
+    const duels = loadDuels();
+    const duel = duels.find(d => d.id === id);
+    if (!duel) return respond(res, 404, { error: "duel bestaat niet" });
+    if (!duel.players.includes(who)) return respond(res, 403, { error: "je zit niet in dit duel" });
+    duel.scores[who] = Math.max(0, Math.min(DUEL_QUESTIONS, Number(score) || 0));
+    // afronden als beide scores binnen zijn
+    if (duel.players.every(p => duel.scores[p] !== null)) {
+      duel.state = "done";
+      const [a, b] = duel.players;
+      duel.winner = duel.scores[a] === duel.scores[b] ? "draw" : (duel.scores[a] > duel.scores[b] ? a : b);
+    }
+    saveDuels(duels);
+    return respond(res, 200, { duel: { id: duel.id, state: duel.state, winner: duel.winner || null } });
+  }
+
+  // ===== V2.2: dagelijkse kalender =====
+  // calendar.json = { "Anna|7B": { "2026-10-29": { answers: 12, correct: 10 }, ... } }
+  // (gevuld door /api/progress via newAnswers — dezelfde data als usage, maar per leerling)
+  if (req.method === "GET" && url === "/api/calendar") {
+    const who = new URL(req.url, "http://x").searchParams.get("who");
+    if (!who) return respond(res, 400, { error: "who verplicht" });
+    const cal = loadCalendar();
+    return respond(res, 200, cal[who] || {});
   }
 
   respond(res, 404, { error: "not found" });

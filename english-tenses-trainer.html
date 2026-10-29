@@ -748,6 +748,44 @@ header h1::after {
 .energy-chip.energy-warn { background: #fff3d6; color: #8a6116; }
 .energy-chip.energy-bad { background: #fdeaea; color: #c94040; }
 
+
+/* V2.2: kalender */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 3px;
+  margin-top: 0.5rem;
+}
+.cal-day { aspect-ratio: 1; border-radius: 3px; background: var(--line); }
+.cal-day.cal-low { background: #cfe0fb; }
+.cal-day.cal-mid { background: #7fa8f0; }
+.cal-day.cal-high { background: #1d4fae; }
+
+/* V2.2: vrienden & duels */
+.friends-list .friend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.friends-list .friend-row:last-child { border-bottom: none; }
+.duel-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  background: #fff;
+}
+.duel-item .vs { font-weight: 800; font-size: 0.8rem; }
+.duel-score { font-weight: 800; }
+.duel-won { border-color: #1e8e5a; background: #e9f7f0; }
+.duel-lost { border-color: #c94040; background: #fdefef; }
+.duel-draw { border-color: #c77f1e; background: #fdf5e6; }
+
 </style>
 </head>
 <body>
@@ -793,9 +831,22 @@ header h1::after {
       </div>
     </div>
 
+    <div class="whiskers-row" style="flex-direction:column;align-items:stretch">
+      <div class="xp-top"><span class="chip">📅 Oefenkalender</span><span id="calendar-streak" class="last"></span></div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </div>
+
     <div id="home-tasks" style="display:none">
           <h2 class="section-title">Taken van je leerkracht</h2>
           <div class="grid" id="task-grid"></div>
+        </div>
+
+        <h2 class="section-title">Vrienden & duels</h2>
+        <div class="grid">
+          <button class="tile" data-view="social">
+            <span class="tile-name">🐱 Vrienden</span>
+            <span class="tile-desc">Vrienden, duels en het klasgenoten-overzicht</span>
+          </button>
         </div>
 
         <h2 class="section-title">Meer</h2>
@@ -1013,6 +1064,34 @@ header h1::after {
         <p id="id-feedback" class="context"></p>
       </div>
     </div>
+
+    <!-- SOCIAL (V2.2) -->
+    <section id="view-social" class="view">
+      <div class="view-head">
+        <button class="back" data-view="home">← Startscherm</button>
+        <h2>Vrienden & duels</h2>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Mijn vrienden</h3>
+        <div id="friends-list" class="friends-list"></div>
+        <div class="btnrow" style="margin-top:0.75rem">
+          <select id="mate-select"></select>
+          <button id="add-friend" class="secondary">Vriend toevoegen</button>
+        </div>
+        <p id="friends-msg" class="context"></p>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Duels</h3>
+        <p class="context">Daag een vriend uit: jullie krijgen dezelfde 10 vragen. Hoogste score wint!</p>
+        <div class="btnrow">
+          <select id="duel-opponent"></select>
+          <button id="start-duel">⚔️ Duel starten</button>
+        </div>
+        <div id="duel-list" style="margin-top:0.75rem"></div>
+      </div>
+    </section>
 
     <footer>English Tenses Trainer — schoolproject</footer>
   </div>
@@ -1907,6 +1986,131 @@ const Whiskers = {
 };
 
 ;
+// V2.2: vrienden, duels en de dagelijkse kalender (client-zijde).
+// Praten met server/index.js endpoints; fallback naar niets zonder server.
+
+const Social = {
+  who() {
+    const id = Identity.get();
+    return id ? id.name + "|" + id.klas : null;
+  },
+
+  api(path, opts) {
+    return fetch(path, {
+      ...opts,
+      headers: { "Content-Type": "application/json", ...(opts && opts.headers || {}) }
+    }).then(r => {
+      if (!r.ok) throw new Error("server onbereikbaar");
+      return r.json();
+    });
+  },
+
+  // ---- vrienden ----
+  async loadFriends() {
+    const who = this.who();
+    if (!who) return [];
+    return this.api("/api/friends?who=" + encodeURIComponent(who)).catch(() => []);
+  },
+
+  async loadClassmates() {
+    const id = Identity.get();
+    if (!id) return [];
+    return this.api(`/api/classmates?klas=${encodeURIComponent(id.klas)}&name=${encodeURIComponent(id.name)}`).catch(() => []);
+  },
+
+  addFriend(friendWho) {
+    return this.api("/api/friends/add", {
+      method: "POST",
+      body: JSON.stringify({ me: this.who(), friend: friendWho })
+    });
+  },
+
+  removeFriend(friendWho) {
+    return this.api("/api/friends/remove", {
+      method: "POST",
+      body: JSON.stringify({ me: this.who(), friend: friendWho })
+    });
+  },
+
+  // ---- duels ----
+  newDuel(opponent) {
+    return this.api("/api/duel/new", {
+      method: "POST",
+      body: JSON.stringify({ me: this.who(), opponent })
+    }).then(r => r.duel);
+  },
+
+  listDuels() {
+    return this.api("/api/duel/list?who=" + encodeURIComponent(this.who())).catch(() => []);
+  },
+
+  getDuel(id) {
+    return this.api("/api/duel/get?id=" + encodeURIComponent(id));
+  },
+
+  submitScore(id, score) {
+    return this.api("/api/duel/score", {
+      method: "POST",
+      body: JSON.stringify({ id, who: this.who(), score })
+    }).then(r => r.duel);
+  },
+
+  // Bouwt speelbare oefeningen uit de server-combinaties
+  buildDuelExercises(questions) {
+    return questions.map(q => ExerciseEngine.build(q.tenseId, q.subject, q.verb));
+  },
+
+  // ---- kalender ----
+  loadCalendar() {
+    return this.api("/api/calendar?who=" + encodeURIComponent(this.who())).catch(() => ({}));
+  }
+};
+
+// Kalender-rendering: laatste 28 dagen als vinkjes-raster
+const Calendar = {
+  async render() {
+    const holder = document.getElementById("calendar-grid");
+    if (!holder) return;
+    const data = await Social.loadCalendar();
+    const days = [];
+    const today = new Date();
+    for (let i = 27; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ key, d, stats: data[key] });
+    }
+    // GitHub-achtige bijdrage-raster: 4 weken x 7
+    holder.innerHTML = days.map(day => {
+      const s = day.stats;
+      const cls = !s ? "cal-empty" :
+        s.answers < 5 ? "cal-low" :
+        s.answers < 15 ? "cal-mid" : "cal-high";
+      const title = s
+        ? `${day.d.toLocaleDateString("nl-NL")}: ${s.answers} vragen (${s.correct} goed)`
+        : `${day.d.toLocaleDateString("nl-NL")}: niet geoefend`;
+      return `<div class="cal-day ${cls}" title="${title}"></div>`;
+    }).join("");
+    const streak = this.calcStreak(data);
+    const label = document.getElementById("calendar-streak");
+    if (label) label.textContent = streak >= 2 ? `🔥 ${streak} dagen op rij geoefend!` : "Oefen vandaag voor je eerste vinkje!";
+  },
+
+  calcStreak(data) {
+    // tel terug vanaf vandaag (of gisteren) zolang er dagen met >=1 antwoord zijn
+    let streak = 0;
+    const d = new Date();
+    // als vandaag nog niks, mag de reeks gisteren beginnen
+    if (!data[d.toISOString().slice(0, 10)]) d.setDate(d.getDate() - 1);
+    while (data[d.toISOString().slice(0, 10)]) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }
+};
+
+;
 // Werkwoorden-data: regelmatig + onregelmatig.
 // vorm: { base, past, pastParticiple, third (optioneel, voor onregelmatige -s) }
 
@@ -2553,6 +2757,139 @@ function renderSkinPicker() {
   });
 }
 
+// ---- V2.2: vrienden, duels, kalender ----
+async function renderSocial() {
+  if (!Identity.get()) return;
+  const friends = await Social.loadFriends();
+  const friendsList = $("friends-list");
+
+  friendsList.innerHTML = friends.length
+    ? friends.map(f => `
+      <div class="friend-row">
+        <span><strong>${f.name}</strong> <span class="last">${f.total} vragen · ${f.total ? Math.round(f.correct / f.total * 100) : 0}% goed</span></span>
+        <button class="secondary" data-remove-friend="${f.who}">Verwijderen</button>
+      </div>`).join("")
+    : '<p class="empty">Nog geen vrienden — voeg er één toe uit je klas!</p>';
+
+  friendsList.querySelectorAll("[data-remove-friend]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await Social.removeFriend(btn.dataset.removeFriend);
+      renderSocial();
+    });
+  });
+
+  // klasgenoten in beide selects
+  const mates = await Social.loadClassmates();
+  const cur = Identity.get();
+  const mateOptions = ['<option value="">— kies —</option>']
+    .concat(mates.map(m => `<option value="${m}|${cur.klas}">${m}</option>`)).join("");
+  $("mate-select").innerHTML = mateOptions;
+  const friendWhos = friends.map(f => f.who);
+  $("duel-opponent").innerHTML = friendWhos.length
+    ? '<option value="">— kies vriend —</option>' + friendWhos.map(f => `<option value="${f}">${f.split("|")[0]}</option>`).join("")
+    : '<option value="">Eerst vrienden toevoegen</option>';
+
+  // duellijst
+  const duels = await Social.listDuels();
+  const me = Social.who();
+  $("duel-list").innerHTML = duels.length
+    ? duels.map(d => {
+        const cls = d.state !== "done" ? "" : d.winner === undefined ? "" : d.winner === "draw" ? "duel-draw" : (d.winner === me ? "duel-won" : "duel-lost");
+        const scoreLabel = d.state === "done"
+          ? `<span class="duel-score">${d.myScore ?? "?"} – ${d.theirScore ?? "?"}</span>`
+          : d.myScore !== null
+            ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
+            : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
+        return `<div class="duel-item ${cls}">
+          <span class="vs">⚔️ vs ${d.opponent.split("|")[0]}</span>
+          ${scoreLabel}
+        </div>`;
+      }).join("")
+    : '<p class="empty">Nog geen duels.</p>';
+  $("duel-list").querySelectorAll("[data-play-duel]").forEach(btn => {
+    btn.addEventListener("click", () => playDuel(btn.dataset.playDuel));
+  });
+}
+
+async function addFriend() {
+  const val = $("mate-select").value;
+  if (!val) { $("friends-msg").textContent = "Kies eerst een klasgenoot."; return; }
+  try {
+    await Social.addFriend(val);
+    $("friends-msg").textContent = "";
+    renderSocial();
+    toast("🐱 Vriend toegevoegd!");
+  } catch (e) {
+    $("friends-msg").textContent = "Kon vriend niet toevoegen (server bereikbaar?)";
+  }
+}
+
+// ---- Duel spelen: 10 vragen in de practice-flow ----
+let duelState = null;
+
+async function startDuel() {
+  const opponent = $("duel-opponent").value;
+  if (!opponent) { toast("Kies eerst een vriend om tegen te duelleren."); return; }
+  try {
+    const duel = await Social.newDuel(opponent);
+    await playDuel(duel.id);
+  } catch (e) {
+    toast("Duel starten mislukt — is de server bereikbaar?");
+  }
+}
+
+async function playDuel(id) {
+  const duel = await Social.getDuel(id);
+  duelState = {
+    id,
+    exercises: Social.buildDuelExercises(duel.questions),
+    index: 0,
+    correct: 0
+  };
+  showView("practice");
+  Whiskers.showCompanion();
+  Whiskers.say("⚔️ Duel-modus! 10 vragen — ga ervoor!", 5000);
+  nextDuelQuestion();
+}
+
+function nextDuelQuestion() {
+  if (!duelState) return;
+  if (duelState.index >= duelState.exercises.length) return finishDuel();
+  const ex = duelState.exercises[duelState.index++];
+  ex.isRepeat = false;
+  currentExercise = ex;
+  // renderen zoals newExercise dat doet
+  $("tense-info").textContent = `⚔️ Duel ${duelState.index}/${duelState.exercises.length} — ${ex.tense.name}`;
+  $("sentence").textContent = ex.sentence;
+  $("context").textContent = "";
+  $("answer").value = "";
+  $("answer").classList.remove("correct", "wrong");
+  $("answer").focus();
+  $("feedback").textContent = "";
+  $("feedback").className = "";
+}
+
+async function finishDuel() {
+  const score = duelState.correct;
+  const id = duelState.id;
+  duelState = null;
+  try {
+    const result = await Social.submitScore(id, score);
+    if (result.state === "done") {
+      const me = Social.who();
+      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("Gelijkspel — eerlijk gedeeld!", 6000); }
+      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("Gewonnennn! 🏆", 6000); Gamification.addXP(50); }
+      else { toast("😈 Verloren... revanche?"); Whiskers.say("Jammer — volgende keer beter!", 6000); Gamification.addXP(15); }
+    } else {
+      toast(`Score ingediend: ${score}/10 — wacht op je tegenstander!`);
+    }
+  } catch (e) {
+    toast("Score kon niet indienen (offline?) — jammer!");
+  }
+  showView("social");
+  renderSocial();
+}
+
 function init() {
   initTenseSelectors();
   IrregularTrainer.init();
@@ -2576,6 +2913,9 @@ function init() {
   $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("badges-reset").addEventListener("click", resetWhiskers);
+  $("add-friend").addEventListener("click", addFriend);
+  $("start-duel").addEventListener("click", startDuel);
+  Calendar.render();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -2590,6 +2930,7 @@ function showView(id) {
   if (id === "irregular") $("irr-past").focus();
   if (id === "progress") renderProgress();
   if (id === "table") renderTable();
+  if (id === "social") renderSocial();
 }
 
 function bindNavigation() {
@@ -2758,6 +3099,12 @@ function checkAnswer() {
   updateMistakeBadge();
   $("score").textContent = score;
   $("count").textContent = count;
+
+  // V2.2: duel-modus — na elk antwoord door naar de volgende vraag
+  if (duelState && currentExercise) {
+    if (ok) duelState.correct++;
+    duelState.timer = setTimeout(nextDuelQuestion, ok ? 700 : 1800);
+  }
 }
 
 function showHint() {

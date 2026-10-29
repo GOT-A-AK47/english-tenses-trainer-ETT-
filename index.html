@@ -49,9 +49,22 @@
       </div>
     </div>
 
+    <div class="whiskers-row" style="flex-direction:column;align-items:stretch">
+      <div class="xp-top"><span class="chip">📅 Oefenkalender</span><span id="calendar-streak" class="last"></span></div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+    </div>
+
     <div id="home-tasks" style="display:none">
           <h2 class="section-title">Taken van je leerkracht</h2>
           <div class="grid" id="task-grid"></div>
+        </div>
+
+        <h2 class="section-title">Vrienden & duels</h2>
+        <div class="grid">
+          <button class="tile" data-view="social">
+            <span class="tile-name">🐱 Vrienden</span>
+            <span class="tile-desc">Vrienden, duels en het klasgenoten-overzicht</span>
+          </button>
         </div>
 
         <h2 class="section-title">Meer</h2>
@@ -270,6 +283,34 @@
       </div>
     </div>
 
+    <!-- SOCIAL (V2.2) -->
+    <section id="view-social" class="view">
+      <div class="view-head">
+        <button class="back" data-view="home">← Startscherm</button>
+        <h2>Vrienden & duels</h2>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Mijn vrienden</h3>
+        <div id="friends-list" class="friends-list"></div>
+        <div class="btnrow" style="margin-top:0.75rem">
+          <select id="mate-select"></select>
+          <button id="add-friend" class="secondary">Vriend toevoegen</button>
+        </div>
+        <p id="friends-msg" class="context"></p>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Duels</h3>
+        <p class="context">Daag een vriend uit: jullie krijgen dezelfde 10 vragen. Hoogste score wint!</p>
+        <div class="btnrow">
+          <select id="duel-opponent"></select>
+          <button id="start-duel">⚔️ Duel starten</button>
+        </div>
+        <div id="duel-list" style="margin-top:0.75rem"></div>
+      </div>
+    </section>
+
     <footer>English Tenses Trainer — schoolproject</footer>
   </div>
 
@@ -279,6 +320,7 @@
   <script src="js/core/identity.js"></script>
   <script src="js/core/gamification.js"></script>
   <script src="js/core/whiskers.js"></script>
+  <script src="js/core/social.js"></script>
   <script src="js/data/verbs.js"></script>
   <script src="js/data/templates.js"></script>
   <script src="js/tenses/_shared.js"></script>

@@ -191,6 +191,139 @@ function renderSkinPicker() {
   });
 }
 
+// ---- V2.2: vrienden, duels, kalender ----
+async function renderSocial() {
+  if (!Identity.get()) return;
+  const friends = await Social.loadFriends();
+  const friendsList = $("friends-list");
+
+  friendsList.innerHTML = friends.length
+    ? friends.map(f => `
+      <div class="friend-row">
+        <span><strong>${f.name}</strong> <span class="last">${f.total} vragen · ${f.total ? Math.round(f.correct / f.total * 100) : 0}% goed</span></span>
+        <button class="secondary" data-remove-friend="${f.who}">Verwijderen</button>
+      </div>`).join("")
+    : '<p class="empty">Nog geen vrienden — voeg er één toe uit je klas!</p>';
+
+  friendsList.querySelectorAll("[data-remove-friend]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await Social.removeFriend(btn.dataset.removeFriend);
+      renderSocial();
+    });
+  });
+
+  // klasgenoten in beide selects
+  const mates = await Social.loadClassmates();
+  const cur = Identity.get();
+  const mateOptions = ['<option value="">— kies —</option>']
+    .concat(mates.map(m => `<option value="${m}|${cur.klas}">${m}</option>`)).join("");
+  $("mate-select").innerHTML = mateOptions;
+  const friendWhos = friends.map(f => f.who);
+  $("duel-opponent").innerHTML = friendWhos.length
+    ? '<option value="">— kies vriend —</option>' + friendWhos.map(f => `<option value="${f}">${f.split("|")[0]}</option>`).join("")
+    : '<option value="">Eerst vrienden toevoegen</option>';
+
+  // duellijst
+  const duels = await Social.listDuels();
+  const me = Social.who();
+  $("duel-list").innerHTML = duels.length
+    ? duels.map(d => {
+        const cls = d.state !== "done" ? "" : d.winner === undefined ? "" : d.winner === "draw" ? "duel-draw" : (d.winner === me ? "duel-won" : "duel-lost");
+        const scoreLabel = d.state === "done"
+          ? `<span class="duel-score">${d.myScore ?? "?"} – ${d.theirScore ?? "?"}</span>`
+          : d.myScore !== null
+            ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
+            : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
+        return `<div class="duel-item ${cls}">
+          <span class="vs">⚔️ vs ${d.opponent.split("|")[0]}</span>
+          ${scoreLabel}
+        </div>`;
+      }).join("")
+    : '<p class="empty">Nog geen duels.</p>';
+  $("duel-list").querySelectorAll("[data-play-duel]").forEach(btn => {
+    btn.addEventListener("click", () => playDuel(btn.dataset.playDuel));
+  });
+}
+
+async function addFriend() {
+  const val = $("mate-select").value;
+  if (!val) { $("friends-msg").textContent = "Kies eerst een klasgenoot."; return; }
+  try {
+    await Social.addFriend(val);
+    $("friends-msg").textContent = "";
+    renderSocial();
+    toast("🐱 Vriend toegevoegd!");
+  } catch (e) {
+    $("friends-msg").textContent = "Kon vriend niet toevoegen (server bereikbaar?)";
+  }
+}
+
+// ---- Duel spelen: 10 vragen in de practice-flow ----
+let duelState = null;
+
+async function startDuel() {
+  const opponent = $("duel-opponent").value;
+  if (!opponent) { toast("Kies eerst een vriend om tegen te duelleren."); return; }
+  try {
+    const duel = await Social.newDuel(opponent);
+    await playDuel(duel.id);
+  } catch (e) {
+    toast("Duel starten mislukt — is de server bereikbaar?");
+  }
+}
+
+async function playDuel(id) {
+  const duel = await Social.getDuel(id);
+  duelState = {
+    id,
+    exercises: Social.buildDuelExercises(duel.questions),
+    index: 0,
+    correct: 0
+  };
+  showView("practice");
+  Whiskers.showCompanion();
+  Whiskers.say("⚔️ Duel-modus! 10 vragen — ga ervoor!", 5000);
+  nextDuelQuestion();
+}
+
+function nextDuelQuestion() {
+  if (!duelState) return;
+  if (duelState.index >= duelState.exercises.length) return finishDuel();
+  const ex = duelState.exercises[duelState.index++];
+  ex.isRepeat = false;
+  currentExercise = ex;
+  // renderen zoals newExercise dat doet
+  $("tense-info").textContent = `⚔️ Duel ${duelState.index}/${duelState.exercises.length} — ${ex.tense.name}`;
+  $("sentence").textContent = ex.sentence;
+  $("context").textContent = "";
+  $("answer").value = "";
+  $("answer").classList.remove("correct", "wrong");
+  $("answer").focus();
+  $("feedback").textContent = "";
+  $("feedback").className = "";
+}
+
+async function finishDuel() {
+  const score = duelState.correct;
+  const id = duelState.id;
+  duelState = null;
+  try {
+    const result = await Social.submitScore(id, score);
+    if (result.state === "done") {
+      const me = Social.who();
+      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("Gelijkspel — eerlijk gedeeld!", 6000); }
+      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("Gewonnennn! 🏆", 6000); Gamification.addXP(50); }
+      else { toast("😈 Verloren... revanche?"); Whiskers.say("Jammer — volgende keer beter!", 6000); Gamification.addXP(15); }
+    } else {
+      toast(`Score ingediend: ${score}/10 — wacht op je tegenstander!`);
+    }
+  } catch (e) {
+    toast("Score kon niet indienen (offline?) — jammer!");
+  }
+  showView("social");
+  renderSocial();
+}
+
 function init() {
   initTenseSelectors();
   IrregularTrainer.init();
@@ -214,6 +347,9 @@ function init() {
   $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("badges-reset").addEventListener("click", resetWhiskers);
+  $("add-friend").addEventListener("click", addFriend);
+  $("start-duel").addEventListener("click", startDuel);
+  Calendar.render();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -228,6 +364,7 @@ function showView(id) {
   if (id === "irregular") $("irr-past").focus();
   if (id === "progress") renderProgress();
   if (id === "table") renderTable();
+  if (id === "social") renderSocial();
 }
 
 function bindNavigation() {
@@ -396,6 +533,12 @@ function checkAnswer() {
   updateMistakeBadge();
   $("score").textContent = score;
   $("count").textContent = count;
+
+  // V2.2: duel-modus — na elk antwoord door naar de volgende vraag
+  if (duelState && currentExercise) {
+    if (ok) duelState.correct++;
+    duelState.timer = setTimeout(nextDuelQuestion, ok ? 700 : 1800);
+  }
 }
 
 function showHint() {
