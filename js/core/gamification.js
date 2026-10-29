@@ -27,6 +27,7 @@ const QUEST_REWARD = 25;    // bonus-XP
 
 const Gamification = {
   KEY: "english-tenses-game-v1",
+  LEVELS_REF: null, // in init() gevuld met de LEVELS-array (bereikbaar voor de UI)
   state: null,
   _rowStreak: 0,     // goede antwoorden op rij (deze sessie)
   _mistakes: 0,      // fouten sinds laatste goede reeks
@@ -73,6 +74,26 @@ const Gamification = {
     }
   },
 
+  // V2.0: bakje kattenvoeding voor doorzetters. 20 correct op een dag = bakje
+  // met +30 energie (max 130), zodat Whiskers langer overleeft zonder visjes.
+  FEED_CAN_GOAL: 20,
+  FEED_CAN_BONUS: 30,
+  correctToday: 0,
+
+  checkFeedCan(correct) {
+    if (!correct) return false;
+    this.correctToday++;
+    if (this.correctToday === this.FEED_CAN_GOAL) {
+      this.state.energy = Math.min(130, this.state.energy + this.FEED_CAN_BONUS);
+      this.save();
+      this.renderEnergy();
+      toast("🥫 Bakje kattenvoeding! Whiskers zit extra vol (+30 energie)");
+      if (typeof Whiskers !== "undefined" && Whiskers.showFeeding) Whiskers.showFeeding();
+      return true;
+    }
+    return false;
+  },
+
   // V1.9: Whiskers voeden. 5 goede antwoorden op rij = visje (+25 energie).
   // Elke dag (bij eerste bezoek) zakt de energie met 25; leerlingen moeten
   // blijven oefenen om hem in leven te houden.
@@ -87,6 +108,7 @@ const Gamification = {
         this.state.energy = Math.max(0, this.state.energy - 25 * daysGone);
       }
       this.state.lastEnergyDay = today;
+      this.correctToday = 0; // nieuwe dag = bakje-goal herstart
       this.save();
     }
   },
@@ -105,6 +127,8 @@ const Gamification = {
   onAnswer(tenseId, correct) {
     // energie-huishouding (1x per dag verlagen)
     this.tickEnergy();
+    // bakje kattenvoeding bij doorzetten
+    this.checkFeedCan(correct);
     // XP
     this.addXP(correct ? 10 : 2);
 
@@ -338,6 +362,7 @@ const Gamification = {
   },
 
   init() {
+    if (!this.LEVELS_REF) this.LEVELS_REF = LEVELS;
     this.load();
     this.tickEnergy();
     this.renderBar();

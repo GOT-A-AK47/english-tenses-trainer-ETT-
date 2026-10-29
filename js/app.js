@@ -172,7 +172,7 @@ function renderSkinPicker() {
   holder.querySelectorAll("[data-skin]").forEach(btn => {
     btn.addEventListener("click", () => {
       const skin = Whiskers.SKINS.find(s => s.id === btn.dataset.skin);
-      const lvlNow = Gamification.LEVELS.indexOf(Gamification.level()) + 1;
+      const lvlNow = (Gamification.LEVELS_REF || []).indexOf(Gamification.level()) + 1;
       if (lvlNow < skin.level) {
         toast(`🔒 ${skin.name} ontgrendelt op level ${skin.level}`);
         return;
