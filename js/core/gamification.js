@@ -35,7 +35,7 @@ const Gamification = {
   load() {
     try { this.state = JSON.parse(localStorage.getItem(this.KEY)) || null; }
     catch { this.state = null; }
-    if (!this.state) this.state = { xp: 0, badges: [], quest: null, questDone: false };
+    if (!this.state) this.state = { xp: 0, badges: [], quest: null, questDone: false, energy: 100, lastEnergyDay: null };
     // dagelijkse quest reset bij nieuwe dag
     const today = new Date().toISOString().slice(0, 10);
     if (!this.state.quest || this.state.quest.date !== today) {
@@ -73,7 +73,38 @@ const Gamification = {
     }
   },
 
+  // V1.9: Whiskers voeden. 5 goede antwoorden op rij = visje (+25 energie).
+  // Elke dag (bij eerste bezoek) zakt de energie met 25; leerlingen moeten
+  // blijven oefenen om hem in leven te houden.
+  tickEnergy() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (this.state.lastEnergyDay !== today) {
+      // nieuwe dag: energie zakt (max 1x per dag, ook na meerdere dagen afwezigheid maar minimaal 0)
+      const daysGone = this.state.lastEnergyDay
+        ? Math.min(4, Math.max(1, Math.round((new Date(today) - new Date(this.state.lastEnergyDay)) / 86400000)))
+        : 0;
+      if (daysGone > 0) {
+        this.state.energy = Math.max(0, this.state.energy - 25 * daysGone);
+      }
+      this.state.lastEnergyDay = today;
+      this.save();
+    }
+  },
+
+  renderEnergy() {
+    const chip = document.getElementById("energy-chip");
+    if (!chip) return;
+    const e = this.state.energy;
+    const label = e >= 70 ? "voedzaam" : e >= 40 ? "hongerig" : e > 0 ? "heel hongerig!" : "uitgehongerd 😿";
+    chip.innerHTML = e > 0
+      ? `🐱 Energie: ${e}/100 (${label})`
+      : "😿 Whiskers heeft honger! Oefen 5 vragen op rij voor een visje";
+    chip.className = "chip energy-chip " + (e >= 70 ? "energy-ok" : e >= 40 ? "energy-warn" : "energy-bad");
+  },
+
   onAnswer(tenseId, correct) {
+    // energie-huishouding (1x per dag verlagen)
+    this.tickEnergy();
     // XP
     this.addXP(correct ? 10 : 2);
 
@@ -113,6 +144,14 @@ const Gamification = {
 
     // muis-mini-game: 5 op rij
     if (this._rowStreak > 0 && this._rowStreak % 5 === 0) this.spawnMouse();
+    // voeden: 5 op rij (ook bij 10, 15, ...) geeft energie
+    if (this._rowStreak > 0 && this._rowStreak % 5 === 0) {
+      this.state.energy = Math.min(100, this.state.energy + 25);
+      this.save();
+      this.renderEnergy();
+      if (typeof Whiskers !== "undefined" && Whiskers.showFeeding) Whiskers.showFeeding();
+    }
+    this.renderEnergy();
   },
 
   earnBadge(id) {
@@ -300,8 +339,10 @@ const Gamification = {
 
   init() {
     this.load();
+    this.tickEnergy();
     this.renderBar();
     this.renderQuest();
+    this.renderEnergy();
     this.renderWhiskers("idle");
     this.renderBadges();
   }

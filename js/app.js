@@ -137,7 +137,52 @@ function restoreSession() {
 // ---- Whiskers & gamification (V1.7) ----
 function showBadges() {
   Gamification.renderBadges();
+  renderSkinPicker();
   $("badges-modal").style.display = "block";
+}
+
+// ---- V1.9: introductie-scherm (eerste bezoek) ----
+function maybeShowIntro() {
+  const seen = localStorage.getItem("whiskers-intro-seen");
+  if (seen) return;
+  $("intro-cat").innerHTML = Whiskers.pixelSVG({ size: 120, mood: "happy", id: "intro-cat-svg" });
+  $("intro-modal").style.display = "block";
+}
+
+function closeIntro() {
+  localStorage.setItem("whiskers-intro-seen", "1");
+  $("intro-modal").style.display = "none";
+}
+
+// ---- V1.9: pels-kiezer in het badges-scherm ----
+function renderSkinPicker() {
+  const holder = $("skin-picker");
+  if (!holder) return;
+  const cur = Whiskers.getSkin().id;
+  const lvl = Gamification.level();
+  const lvlIndex = Gamification.LEVELS.indexOf(lvl) + 1;
+  holder.innerHTML = Whiskers.SKINS.map(s => {
+    const unlocked = lvlIndex >= s.level;
+    return `<button class="skin-swatch ${s.id === cur ? "selected" : ""} ${unlocked ? "" : "locked"}"
+      data-skin="${s.id}" title="${s.name}${unlocked ? "" : " — bereik level " + s.level}">
+      <span class="swatch" style="background:${s.fur}"></span>
+      <span>${s.name}</span>
+    </button>`;
+  }).join("");
+  holder.querySelectorAll("[data-skin]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const skin = Whiskers.SKINS.find(s => s.id === btn.dataset.skin);
+      const lvlNow = Gamification.LEVELS.indexOf(Gamification.level()) + 1;
+      if (lvlNow < skin.level) {
+        toast(`🔒 ${skin.name} ontgrendelt op level ${skin.level}`);
+        return;
+      }
+      Whiskers.setSkin(skin.id);
+      renderSkinPicker();
+      Gamification.renderWhiskers("happy");
+      toast(`🐾 Whiskers draagt nu: ${skin.name}`);
+    });
+  });
 }
 
 function init() {
@@ -158,6 +203,8 @@ function init() {
   window.addEventListener("beforeunload", saveSession);
   Gamification.init();
   Whiskers.trackEyes();
+  maybeShowIntro();
+  $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("id-name").addEventListener("keydown", e => {

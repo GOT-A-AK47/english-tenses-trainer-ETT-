@@ -4,16 +4,40 @@
 
 const Whiskers = {
   W: 24, H: 20,
-  COLORS: {
-    k: "#21201c",  // outline
-    o: "#f4a742",  // vacht
-    O: "#ffb84d",  // lichte vacht (borst)
-    d: "#c97d1c",  // strepen
-    w: "#ffffff",  // oogwit
-    e: "#1d4fae",  // pupil (ETT-blauw)
-    p: "#ff8fa3",  // neus/blos/oren
-    n: "#6e6a60"   // snorharen
+
+  // ---- pels-customisatie ----
+  SKINS: [
+    { id: "oranje", name: "Klassiek oranje", level: 1,  fur: "#f4a742", light: "#ffb84d", stripe: "#c97d1c" },
+    { id: "grijs",  name: "Grijze poes",     level: 2,  fur: "#9aa0ab", light: "#c3c8d1", stripe: "#6d7280" },
+    { id: "zwart",  name: "Zwarte panter",  level: 3,  fur: "#3a3d45", light: "#565a64", stripe: "#212229" },
+    { id: "wit",    name: "Witte sneeuwkat", level: 4, fur: "#eef0f4", light: "#ffffff", stripe: "#c4c9d4" },
+    { id: "roze",   name: "Roze knuffelkat", level: 5, fur: "#f7a8c4", light: "#ffd3e3", stripe: "#d97ba3" }
+  ],
+
+  getSkin() {
+    try { return JSON.parse(localStorage.getItem("whiskers-skin") || "null") || { id: "oranje" }; }
+    catch { return { id: "oranje" }; }
   },
+
+  setSkin(id) {
+    localStorage.setItem("whiskers-skin", JSON.stringify({ id }));
+  },
+
+  skinColors() {
+    const skin = this.SKINS.find(s => s.id === this.getSkin().id) || this.SKINS[0];
+    return {
+      k: "#21201c",
+      o: skin.fur,
+      O: skin.light,
+      d: skin.stripe,
+      w: "#ffffff",
+      e: "#1d4fae",
+      p: "#ff8fa3",
+      n: "#6e6a60"
+    };
+  },
+
+  COLORS: null, // legacy; skinColors() is de bron
 
   // ---- grid helpers ----
   blank() { return Array.from({ length: this.H }, () => Array(this.W).fill(".")); },
@@ -137,13 +161,19 @@ const Whiskers = {
     this.mouth(g, m.mouth);
     this.extras(g, mood);
 
+    // hongerige kat (energie < 30): denkpuntjes boven de kop
+    if (mood === "idle" && typeof Gamification !== "undefined" && Gamification.state && Gamification.state.energy < 30) {
+      this.px(g, 9, 0, "n"); this.px(g, 14, 1, "n"); this.px(g, 19, 0, "n");
+    }
+
+    const colors = this.skinColors();
     const pxSize = 4; // viewBox = 24*4 x 20*4
     let body = "", pupils = "";
     for (let y = 0; y < this.H; y++) {
       for (let x = 0; x < this.W; x++) {
         const ch = g[y][x];
         if (ch === ".") continue;
-        const r = `<rect x="${x * pxSize}" y="${y * pxSize}" width="${pxSize}" height="${pxSize}" fill="${this.COLORS[ch]}"/>`;
+        const r = `<rect x="${x * pxSize}" y="${y * pxSize}" width="${pxSize}" height="${pxSize}" fill="${colors[ch] || colors.o}"/>`;
         if (ch === "e") pupils += r;
         else body += r;
       }
@@ -152,6 +182,14 @@ const Whiskers = {
       <g class="cat-body">${body}</g>
       <g class="pupils" data-uid="${id}">${pupils}</g>
     </svg>`;
+  },
+
+  // voedings-moment: Whiskers eet een visje
+  showFeeding() {
+    const holder = document.getElementById("companion-bubble");
+    if (!holder) return;
+    this.say("🐟 *hap hap* Lekker visje! Bedankt!", 3500);
+    this.setCompanionMood("excited");
   },
 
   // ---- ogen laten meekijken ----
@@ -197,6 +235,7 @@ const Whiskers = {
     document.body.appendChild(el);
     document.getElementById("companion-cat-holder").innerHTML =
       this.pixelSVG({ size: 72, mood: "idle", id: "whiskers-companion-svg" });
+    el.style.display = "flex";
   },
 
   hideCompanion() {

@@ -42,6 +42,7 @@
         <div class="xp-top">
           <span id="level-badge" class="chip">Katje</span>
           <span id="quest-chip" class="chip quest-chip" style="display:none"></span>
+          <span id="energy-chip" class="chip energy-chip"></span>
         </div>
         <div class="xp-bar"><div id="xp-fill"></div></div>
         <span id="xp-label" class="xp-label">0 XP</span>
@@ -194,11 +195,31 @@
       </section>
     </main>
 
+    <!-- INTRODUCTIE WHISKERS (V1.9, eerste bezoek) -->
+    <div id="intro-modal" style="display:none">
+      <div class="card identity-card">
+        <div class="intro-cat" id="intro-cat"></div>
+        <span class="chip">🐱 Ontmoet Whiskers!</span>
+        <p class="context">Dit is <strong>Whiskers</strong>, jouw huisdier tijdens het oefenen van Engelse tijden.</p>
+        <ul class="intro-list">
+          <li>🐟 <strong>Houd hem in leven:</strong> elke dag wordt hij hongeriger. 5 goede antwoorden op rij = een visje!</li>
+          <li>⭐ <strong>Verdien XP</strong> enWhiskers groeit van katje tot legendarische leeuw.</li>
+          <li>🏅 <strong>Badges</strong> voor bijzondere prestaties — klik op Whiskers om ze te zien.</li>
+          <li>🎨 <strong>Kleed hem aan:</strong> bij hogere levels ontgrendel je nieuwe pelskleuren.</li>
+        </ul>
+        <div class="btnrow">
+          <button id="intro-close">Laten we oefenen!</button>
+        </div>
+      </div>
+    </div>
+
     <!-- WHISKERS / BADGES (V1.7) -->
     <div id="badges-modal" style="display:none">
       <div class="card identity-card">
         <span class="chip">🐱 Whiskers</span>
         <p id="badges-xp" class="context"></p>
+        <p class="context" style="margin-bottom:0.2rem"><strong>Pels van Whiskers</strong> — wissel hieronder:</p>
+        <div id="skin-picker" class="skin-picker"></div>
         <div id="badges-grid" class="badges-grid"></div>
         <div class="btnrow">
           <button id="badges-close" class="secondary">Sluiten</button>
