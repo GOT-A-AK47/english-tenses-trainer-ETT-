@@ -157,6 +157,7 @@ function init() {
   });
   window.addEventListener("beforeunload", saveSession);
   Gamification.init();
+  Whiskers.trackEyes();
   $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("id-name").addEventListener("keydown", e => {
@@ -177,7 +178,7 @@ function showView(id) {
 
 function bindNavigation() {
   document.querySelectorAll("[data-view]").forEach(el => {
-    el.addEventListener("click", () => showView(el.dataset.view));
+    el.addEventListener("click", () => { showView(el.dataset.view); if (el.dataset.view !== "practice") Whiskers.hideCompanion(); });
   });
   document.querySelectorAll("[data-group]").forEach(el => {
     el.addEventListener("click", () => openGroup(el.dataset.group));
@@ -235,6 +236,13 @@ document.addEventListener("click", e => {
   }
 });
 
+// ---- Whiskers metgezel (V1.8) ----
+function whiskersExplain() {
+  const t = currentExercise ? TenseRegistry.get(currentExercise.tense.id) : null;
+  if (!t) return;
+  Whiskers.explain(t.id, t.hint(), t.explain);
+}
+
 function startPractice(tenseId, mixIds) {
   currentMix = mixIds;
   if (mixIds) {
@@ -244,6 +252,7 @@ function startPractice(tenseId, mixIds) {
   }
   newExercise();
   showView("practice");
+  Whiskers.showCompanion();
 }
 
 // ---- Selects ----
@@ -317,6 +326,7 @@ function checkAnswer() {
   ProgressStore.record(currentExercise.tense.id, ok);
   ProgressStore.queueAnswer(currentExercise.tense.id, ok);
   Gamification.onAnswer(currentExercise.tense.id, ok);
+  Whiskers.react(ok, Gamification._rowStreak, Gamification._mistakes, currentExercise.tense.explain);
   ProgressStore.sync();
   if (!ok) {
     MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);
@@ -453,6 +463,7 @@ function repeatPractice() {
   $("count").textContent = "0";
   newExercise();
   showView("practice");
+  Whiskers.showCompanion();
 }
 
 function updateMistakeBadge() {
@@ -498,6 +509,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("check").addEventListener("click", checkAnswer);
   $("next").addEventListener("click", newExercise);
   $("show-hint").addEventListener("click", showHint);
+  $("show-hint").addEventListener("click", whiskersExplain);
   $("share").addEventListener("click", shareTask);
   $("repeat-btn") && $("repeat-btn").addEventListener("click", repeatPractice);
   $("irr-check").addEventListener("click", checkIrregular);
