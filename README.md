@@ -78,7 +78,11 @@ Naast de statische site draait er een kleine pure-Node server (`server/index.js`
 
 - **`POST /api/progress`** — leerlingen (naam + klas, zie het identiteitsvenster bij eerste gebruik) sturen hun voortgang; de server bewaart die in `server/data/progress.json`
 - **`GET /api/classes`** — voortgang per klas/leerling, gebruikt door het dashboard
-- **`/teacher`** — leerkrachtdashboard: per klas de leerlingen met aantal vragen, totaalscore, zwakste tijd en laatst gezien
+- **`/teacher`** — leerkrachtdashboard (achter docentencode):
+  - **Klassen maken/beheren** — leerlingen kunnen alleen kiezen uit klassen die de leerkracht aanmaakte (`GET /api/classes/list` levert de openbare namenlijst)
+  - **Taken toewijzen** — titel + klas + tijden; leerlingen zien de taken op hun startscherm en oefenen die tijden door elkaar (`GET /api/tasks?klas=…`)
+  - **Voortgang** — per klas: vragen, score, zwakste tijd, laatst gezien
+- **Docenten-auth**: eerste login op `/teacher` stelt de code in; daarna geldt alleen die code (sessies in-memory)
 
 De front-end valt automatisch terug op localStorage als de API niet beschikbaar is (bv. de statische versie op GitHub Pages of het single-file bestand). `ProgressStore` (`js/core/store.js`) blijft de enige plek die opslaat; `MistakeStore` (fouten herhalen) blijft bewust lokaal per toestel.
 

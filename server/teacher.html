@@ -11,91 +11,226 @@
       --ok: #1e8e5a; --bad: #c94040; --radius: 10px;
     }
     * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
-      margin: 0; background: var(--bg); color: var(--ink); line-height: 1.5;
-    }
+    body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--ink); line-height: 1.5; }
     .wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
     h1 { font-size: 1.3rem; margin: 0 0 0.25rem; }
+    h2 { font-size: 1.05rem; margin: 1.5rem 0 0.75rem; }
     .sub { color: var(--muted); font-size: 0.9rem; margin: 0 0 1.5rem; }
-    .card {
-      background: var(--card); border: 1px solid var(--line);
-      border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem;
-    }
-    .klas-title { font-size: 1.05rem; margin: 0 0 0.75rem; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     th, td { padding: 0.45rem 0.6rem; text-align: left; border-bottom: 1px solid var(--line); }
     th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
     .pct { font-weight: 700; }
-    .pct.good { color: var(--ok); }
-    .pct.warn { color: #c77f1e; }
-    .pct.bad { color: var(--bad); }
-    .bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; min-width: 80px; }
-    .bar .fill { height: 100%; background: var(--ok); border-radius: 999px; }
+    .pct.good { color: var(--ok); } .pct.warn { color: #c77f1e; } .pct.bad { color: var(--bad); }
     .last { color: var(--muted); font-size: 0.78rem; }
-    .refresh {
-      font: inherit; font-weight: 600; background: var(--accent); color: #fff;
-      border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer;
-    }
+    button { font: inherit; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; }
+    button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+    button.danger { background: #fff; color: var(--bad); border: 1px solid var(--line); }
+    button:hover { opacity: 0.9; }
+    input, select { font: inherit; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin: 0.5rem 0; }
     .empty { color: var(--muted); font-style: italic; }
-    .legend { font-size: 0.78rem; color: var(--muted); margin-top: 1.5rem; }
+    .chip { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; background: var(--accent-soft); color: #1d4fae; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .hidden { display: none; }
+    .task-tense { display: inline-block; background: var(--accent-soft); border-radius: 6px; padding: 0.1rem 0.5rem; font-size: 0.78rem; margin: 0.15rem 0.15rem 0 0; }
+    .msg { font-weight: 600; font-size: 0.85rem; min-height: 1.2rem; margin: 0.3rem 0; }
+    .msg.ok { color: var(--ok); } .msg.err { color: var(--bad); }
+    #login-box { max-width: 380px; margin: 3rem auto; }
+    .tense-picks { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0; }
+    .tense-picks label { display: inline-flex; align-items: center; gap: 0.3rem; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.82rem; font-weight: 500; cursor: pointer; }
+    .tense-picks input { accent-color: var(--accent); }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Leerkrachtdashboard</h1>
-    <p class="sub">Voortgang per klas en leerling — live uit de serverdata.</p>
-    <button class="refresh" onclick="load()">Verversen</button>
-    <div id="content"><p class="empty">Laden…</p></div>
-    <p class="legend">Score = percentage goede antwoorden per tijd, samengevoegd over alle sessies. Gekleurd: groen ≥ 75%, oranje 50–74%, rood &lt; 50%.</p>
+
+    <!-- LOGIN -->
+    <div id="login-box" class="card">
+      <h1>Leerkrachtdashboard</h1>
+      <p class="sub">Vul je docentencode in.</p>
+      <div class="row">
+        <input type="password" id="code" placeholder="Docentencode" autocomplete="off">
+        <button onclick="login()">Inloggen</button>
+      </div>
+      <p class="msg" id="login-msg"></p>
+      <p class="sub">Eerste keer? De code die je nu intypt wordt dé docentencode.</p>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dash" class="hidden">
+      <h1>Leerkrachtdashboard</h1>
+      <div class="row">
+        <button class="secondary" onclick="refreshAll()">Verversen</button>
+        <button class="secondary" onclick="logout()">Uitloggen</button>
+      </div>
+
+      <h2>Klassen</h2>
+      <div class="card">
+        <div class="row">
+          <input type="text" id="new-klas" placeholder="Nieuwe klas, bv. 7B" autocomplete="off">
+          <button onclick="addKlas()">Klas maken</button>
+        </div>
+        <p class="msg" id="klas-msg"></p>
+        <div id="klas-list"></div>
+      </div>
+
+      <h2>Taak toewijzen</h2>
+      <div class="card">
+        <div class="row">
+          <input type="text" id="task-title" placeholder="Titel, bv. Huiswerk week 3" autocomplete="off">
+          <select id="task-klas"></select>
+        </div>
+        <p class="sub" style="margin:0.4rem 0 0">Vink aan welke tijden de leerlingen moeten oefenen:</p>
+        <div class="tense-picks" id="task-tenses"></div>
+        <div class="row"><button onclick="addTask()">Taak toewijzen</button></div>
+        <p class="msg" id="task-msg"></p>
+      </div>
+
+      <h2>Toegewezen taken</h2>
+      <div class="card"><div id="task-list"></div></div>
+
+      <h2>Voortgang per klas</h2>
+      <div id="progress-list"><p class="empty">Laden…</p></div>
+    </div>
   </div>
 
   <script>
-    async function load() {
-      const content = document.getElementById("content");
+    const TENSES = [
+      "present-simple", "present-continuous", "present-perfect", "present-perfect-continuous",
+      "past-simple", "past-continuous", "past-perfect", "past-perfect-continuous",
+      "future-simple", "future-continuous", "future-perfect", "future-perfect-continuous"
+    ];
+    let token = sessionStorage.getItem("teacher-token") || "";
+
+    const api = (path, opts = {}) => fetch(path, {
+      ...opts,
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token, ...(opts.headers || {}) }
+    }).then(async r => {
+      if (r.status === 401) { showLogin(); throw new Error("niet ingelogd"); }
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "fout " + r.status);
+      return r.json();
+    });
+
+    function showLogin() {
+      document.getElementById("login-box").classList.remove("hidden");
+      document.getElementById("dash").classList.add("hidden");
+    }
+    function showDash() {
+      document.getElementById("login-box").classList.add("hidden");
+      document.getElementById("dash").classList.remove("hidden");
+    }
+
+    async function login() {
+      const code = document.getElementById("code").value;
+      if (!code) return;
       try {
-        const res = await fetch("/api/classes");
-        if (!res.ok) throw new Error("API onbereikbaar");
-        const classes = await res.json();
-        render(classes);
+        const r = await fetch("/api/teacher/login", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code })
+        });
+        if (!r.ok) throw new Error((await r.json()).error);
+        const data = await r.json();
+        token = data.token;
+        sessionStorage.setItem("teacher-token", token);
+        document.getElementById("login-msg").textContent = data.firstTime ? "Code ingesteld — welkom!" : "";
+        showDash(); refreshAll();
       } catch (e) {
-        content.innerHTML = '<p class="empty">Kan de serverdata niet laden. Draait de server wel?</p>';
+        const m = document.getElementById("login-msg");
+        m.textContent = e.message; m.className = "msg err";
       }
     }
 
-    function render(classes) {
-      const content = document.getElementById("content");
+    function logout() {
+      sessionStorage.removeItem("teacher-token");
+      token = "";
+      showLogin();
+    }
+
+    async function refreshAll() { await Promise.all([loadKlassen(), loadTasks(), loadProgress()]); }
+
+    // ---- klassen ----
+    async function loadKlassen() {
+      const classes = await api("/api/teacher/classes");
+      document.getElementById("klas-list").innerHTML = classes.length
+        ? classes.map(c => `<span class="chip">${esc(c.name)}</span> `).join("")
+        : '<p class="empty">Nog geen klassen.</p>';
+      const sel = document.getElementById("task-klas");
+      sel.innerHTML = classes.map(c => `<option>${esc(c.name)}</option>`).join("");
+      renderTaskTenses();
+    }
+
+    async function addKlas() {
+      const name = document.getElementById("new-klas").value;
+      const m = document.getElementById("klas-msg");
+      try {
+        await api("/api/teacher/classes", { method: "POST", body: JSON.stringify({ name }) });
+        m.textContent = `Klas "${name}" toegevoegd.`; m.className = "msg ok";
+        document.getElementById("new-klas").value = "";
+        await Promise.all([loadKlassen(), loadProgress()]);
+      } catch (e) { m.textContent = e.message; m.className = "msg err"; }
+    }
+
+    // ---- taken ----
+    function renderTaskTenses() {
+      document.getElementById("task-tenses").innerHTML = TENSES.map(t =>
+        `<label><input type="checkbox" value="${t}"> ${t.replace(/-/g, " ")}</label>`).join("");
+    }
+
+    async function addTask() {
+      const title = document.getElementById("task-title").value;
+      const klas = document.getElementById("task-klas").value;
+      const tenseIds = [...document.querySelectorAll("#task-tenses input:checked")].map(i => i.value);
+      const m = document.getElementById("task-msg");
+      try {
+        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds }) });
+        m.textContent = "Taak toegekend!"; m.className = "msg ok";
+        document.getElementById("task-title").value = "";
+        document.querySelectorAll("#task-tenses input:checked").forEach(i => i.checked = false);
+        loadTasks();
+      } catch (e) { m.textContent = e.message; m.className = "msg err"; }
+    }
+
+    async function loadTasks() {
+      const tasks = await api("/api/teacher/tasks");
+      document.getElementById("task-list").innerHTML = tasks.length
+        ? tasks.map(t => `<div class="card" style="margin:0.5rem 0">
+            <strong>${esc(t.title)}</strong> <span class="chip">${esc(t.klas)}</span>
+            <div>${t.tenseIds.map(x => `<span class="task-tense">${esc(x.replace(/-/g, " "))}</span>`).join("")}</div>
+            <div class="row"><button class="danger" onclick="delTask('${t.id}')">Verwijderen</button></div>
+          </div>`).join("")
+        : '<p class="empty">Nog geen taken toegewezen.</p>';
+    }
+
+    async function delTask(id) {
+      await api("/api/teacher/tasks/" + id, { method: "DELETE" });
+      loadTasks();
+    }
+
+    // ---- voortgang ----
+    async function loadProgress() {
+      const classes = await api("/api/classes");
+      const holder = document.getElementById("progress-list");
       const klasNamen = Object.keys(classes).sort();
       if (!klasNamen.length) {
-        content.innerHTML = '<p class="empty">Nog geen leerlingen hebben geoefend.</p>';
+        holder.innerHTML = '<p class="empty">Nog geen leerlingen hebben geoefend.</p>';
         return;
       }
-      content.innerHTML = klasNamen.map(klas => {
-        const students = classes[klas]
-          .slice()
-          .sort((a, b) => a.name.localeCompare(b.name));
+      holder.innerHTML = klasNamen.map(klas => {
+        const students = classes[klas].slice().sort((a, b) => a.name.localeCompare(b.name));
         const rows = students.map(s => {
           const totals = Object.values(s.progress)
             .reduce((acc, t) => ({ correct: acc.correct + (t.correct || 0), total: acc.total + (t.total || 0) }), { correct: 0, total: 0 });
           const pct = totals.total ? Math.round((totals.correct / totals.total) * 100) : null;
           const weak = weakestTense(s.progress);
-          const pctClass = pct === null ? "" : pct >= 75 ? "good" : pct >= 50 ? "warn" : "bad";
+          const pc = pct === null ? "" : pct >= 75 ? "good" : pct >= 50 ? "warn" : "bad";
           const last = s.lastSeen ? new Date(s.lastSeen).toLocaleString("nl-NL") : "—";
-          return `<tr>
-            <td>${esc(s.name)}</td>
-            <td>${totals.total}</td>
-            <td><span class="pct ${pctClass}">${pct === null ? "—" : pct + "%"}</span></td>
-            <td>${weak ? esc(weak.name) : "—"}</td>
-            <td class="last">${last}</td>
-          </tr>`;
+          return `<tr><td>${esc(s.name)}</td><td>${totals.total}</td>
+            <td><span class="pct ${pc}">${pct === null ? "—" : pct + "%"}</span></td>
+            <td>${weak ? esc(weak.name.replace(/-/g, " ")) : "—"}</td><td class="last">${last}</td></tr>`;
         }).join("");
-        return `<div class="card">
-          <h2 class="klas-title">Klas ${esc(klas)} <span class="last">(${students.length} leerling${students.length === 1 ? "" : "en"})</span></h2>
-          <table>
-            <thead><tr><th>Naam</th><th>Vragen</th><th>Score</th><th>Zwakste tijd</th><th>Laatst gezien</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
+        return `<div class="card"><h2 style="margin-top:0">Klas ${esc(klas)} <span class="last">(${students.length})</span></h2>
+          <table><thead><tr><th>Naam</th><th>Vragen</th><th>Score</th><th>Zwakste tijd</th><th>Laatst gezien</th></tr></thead>
+          <tbody>${rows}</tbody></table></div>`;
       }).join("");
     }
 
@@ -114,7 +249,10 @@
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
-    load();
+    if (token) { showDash(); refreshAll(); } else showLogin();
+    document.getElementById("code").addEventListener("keydown", e => {
+      if (e.key === "Enter") { e.preventDefault(); login(); }
+    });
   </script>
 </body>
 </html>

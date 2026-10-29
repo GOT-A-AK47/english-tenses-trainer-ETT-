@@ -35,6 +35,11 @@
           </button>
         </div>
 
+        <div id="home-tasks" style="display:none">
+          <h2 class="section-title">Taken van je leerkracht</h2>
+          <div class="grid" id="task-grid"></div>
+        </div>
+
         <h2 class="section-title">Meer</h2>
         <div class="grid">
           <button class="tile" data-action="custom">
@@ -185,7 +190,7 @@
           <input type="text" id="id-name" placeholder="bv. Anna" autocomplete="off" spellcheck="false">
         </label>
         <label>Klas
-          <input type="text" id="id-klas" placeholder="bv. 7B" autocomplete="off" spellcheck="false">
+          <select id="id-klas"></select>
         </label>
         <div class="btnrow">
           <button id="id-save">Beginnen</button>

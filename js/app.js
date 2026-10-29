@@ -6,15 +6,29 @@ let score = 0, count = 0;
 
 const $ = id => document.getElementById(id);
 
-// ---- Identiteit (V1.1: naam + klas) ----
+// ---- Identiteit (V1.4: naam + klas uit docentlijst) ----
+function fetchClassList() {
+  return fetch("/api/classes/list")
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .catch(() => null); // geen server: lokale fallback (vrije invoer)
+}
+
 function ensureIdentity() {
   if (Identity.get()) {
     updateIdentityLabel();
+    loadTasks();
     return;
   }
-  const modal = $("identity-modal");
-  modal.style.display = "block";
-  $("id-name").focus();
+  fetchClassList().then(classes => {
+    const sel = $("id-klas");
+    if (classes && classes.length) {
+      sel.innerHTML = classes.map(c => `<option value="${c}">${c}</option>`).join("");
+    } else {
+      sel.outerHTML = '<input type="text" id="id-klas" placeholder="bv. 7B" autocomplete="off" spellcheck="false">';
+    }
+    $("identity-modal").style.display = "block";
+    $("id-name").focus();
+  });
 }
 
 function updateIdentityLabel() {
@@ -25,16 +39,38 @@ function updateIdentityLabel() {
 
 function saveIdentity() {
   const name = $("id-name").value;
-  const klas = $("id-klas").value;
-  if (!name.trim() || !klas.trim()) {
-    $("id-feedback").textContent = "Vul beide velden in.";
+  const klasEl = $("id-klas");
+  const klas = klasEl.value;
+  if (!name.trim() || !klas || !klas.trim()) {
+    $("id-feedback").textContent = "Vul je naam in en kies een klas.";
     return;
   }
   Identity.save(name, klas);
   $("identity-modal").style.display = "none";
   updateIdentityLabel();
   ProgressStore.sync();
+  loadTasks();
   toast(`Welkom, ${name.trim()}!`);
+}
+
+// ---- Taken van de leerkracht (V1.4) ----
+function loadTasks() {
+  const id = Identity.get();
+  if (!id) return;
+  fetch("/api/tasks?klas=" + encodeURIComponent(id.klas))
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(tasks => {
+      const wrap = $("home-tasks");
+      const grid = $("task-grid");
+      if (!tasks || !tasks.length) { wrap.style.display = "none"; return; }
+      wrap.style.display = "block";
+      grid.innerHTML = tasks.map(t => `
+        <button class="tile" data-task-mix="${t.tenseIds.join(",")}">
+          <span class="tile-name">${t.title}</span>
+          <span class="tile-desc">${t.tenseIds.length} tijd${t.tenseIds.length === 1 ? "" : "en"} door elkaar</span>
+        </button>`).join("");
+    })
+    .catch(() => { $("home-tasks").style.display = "none"; });
 }
 
 function init() {
@@ -45,10 +81,8 @@ function init() {
   handleTaskLink();
   ensureIdentity();
   $("id-save").addEventListener("click", saveIdentity);
-  ["id-name", "id-klas"].forEach(id => {
-    $(id).addEventListener("keydown", e => {
-      if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
-    });
+  $("id-name").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
 }
 
@@ -115,6 +149,11 @@ document.addEventListener("click", e => {
   const mixTile = e.target.closest("[data-mix]");
   if (mixTile && mixTile.dataset.mix) {
     startPractice("mix", mixTile.dataset.mix.split(","));
+    return;
+  }
+  const taskTile = e.target.closest("[data-task-mix]");
+  if (taskTile && taskTile.dataset.taskMix) {
+    startPractice("mix", taskTile.dataset.taskMix.split(","));
   }
 });
 
