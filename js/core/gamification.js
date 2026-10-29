@@ -252,6 +252,17 @@ const Gamification = {
   renderWhiskers(mood) {
     const holder = document.getElementById("whiskers");
     if (!holder) return;
+    if (typeof Whiskers !== "undefined" && Whiskers.pixelSVG) {
+      holder.innerHTML = Whiskers.pixelSVG({ size: 88, mood, id: "whiskers-svg" });
+      const lvl0 = this.level();
+      holder.style.setProperty("--cat-scale", lvl0.scale);
+      holder.classList.remove("cat-bounce");
+      if (mood === "happy" || mood === "excited") {
+        void holder.offsetWidth;
+        holder.classList.add("cat-bounce");
+      }
+      return;
+    }
     const map = this.PIXELS[mood] || this.PIXELS.idle;
     const px = 8;
     const svg = map.map((row, y) =>
