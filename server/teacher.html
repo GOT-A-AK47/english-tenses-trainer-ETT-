@@ -61,6 +61,7 @@
       <h1>Leerkrachtdashboard</h1>
       <div class="row">
         <button class="secondary" onclick="refreshAll()">Verversen</button>
+        <button class="secondary" onclick="loadCSV()">📤 Voortgang downloaden (CSV)</button>
         <button class="secondary" onclick="logout()">Uitloggen</button>
       </div>
 
@@ -91,6 +92,12 @@
 
       <h2>Voortgang per klas</h2>
       <div id="progress-list"><p class="empty">Laden…</p></div>
+
+      <h2>Gebruik (laatste 30 dagen)</h2>
+      <div class="card" id="usage-box"><p class="empty">Laden…</p></div>
+
+      <h2>Feedback</h2>
+      <div class="card"><div id="feedback-list"><p class="empty">Laden…</p></div></div>
     </div>
   </div>
 
@@ -146,7 +153,66 @@
       showLogin();
     }
 
-    async function refreshAll() { await Promise.all([loadKlassen(), loadTasks(), loadProgress()]); }
+    async function refreshAll() { await Promise.all([loadKlassen(), loadTasks(), loadProgress(), loadUsage(), loadFeedback()]); }
+
+    // ---- CSV-export ----
+    async function loadCSV() {
+      const r = await fetch("/api/teacher/export.csv", { headers: { "Authorization": "Bearer " + token } });
+      if (!r.ok) return alert("Export mislukt");
+      const blob = await r.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "voortgang.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ---- usage ----
+    async function loadUsage() {
+      const u = await api("/api/teacher/usage");
+      const box = document.getElementById("usage-box");
+      if (!u.days.length) { box.innerHTML = '<p class="empty">Nog geen gebruik geregistreerd.</p>'; return; }
+      const dayRows = u.days.map(d =>
+        `<tr><td>${d.date}</td><td>${d.students}</td><td>${d.answers}</td></tr>`).join("");
+      const tenseRows = Object.entries(u.tenseTotals)
+        .sort((a, b) => b[1].total - a[1].total)
+        .map(([t, st]) => {
+          const pct = st.total ? Math.round((st.correct / st.total) * 100) : 0;
+          return `<tr><td>${esc(t.replace(/-/g, " "))}</td><td>${st.total}</td><td><span class="pct ${pct >= 75 ? "good" : pct >= 50 ? "warn" : "bad"}">${pct}%</span></td></tr>`;
+        }).join("");
+      box.innerHTML = `
+        <p><strong>${u.totalStudents}</strong> unieke leerlingen · <strong>${u.totalAnswers}</strong> beantwoorde vragen</p>
+        <table><thead><tr><th>Dag</th><th>Leerlingen</th><th>Vragen</th></tr></thead><tbody>${dayRows}</tbody></table>
+        <h2 style="font-size:0.9rem">Populairste tijden</h2>
+        <table><thead><tr><th>Tijd</th><th>Vragen</th><th>Score</th></tr></thead><tbody>${tenseRows}</tbody></table>`;
+    }
+
+    // ---- feedback ----
+    async function loadFeedback() {
+      const list = await api("/api/teacher/feedback");
+      const box = document.getElementById("feedback-list");
+      if (!list.length) { box.innerHTML = '<p class="empty">Nog geen feedback ontvangen.</p>'; return; }
+      box.innerHTML = list.map(f => `
+        <div class="card" style="margin:0.5rem 0; ${f.read ? "opacity:0.6" : ""}">
+          <strong>${esc(f.from)}</strong> <span class="chip">${esc(f.category)}</span>
+          <span class="last">${new Date(f.createdAt).toLocaleString("nl-NL")}</span>
+          <p style="margin:0.4rem 0">${esc(f.message)}</p>
+          <div class="row">
+            ${f.read ? "" : `<button class="secondary" onclick="markRead('${f.id}')">Markeer gelezen</button>`}
+            <button class="danger" onclick="delFeedback('${f.id}')">Verwijderen</button>
+          </div>
+        </div>`).join("");
+    }
+
+    async function markRead(id) {
+      await api("/api/teacher/feedback/" + id + "/read", { method: "POST" });
+      loadFeedback();
+    }
+
+    async function delFeedback(id) {
+      await api("/api/teacher/feedback/" + id, { method: "DELETE" });
+      loadFeedback();
+    }
 
     // ---- klassen ----
     async function loadKlassen() {

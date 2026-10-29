@@ -4,6 +4,7 @@ var TENSE = {
   name: "Past Continuous",
   color: "#e74c3c",
   conjugate: (subj, v) => `${subj === "I" ? "was" : isThird(subj) ? "was" : "were"} ${v.ing}`,
+  explain: "Onthoud: was/were + werkwoord+ing.",
   hint: () => "was/were + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);

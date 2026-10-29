@@ -73,6 +73,67 @@ function loadTasks() {
     .catch(() => { $("home-tasks").style.display = "none"; });
 }
 
+// ---- Feedback (V1.5) ----
+function openFeedback() {
+  $("feedback-modal").style.display = "block";
+  const id = Identity.get();
+  $("feedback-from").textContent = id ? `Verstuurd als ${id.name} (${id.klas})` : "Verstuurd anoniem";
+  $("feedback-text").focus();
+}
+
+function sendFeedback() {
+  const message = $("feedback-text").value;
+  if (!message.trim()) {
+    $("feedback-msg").textContent = "Schrijf eerst een berichtje.";
+    return;
+  }
+  const payload = {
+    message,
+    identity: Identity.get(),
+    category: $("feedback-category").value
+  };
+  fetch("/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(r => {
+      if (!r.ok) throw new Error();
+      $("feedback-modal").style.display = "none";
+      $("feedback-text").value = "";
+      toast("Bedankt voor je feedback!");
+    })
+    .catch(() => {
+      $("feedback-msg").textContent = "Versturen mislukt — probeer het later opnieuw.";
+    });
+}
+
+// ---- Sessie bewaren (V1.5): verder waar je was ----
+function saveSession() {
+  const id = Identity.get();
+  if (!id) return;
+  localStorage.setItem("english-tenses-session", JSON.stringify({
+    tenseSelect: $("tense-select").value,
+    score,
+    count
+  }));
+}
+
+function restoreSession() {
+  const id = Identity.get();
+  if (!id) return;
+  try {
+    const sess = JSON.parse(localStorage.getItem("english-tenses-session"));
+    if (!sess || !sess.tenseSelect) return;
+    $("tense-select").value = sess.tenseSelect;
+    currentMix = sess.tenseSelect === "mix" ? TenseRegistry.all().map(t => t.id) : null;
+    score = sess.score || 0;
+    count = sess.count || 0;
+    $("score").textContent = score;
+    $("count").textContent = count;
+  } catch { /* geen sessie */ }
+}
+
 function init() {
   initTenseSelectors();
   IrregularTrainer.init();
@@ -80,7 +141,15 @@ function init() {
   bindNavigation();
   handleTaskLink();
   ensureIdentity();
+  restoreSession();
   $("id-save").addEventListener("click", saveIdentity);
+  $("feedback-btn").addEventListener("click", openFeedback);
+  $("feedback-send").addEventListener("click", sendFeedback);
+  $("feedback-cancel").addEventListener("click", () => $("feedback-modal").style.display = "none");
+  $("feedback-text").addEventListener("keydown", e => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendFeedback(); }
+  });
+  window.addEventListener("beforeunload", saveSession);
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -233,10 +302,11 @@ function checkAnswer() {
     $("feedback").className = "ok";
   } else {
     input.classList.add("wrong");
-    $("feedback").textContent = `Fout. Het juiste antwoord is "${currentExercise.answer}".`;
+    $("feedback").textContent = `Fout. Het juiste antwoord is "${currentExercise.answer}". ${currentExercise.explain || ""}`;
     $("feedback").className = "nok";
   }
   ProgressStore.record(currentExercise.tense.id, ok);
+  ProgressStore.queueAnswer(currentExercise.tense.id, ok);
   ProgressStore.sync();
   if (!ok) {
     MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);

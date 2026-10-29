@@ -4,6 +4,7 @@ var TENSE = {
   name: "Future Perfect",
   color: "#27ae60",
   conjugate: (subj, v) => `will have ${v.pastParticiple}`,
+  explain: "Onthoud: will have + 3e kolom (voltooid deelwoord).",
   hint: () => "will have + voltooid deelwoord."
 };
 TenseRegistry.register(TENSE);

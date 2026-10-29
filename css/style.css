@@ -521,6 +521,34 @@ footer {
 
 #identity-modal label input { margin-top: 0.3rem; }
 
+#feedback-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(33, 32, 28, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.feedback-link { position: absolute; right: 1.25rem; top: 2rem; }
+
+header { position: relative; }
+
+textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 0.3rem;
+  resize: vertical;
+}
+
+textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
 /* ETT branding + taken (V1.4 UI) */
 header h1::after {
   content: "ETT";

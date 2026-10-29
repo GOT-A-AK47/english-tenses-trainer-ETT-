@@ -13,6 +13,7 @@
         <span class="logo-badge">EN</span>
         <h1>English Tenses Trainer</h1>
       </button>
+      <button id="feedback-btn" class="link-btn feedback-link" title="Stuur feedback naar de beheerder">💬 Feedback</button>
     </header>
 
     <main>
@@ -180,6 +181,30 @@
         </div>
       </section>
     </main>
+
+    <!-- FEEDBACK (V1.5) -->
+    <div id="feedback-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">Feedback</span>
+        <p class="context" id="feedback-from"></p>
+        <label>Categorie
+          <select id="feedback-category">
+            <option value="idee">Idee</option>
+            <option value="bug">Bug</option>
+            <option value="klacht">Klacht</option>
+            <option value="anders">Anders</option>
+          </select>
+        </label>
+        <label>Bericht
+          <textarea id="feedback-text" rows="4" placeholder="Wat wil je doorgeven?" spellcheck="false"></textarea>
+        </label>
+        <div class="btnrow">
+          <button id="feedback-send">Versturen</button>
+          <button id="feedback-cancel" class="secondary">Annuleren</button>
+        </div>
+        <p id="feedback-msg" class="context"></p>
+      </div>
+    </div>
 
     <!-- IDENTITEIT (V1. naam + klas) -->
     <div id="identity-modal" style="display:none">

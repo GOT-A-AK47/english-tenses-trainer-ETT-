@@ -528,6 +528,34 @@ footer {
 
 #identity-modal label input { margin-top: 0.3rem; }
 
+#feedback-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(33, 32, 28, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.feedback-link { position: absolute; right: 1.25rem; top: 2rem; }
+
+header { position: relative; }
+
+textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 0.3rem;
+  resize: vertical;
+}
+
+textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
 /* ETT branding + taken (V1.4 UI) */
 header h1::after {
   content: "ETT";
@@ -572,6 +600,7 @@ header h1::after {
         <span class="logo-badge">EN</span>
         <h1>English Tenses Trainer</h1>
       </button>
+      <button id="feedback-btn" class="link-btn feedback-link" title="Stuur feedback naar de beheerder">💬 Feedback</button>
     </header>
 
     <main>
@@ -740,6 +769,30 @@ header h1::after {
       </section>
     </main>
 
+    <!-- FEEDBACK (V1.5) -->
+    <div id="feedback-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">Feedback</span>
+        <p class="context" id="feedback-from"></p>
+        <label>Categorie
+          <select id="feedback-category">
+            <option value="idee">Idee</option>
+            <option value="bug">Bug</option>
+            <option value="klacht">Klacht</option>
+            <option value="anders">Anders</option>
+          </select>
+        </label>
+        <label>Bericht
+          <textarea id="feedback-text" rows="4" placeholder="Wat wil je doorgeven?" spellcheck="false"></textarea>
+        </label>
+        <div class="btnrow">
+          <button id="feedback-send">Versturen</button>
+          <button id="feedback-cancel" class="secondary">Annuleren</button>
+        </div>
+        <p id="feedback-msg" class="context"></p>
+      </div>
+    </div>
+
     <!-- IDENTITEIT (V1. naam + klas) -->
     <div id="identity-modal" style="display:none">
       <div class="card identity-card">
@@ -853,15 +906,25 @@ const ProgressStore = {
     localStorage.removeItem(this.KEY);
   },
 
+  // V1.5: antwoorden sinds de vorige sync, voor usage-statistieken.
+  _pendingAnswers: [],
+
+  queueAnswer(tenseId, correct) {
+    this._pendingAnswers.push({ tenseId, correct });
+  },
+
   // V1: sync met de server. Stuurt naam + klas + voortgang naar /api/progress
   // en vervangt de lokale cache door het serverantwoord. Faalt de server
   // (offline, of static-only hosting), dan blijft de lokale opslag werken.
   sync() {
     const identity = typeof Identity !== "undefined" ? Identity.get() : null;
     if (!identity) return Promise.resolve(this.all());
+    const newAnswers = this._pendingAnswers;
+    this._pendingAnswers = [];
     const payload = {
       identity,
-      progress: this.all()
+      progress: this.all(),
+      newAnswers
     };
     return fetch("/api/progress", {
       method: "POST",
@@ -1182,6 +1245,7 @@ var TENSE = {
   name: "Present Simple",
   color: "#3498db",
   conjugate: (subj, v) => isThird(subj) ? v.third : v.base,
+  explain: "Onthoud: he/she/it krijgt -s (studies, watches).",
   hint: () => "He/she/it + werkwoord + s (of -es/-ies). Zie tabel."
 };
 TenseRegistry.register(TENSE);
@@ -1193,6 +1257,7 @@ var TENSE = {
   name: "Past Simple",
   color: "#9b59b6",
   conjugate: (subj, v) => v.past,
+  explain: "Onthoud: regelmatig = -ed, onregelmatig = 2e kolom (went, saw).",
   hint: () => "Werkwoord + ed, of de onregelmatige vorm (2e kolom)."
 };
 TenseRegistry.register(TENSE);
@@ -1204,6 +1269,7 @@ var TENSE = {
   name: "Present Perfect",
   color: "#1abc9c",
   conjugate: (subj, v) => `${isThird(subj) ? "has" : "have"} ${v.pastParticiple}`,
+  explain: "Onthoud: have/has + 3e kolom (voltooid deelwoord).",
   hint: () => "have/has + voltooid deelwoord (3e kolom)."
 };
 TenseRegistry.register(TENSE);
@@ -1215,6 +1281,7 @@ var TENSE = {
   name: "Present Continuous",
   color: "#e67e22",
   conjugate: (subj, v) => `${subj === "I" ? "am" : isThird(subj) ? "is" : "are"} ${v.ing}`,
+  explain: "Onthoud: am/is/are + werkwoord+ing.",
   hint: () => "am/is/are + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);
@@ -1226,6 +1293,7 @@ var TENSE = {
   name: "Past Continuous",
   color: "#e74c3c",
   conjugate: (subj, v) => `${subj === "I" ? "was" : isThird(subj) ? "was" : "were"} ${v.ing}`,
+  explain: "Onthoud: was/were + werkwoord+ing.",
   hint: () => "was/were + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);
@@ -1237,6 +1305,7 @@ var TENSE = {
   name: "Future Simple",
   color: "#2ecc71",
   conjugate: (subj, v) => `will ${v.base}`,
+  explain: "Onthoud: will + basisvorm (zonder -s).",
   hint: () => "will + werkwoord (basisvorm)."
 };
 TenseRegistry.register(TENSE);
@@ -1248,6 +1317,7 @@ var TENSE = {
   name: "Past Perfect",
   color: "#34495e",
   conjugate: (subj, v) => `had ${v.pastParticiple}`,
+  explain: "Onthoud: had + 3e kolom (voltooid deelwoord).",
   hint: () => "had + voltooid deelwoord."
 };
 TenseRegistry.register(TENSE);
@@ -1259,6 +1329,7 @@ var TENSE = {
   name: "Future Continuous",
   color: "#16a085",
   conjugate: (subj, v) => `will be ${v.ing}`,
+  explain: "Onthoud: will be + werkwoord+ing.",
   hint: () => "will be + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);
@@ -1270,6 +1341,7 @@ var TENSE = {
   name: "Present Perfect Continuous",
   color: "#d35400",
   conjugate: (subj, v) => `${isThird(subj) ? "has" : "have"} been ${v.ing}`,
+  explain: "Onthoud: have/has been + werkwoord+ing.",
   hint: () => "have/has been + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);
@@ -1281,6 +1353,7 @@ var TENSE = {
   name: "Past Perfect Continuous",
   color: "#7f8c8d",
   conjugate: (subj, v) => `had been ${v.ing}`,
+  explain: "Onthoud: had been + werkwoord+ing.",
   hint: () => "had been + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);
@@ -1292,6 +1365,7 @@ var TENSE = {
   name: "Future Perfect",
   color: "#27ae60",
   conjugate: (subj, v) => `will have ${v.pastParticiple}`,
+  explain: "Onthoud: will have + 3e kolom (voltooid deelwoord).",
   hint: () => "will have + voltooid deelwoord."
 };
 TenseRegistry.register(TENSE);
@@ -1303,6 +1377,7 @@ var TENSE = {
   name: "Future Perfect Continuous",
   color: "#f39c12",
   conjugate: (subj, v) => `will have been ${v.ing}`,
+  explain: "Onthoud: will have been + werkwoord+ing.",
   hint: () => "will have been + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);
@@ -1485,6 +1560,67 @@ function loadTasks() {
     .catch(() => { $("home-tasks").style.display = "none"; });
 }
 
+// ---- Feedback (V1.5) ----
+function openFeedback() {
+  $("feedback-modal").style.display = "block";
+  const id = Identity.get();
+  $("feedback-from").textContent = id ? `Verstuurd als ${id.name} (${id.klas})` : "Verstuurd anoniem";
+  $("feedback-text").focus();
+}
+
+function sendFeedback() {
+  const message = $("feedback-text").value;
+  if (!message.trim()) {
+    $("feedback-msg").textContent = "Schrijf eerst een berichtje.";
+    return;
+  }
+  const payload = {
+    message,
+    identity: Identity.get(),
+    category: $("feedback-category").value
+  };
+  fetch("/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(r => {
+      if (!r.ok) throw new Error();
+      $("feedback-modal").style.display = "none";
+      $("feedback-text").value = "";
+      toast("Bedankt voor je feedback!");
+    })
+    .catch(() => {
+      $("feedback-msg").textContent = "Versturen mislukt — probeer het later opnieuw.";
+    });
+}
+
+// ---- Sessie bewaren (V1.5): verder waar je was ----
+function saveSession() {
+  const id = Identity.get();
+  if (!id) return;
+  localStorage.setItem("english-tenses-session", JSON.stringify({
+    tenseSelect: $("tense-select").value,
+    score,
+    count
+  }));
+}
+
+function restoreSession() {
+  const id = Identity.get();
+  if (!id) return;
+  try {
+    const sess = JSON.parse(localStorage.getItem("english-tenses-session"));
+    if (!sess || !sess.tenseSelect) return;
+    $("tense-select").value = sess.tenseSelect;
+    currentMix = sess.tenseSelect === "mix" ? TenseRegistry.all().map(t => t.id) : null;
+    score = sess.score || 0;
+    count = sess.count || 0;
+    $("score").textContent = score;
+    $("count").textContent = count;
+  } catch { /* geen sessie */ }
+}
+
 function init() {
   initTenseSelectors();
   IrregularTrainer.init();
@@ -1492,7 +1628,15 @@ function init() {
   bindNavigation();
   handleTaskLink();
   ensureIdentity();
+  restoreSession();
   $("id-save").addEventListener("click", saveIdentity);
+  $("feedback-btn").addEventListener("click", openFeedback);
+  $("feedback-send").addEventListener("click", sendFeedback);
+  $("feedback-cancel").addEventListener("click", () => $("feedback-modal").style.display = "none");
+  $("feedback-text").addEventListener("keydown", e => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendFeedback(); }
+  });
+  window.addEventListener("beforeunload", saveSession);
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -1645,10 +1789,11 @@ function checkAnswer() {
     $("feedback").className = "ok";
   } else {
     input.classList.add("wrong");
-    $("feedback").textContent = `Fout. Het juiste antwoord is "${currentExercise.answer}".`;
+    $("feedback").textContent = `Fout. Het juiste antwoord is "${currentExercise.answer}". ${currentExercise.explain || ""}`;
     $("feedback").className = "nok";
   }
   ProgressStore.record(currentExercise.tense.id, ok);
+  ProgressStore.queueAnswer(currentExercise.tense.id, ok);
   ProgressStore.sync();
   if (!ok) {
     MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);

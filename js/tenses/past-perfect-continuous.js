@@ -4,6 +4,7 @@ var TENSE = {
   name: "Past Perfect Continuous",
   color: "#7f8c8d",
   conjugate: (subj, v) => `had been ${v.ing}`,
+  explain: "Onthoud: had been + werkwoord+ing.",
   hint: () => "had been + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);

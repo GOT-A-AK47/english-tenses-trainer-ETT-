@@ -49,15 +49,25 @@ const ProgressStore = {
     localStorage.removeItem(this.KEY);
   },
 
+  // V1.5: antwoorden sinds de vorige sync, voor usage-statistieken.
+  _pendingAnswers: [],
+
+  queueAnswer(tenseId, correct) {
+    this._pendingAnswers.push({ tenseId, correct });
+  },
+
   // V1: sync met de server. Stuurt naam + klas + voortgang naar /api/progress
   // en vervangt de lokale cache door het serverantwoord. Faalt de server
   // (offline, of static-only hosting), dan blijft de lokale opslag werken.
   sync() {
     const identity = typeof Identity !== "undefined" ? Identity.get() : null;
     if (!identity) return Promise.resolve(this.all());
+    const newAnswers = this._pendingAnswers;
+    this._pendingAnswers = [];
     const payload = {
       identity,
-      progress: this.all()
+      progress: this.all(),
+      newAnswers
     };
     return fetch("/api/progress", {
       method: "POST",

@@ -4,6 +4,7 @@ var TENSE = {
   name: "Future Perfect Continuous",
   color: "#f39c12",
   conjugate: (subj, v) => `will have been ${v.ing}`,
+  explain: "Onthoud: will have been + werkwoord+ing.",
   hint: () => "will have been + werkwoord + ing."
 };
 TenseRegistry.register(TENSE);

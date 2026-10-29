@@ -12,6 +12,8 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const PROGRESS_FILE = path.join(DATA_DIR, "progress.json");
 const CLASSES_FILE = path.join(DATA_DIR, "classes.json");
 const TASKS_FILE = path.join(DATA_DIR, "tasks.json");
+const FEEDBACK_FILE = path.join(DATA_DIR, "feedback.json");
+const USAGE_FILE = path.join(DATA_DIR, "usage.json");
 const PORT = process.env.PORT || 3000;
 
 // ---------- data-laag ----------
@@ -32,6 +34,10 @@ const loadClasses = () => loadJson(CLASSES_FILE, []);
 const saveClasses = d => saveJson(CLASSES_FILE, d);
 const loadTasks = () => loadJson(TASKS_FILE, []);
 const saveTasks = d => saveJson(TASKS_FILE, d);
+const loadFeedback = () => loadJson(FEEDBACK_FILE, []);
+const saveFeedback = d => saveJson(FEEDBACK_FILE, d);
+const loadUsage = () => loadJson(USAGE_FILE, {});
+const saveUsage = d => saveJson(USAGE_FILE, d);
 
 function studentKey(identity) {
   return `${identity.name}|${identity.klas}`;
@@ -47,6 +53,27 @@ function mergeProgress(existing, incoming) {
     };
   }
   return merged;
+}
+
+// ---------- usage-statistieken ----------
+// Bewaart per dag: unieke leerlingen, beantwoorde vragen en gebruik per tijd.
+// De client stuurt per sync "newAnswers": [{tenseId, correct}] voor enkel de
+// vragen die sinds de vorige sync beantwoord zijn.
+function trackUsage(identity, newAnswers) {
+  const today = new Date().toISOString().slice(0, 10);
+  const usage = loadUsage();
+  if (!usage.days) usage.days = {};
+  if (!usage.days[today]) usage.days[today] = { students: [], answers: 0, tenses: {} };
+  const day = usage.days[today];
+  const student = identity.name + "|" + identity.klas;
+  if (!day.students.includes(student)) day.students.push(student);
+  for (const a of newAnswers) {
+    day.answers++;
+    if (!day.tenses[a.tenseId]) day.tenses[a.tenseId] = { total: 0, correct: 0 };
+    day.tenses[a.tenseId].total++;
+    if (a.correct) day.tenses[a.tenseId].correct++;
+  }
+  saveUsage(usage);
 }
 
 // ---------- docenten-auth ----------
@@ -99,11 +126,13 @@ async function handleApi(req, res) {
     if (!identity || !identity.name || !identity.klas || typeof progress !== "object") {
       return respond(res, 400, { error: "identity en progress zijn verplicht" });
     }
+    const newAnswers = Array.isArray(payload.newAnswers) ? payload.newAnswers : [];
     const key = studentKey(identity);
     const all = loadProgress();
     all[key] = mergeProgress(all[key] || {}, progress);
     all[key]._identity = { name: identity.name, klas: identity.klas, lastSeen: new Date().toISOString() };
     saveProgress(all);
+    trackUsage(identity, newAnswers);
     return respond(res, 200, { ok: true, progress });
   }
 
@@ -208,6 +237,97 @@ async function handleApi(req, res) {
     const klas = new URL(req.url, "http://x").searchParams.get("klas");
     if (!klas) return respond(res, 400, { error: "klas verplicht" });
     return respond(res, 200, loadTasks().filter(t => t.klas === klas));
+  }
+
+  // --- feedback (openbaar posten, docenten lezen) ---
+  if (req.method === "POST" && url === "/api/feedback") {
+    const { message, identity, category } = JSON.parse(await readBody(req) || "{}") || {};
+    if (!message || !String(message).trim()) {
+      return respond(res, 400, { error: "bericht is leeg" });
+    }
+    const feedback = loadFeedback();
+    feedback.push({
+      id: "f" + Date.now().toString(36),
+      message: String(message).trim().slice(0, 2000),
+      category: ["bug", "idee", "klacht", "anders"].includes(category) ? category : "anders",
+      from: identity ? `${identity.name} (${identity.klas})` : "anoniem",
+      createdAt: new Date().toISOString(),
+      read: false
+    });
+    saveFeedback(feedback);
+    return respond(res, 200, { ok: true });
+  }
+
+  if (req.method === "GET" && url === "/api/teacher/feedback") {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    return respond(res, 200, loadFeedback().slice().reverse());
+  }
+
+  if (req.method === "POST" && url.startsWith("/api/teacher/feedback/") && url.endsWith("/read")) {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const id = url.split("/")[4];
+    const feedback = loadFeedback();
+    const item = feedback.find(f => f.id === id);
+    if (item) { item.read = true; saveFeedback(feedback); }
+    return respond(res, 200, { ok: true });
+  }
+
+  if (req.method === "DELETE" && url.startsWith("/api/teacher/feedback/")) {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const id = url.split("/").pop();
+    saveFeedback(loadFeedback().filter(f => f.id !== id));
+    return respond(res, 200, { ok: true });
+  }
+
+  // --- usage-statistieken (docenten) ---
+  if (req.method === "GET" && url === "/api/teacher/usage") {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const usage = loadUsage();
+    const days = Object.entries(usage.days || {})
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-30)
+      .map(([date, d]) => ({ date, students: d.students.length, answers: d.answers, tenses: d.tenses }));
+    const totalAnswers = days.reduce((a, d) => a + d.answers, 0);
+    const totalStudents = new Set(days.flatMap(d => d.students)).size;
+    const tenseTotals = {};
+    for (const d of Object.values(usage.days || {})) {
+      for (const [tenseId, t] of Object.entries(d.tenses || {})) {
+        if (!tenseTotals[tenseId]) tenseTotals[tenseId] = { total: 0, correct: 0 };
+        tenseTotals[tenseId].total += t.total || 0;
+        tenseTotals[tenseId].correct += t.correct || 0;
+      }
+    }
+    return respond(res, 200, { days, totalAnswers, totalStudents, tenseTotals });
+  }
+
+  // --- CSV-export voortgang (docenten) ---
+  if (req.method === "GET" && url === "/api/teacher/export.csv") {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const all = loadProgress();
+    const tenseIds = new Set();
+    for (const entry of Object.values(all)) {
+      Object.keys(entry).forEach(k => { if (!k.startsWith("_")) tenseIds.add(k); });
+    }
+    const cols = ["naam", "klas", ...tenseIds, "totaal_correct", "totaal_vragen"];
+    const rows = Object.values(all).filter(e => e._identity).map(e => {
+      let c = 0, t = 0;
+      const cells = [e._identity.name, e._identity.klas];
+      for (const tenseId of tenseIds) {
+        const st = e[tenseId] || { correct: 0, total: 0 };
+        cells.push(`${st.correct}/${st.total}`);
+        c += st.correct; t += st.total;
+      }
+      cells.push(c, t);
+      return cells;
+    });
+    const csv = [cols, ...rows]
+      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+    res.writeHead(200, {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": 'attachment; filename="voortgang.csv"'
+    });
+    return res.end("\uFEFF" + csv);
   }
 
   respond(res, 404, { error: "not found" });
