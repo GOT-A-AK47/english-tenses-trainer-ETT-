@@ -624,7 +624,16 @@ header h1::after {
 
 .quest-chip { background: #fff3d6; color: #8a6116; }
 
-.whiskers-link { position: absolute; right: 1.25rem; top: 5.2rem; }
+.whiskers-clickable { cursor: pointer; }
+.whiskers-clickable:hover { filter: brightness(1.08) drop-shadow(0 3px 6px rgba(47,111,237,0.25)); }
+
+@keyframes catBounce {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-8px); }
+  60% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+.cat-bounce { animation: catBounce 0.45s ease; }
 
 .badges-grid {
   display: grid;

@@ -157,7 +157,7 @@ function init() {
   });
   window.addEventListener("beforeunload", saveSession);
   Gamification.init();
-  $("whiskers-btn").addEventListener("click", showBadges);
+  $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }

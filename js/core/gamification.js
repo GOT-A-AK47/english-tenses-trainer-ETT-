@@ -67,7 +67,7 @@ const Gamification = {
     this.renderBar();
     if (this.level() !== before && this.level().xp > before.xp) {
       toast(`⬆️ Level up! Whiskers is nu een ${this.level().name}!`);
-      this.renderWhiskers("happy");
+      this.renderWhiskers("excited");
     } else if (amount > 0) {
       this.renderWhiskers("happy");
     }
@@ -85,7 +85,7 @@ const Gamification = {
       this._mistakes++;
       this._rowStreak = 0;
       this._sinceMistakeStreak = 0;
-      this.renderWhiskers("sad");
+      this.renderWhiskers(this._mistakes >= 3 ? "sleepy" : "sad");
     }
 
     // dagelijkse quest
@@ -138,7 +138,7 @@ const Gamification = {
       this.earnBadge("mouse-catch");
       this.addXP(15);
       toast("🖱️ Whiskers ving de muis! +15 XP");
-      this.renderWhiskers("happy");
+      this.renderWhiskers("excited");
     });
     setTimeout(() => mouse.remove(), dur);
   },
@@ -172,46 +172,79 @@ const Gamification = {
   },
 
   // ---- Whiskers (8-bit pixelkat) ----
-  CAT_COLORS: { k: "#21201c", o: "#f4a742", d: "#d17f1f", p: "#ff8fa3", w: "#ffffff" },
+  CAT_COLORS: { k: "#21201c", o: "#f4a742", d: "#d17f1f", p: "#ff8fa3", w: "#ffffff", e: "#1d4fae" },
 
+  // 12 breed x 11 hoog. k=lijn, o=vacht, d=donkere vacht, w=wit (oogwit),
+  // e=oogblauw, p=neus/blos, n=snorhaar-pixel
   PIXELS: {
+    // aandachtig kijken, ogen open
     idle: [
       ".k........k.",
       ".ko......ok.",
       ".koo....ook.",
-      ".koooookooo.",
-      ".kooooooooo.",
-      ".kokoooooko.",
-      ".kooooppooo.",
-      ".koooooooko.",
-      ".koooooooook",
-      "..koooooook.",
+      ".kooo..ooko.",
+      ".koowoowook.",
+      ".koweeoeeok.",
+      ".koowwewwok.",
+      ".koooopooo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
       "...kkkkkk..."
     ],
+    // blij: ogen dicht als ^^, blos
     happy: [
       ".k........k.",
       ".ko......ok.",
       ".koo....ook.",
-      ".koooookooo.",
-      ".kwooooowok.",
-      ".kwkoooookw",
-      ".kooooppooo.",
-      ".koooookooo.",
-      ".kooooooooo.",
-      "..koooooook.",
+      ".kooo..ooko.",
+      ".koowwowwok.",
+      ".kowwwwwwok.",
+      ".koopooopo..",
+      ".koopppppo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
       "...kkkkkk..."
     ],
+    // droevig: oren plat, blik omlaag
     sad: [
       "............",
       "..k......k..",
       ".koo....ook.",
-      ".koooookooo.",
-      ".kooooooooo.",
-      ".kokoooooko.",
-      ".koooooooook",
-      ".kooopppooo.",
-      ".koooooooko.",
-      "..koooooook.",
+      ".koood.ooko.",
+      ".koowoowook.",
+      ".kowedeowok.",
+      ".koowwewwok.",
+      ".koooppooo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
+      "...kkkkkk..."
+    ],
+    // excited: ster-ogen na level-up of muisvangst
+    excited: [
+      ".k........k.",
+      ".ko......ok.",
+      ".koo....ook.",
+      ".koood.ooko.",
+      ".kowwwwwwok.",
+      ".koweweweok.",
+      ".koweweweok.",
+      ".koopppppo..",
+      ".koopoooopo.",
+      "..konooonk..",
+      "...kkkkkk..."
+    ],
+    // sleepy: ogen dicht als -, na veel fouten
+    sleepy: [
+      ".k........k.",
+      ".ko......ok.",
+      ".koo....ook.",
+      ".kooo..ooko.",
+      ".koowoowook.",
+      ".kokkkkkkok.",
+      ".koowwewwok.",
+      ".koooopooo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
       "...kkkkkk..."
     ]
   },
@@ -231,6 +264,12 @@ const Gamification = {
       `<svg viewBox="0 0 96 88" shape-rendering="crispEdges" width="100%" height="100%">${svg}</svg>`;
     const lvl = this.level();
     holder.style.setProperty("--cat-scale", lvl.scale);
+    // korte bounce-animatie bij sterke emoties
+    holder.classList.remove("cat-bounce");
+    if (mood === "happy" || mood === "excited") {
+      void holder.offsetWidth; // reflow zodat animatie herstart
+      holder.classList.add("cat-bounce");
+    }
   },
 
   // ---- badges-scherm ----

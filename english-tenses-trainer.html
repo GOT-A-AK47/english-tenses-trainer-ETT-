@@ -631,7 +631,16 @@ header h1::after {
 
 .quest-chip { background: #fff3d6; color: #8a6116; }
 
-.whiskers-link { position: absolute; right: 1.25rem; top: 5.2rem; }
+.whiskers-clickable { cursor: pointer; }
+.whiskers-clickable:hover { filter: brightness(1.08) drop-shadow(0 3px 6px rgba(47,111,237,0.25)); }
+
+@keyframes catBounce {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-8px); }
+  60% { transform: translateY(2px); }
+  100% { transform: translateY(0); }
+}
+.cat-bounce { animation: catBounce 0.45s ease; }
 
 .badges-grid {
   display: grid;
@@ -677,7 +686,6 @@ header h1::after {
         <h1>English Tenses Trainer</h1>
       </button>
       <button id="feedback-btn" class="link-btn feedback-link" title="Stuur feedback naar de beheerder">💬 Feedback</button>
-      <button id="whiskers-btn" class="link-btn whiskers-link" title="Whiskers & jouw beloningen">🐱 Whiskers</button>
     </header>
 
     <main>
@@ -701,7 +709,7 @@ header h1::after {
         </div>
 
         <div class="whiskers-row">
-      <div id="whiskers" class="whiskers-cat" title="Whiskers"></div>
+      <div id="whiskers" class="whiskers-cat whiskers-clickable" role="button" tabindex="0" title="Klik op Whiskers voor jouw beloningen!"></div>
       <div class="xp-track">
         <div class="xp-top">
           <span id="level-badge" class="chip">Katje</span>
@@ -1202,7 +1210,7 @@ const Gamification = {
     this.renderBar();
     if (this.level() !== before && this.level().xp > before.xp) {
       toast(`⬆️ Level up! Whiskers is nu een ${this.level().name}!`);
-      this.renderWhiskers("happy");
+      this.renderWhiskers("excited");
     } else if (amount > 0) {
       this.renderWhiskers("happy");
     }
@@ -1220,7 +1228,7 @@ const Gamification = {
       this._mistakes++;
       this._rowStreak = 0;
       this._sinceMistakeStreak = 0;
-      this.renderWhiskers("sad");
+      this.renderWhiskers(this._mistakes >= 3 ? "sleepy" : "sad");
     }
 
     // dagelijkse quest
@@ -1273,7 +1281,7 @@ const Gamification = {
       this.earnBadge("mouse-catch");
       this.addXP(15);
       toast("🖱️ Whiskers ving de muis! +15 XP");
-      this.renderWhiskers("happy");
+      this.renderWhiskers("excited");
     });
     setTimeout(() => mouse.remove(), dur);
   },
@@ -1307,46 +1315,79 @@ const Gamification = {
   },
 
   // ---- Whiskers (8-bit pixelkat) ----
-  CAT_COLORS: { k: "#21201c", o: "#f4a742", d: "#d17f1f", p: "#ff8fa3", w: "#ffffff" },
+  CAT_COLORS: { k: "#21201c", o: "#f4a742", d: "#d17f1f", p: "#ff8fa3", w: "#ffffff", e: "#1d4fae" },
 
+  // 12 breed x 11 hoog. k=lijn, o=vacht, d=donkere vacht, w=wit (oogwit),
+  // e=oogblauw, p=neus/blos, n=snorhaar-pixel
   PIXELS: {
+    // aandachtig kijken, ogen open
     idle: [
       ".k........k.",
       ".ko......ok.",
       ".koo....ook.",
-      ".koooookooo.",
-      ".kooooooooo.",
-      ".kokoooooko.",
-      ".kooooppooo.",
-      ".koooooooko.",
-      ".koooooooook",
-      "..koooooook.",
+      ".kooo..ooko.",
+      ".koowoowook.",
+      ".koweeoeeok.",
+      ".koowwewwok.",
+      ".koooopooo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
       "...kkkkkk..."
     ],
+    // blij: ogen dicht als ^^, blos
     happy: [
       ".k........k.",
       ".ko......ok.",
       ".koo....ook.",
-      ".koooookooo.",
-      ".kwooooowok.",
-      ".kwkoooookw",
-      ".kooooppooo.",
-      ".koooookooo.",
-      ".kooooooooo.",
-      "..koooooook.",
+      ".kooo..ooko.",
+      ".koowwowwok.",
+      ".kowwwwwwok.",
+      ".koopooopo..",
+      ".koopppppo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
       "...kkkkkk..."
     ],
+    // droevig: oren plat, blik omlaag
     sad: [
       "............",
       "..k......k..",
       ".koo....ook.",
-      ".koooookooo.",
-      ".kooooooooo.",
-      ".kokoooooko.",
-      ".koooooooook",
-      ".kooopppooo.",
-      ".koooooooko.",
-      "..koooooook.",
+      ".koood.ooko.",
+      ".koowoowook.",
+      ".kowedeowok.",
+      ".koowwewwok.",
+      ".koooppooo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
+      "...kkkkkk..."
+    ],
+    // excited: ster-ogen na level-up of muisvangst
+    excited: [
+      ".k........k.",
+      ".ko......ok.",
+      ".koo....ook.",
+      ".koood.ooko.",
+      ".kowwwwwwok.",
+      ".koweweweok.",
+      ".koweweweok.",
+      ".koopppppo..",
+      ".koopoooopo.",
+      "..konooonk..",
+      "...kkkkkk..."
+    ],
+    // sleepy: ogen dicht als -, na veel fouten
+    sleepy: [
+      ".k........k.",
+      ".ko......ok.",
+      ".koo....ook.",
+      ".kooo..ooko.",
+      ".koowoowook.",
+      ".kokkkkkkok.",
+      ".koowwewwok.",
+      ".koooopooo..",
+      ".kooonooook.",
+      "..ko.oo.ook.",
       "...kkkkkk..."
     ]
   },
@@ -1366,6 +1407,12 @@ const Gamification = {
       `<svg viewBox="0 0 96 88" shape-rendering="crispEdges" width="100%" height="100%">${svg}</svg>`;
     const lvl = this.level();
     holder.style.setProperty("--cat-scale", lvl.scale);
+    // korte bounce-animatie bij sterke emoties
+    holder.classList.remove("cat-bounce");
+    if (mood === "happy" || mood === "excited") {
+      void holder.offsetWidth; // reflow zodat animatie herstart
+      holder.classList.add("cat-bounce");
+    }
   },
 
   // ---- badges-scherm ----
@@ -2005,7 +2052,7 @@ function init() {
   });
   window.addEventListener("beforeunload", saveSession);
   Gamification.init();
-  $("whiskers-btn").addEventListener("click", showBadges);
+  $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
