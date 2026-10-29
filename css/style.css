@@ -651,6 +651,8 @@ header h1::after {
   background: #fff;
 }
 .badge-icon { font-size: 1.4rem; display: block; margin-bottom: 0.2rem; }
+.badge-name { display: block; font-weight: 700; font-size: 0.78rem; }
+.badge-desc { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; }
 .badge.locked { opacity: 0.45; filter: grayscale(1); }
 
 /* Muis-mini-game */

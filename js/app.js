@@ -141,6 +141,13 @@ function showBadges() {
   $("badges-modal").style.display = "block";
 }
 
+function resetWhiskers() {
+  if (!confirm("Alles van Whiskers opnieuw beginnen?\n\nJe verliest: XP, level, badges, energie en pelskeuze.\nDit kan niet ongedaan gemaakt worden.")) return;
+  Gamification.resetAll();
+  renderSkinPicker();
+  toast("🐾 Whiskers begint opnieuw als katje!");
+}
+
 // ---- V1.9: introductie-scherm (eerste bezoek) ----
 function maybeShowIntro() {
   const seen = localStorage.getItem("whiskers-intro-seen");
@@ -206,6 +213,7 @@ function init() {
   $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", showBadges);
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
+  $("badges-reset").addEventListener("click", resetWhiskers);
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });

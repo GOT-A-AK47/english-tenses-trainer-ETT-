@@ -2,12 +2,12 @@
 // Whiskers de kat reageert op alles. Puur frontend; bewaard naast de voortgang.
 
 const LEVELS = [
-  { xp: 0,    name: "Katje",           scale: 0.9 },
-  { xp: 50,   name: "Jonge kat",       scale: 1.0 },
-  { xp: 150,  name: "Volwassen kat",   scale: 1.1 },
-  { xp: 300,  name: "Ervaren jager",   scale: 1.2 },
-  { xp: 500,  name: "Wijze kater",     scale: 1.3 },
-  { xp: 800,  name: "Legendarische leeuw", scale: 1.45 }
+  { xp: 0,    name: "Katje",                scale: 0.9 },
+  { xp: 200,  name: "Jonge kat",            scale: 1.0 },
+  { xp: 600,  name: "Volwassen kat",       scale: 1.1 },
+  { xp: 1200, name: "Ervaren jager",        scale: 1.2 },
+  { xp: 2000, name: "Wijze kater",          scale: 1.3 },
+  { xp: 3200, name: "Legendarische leeuw",  scale: 1.45 }
 ];
 
 const BADGES = [
@@ -355,10 +355,23 @@ const Gamification = {
       return `<div class="badge ${earned ? "" : "locked"}" title="${b.desc}">
         <span class="badge-icon">${earned ? b.icon : "🔒"}</span>
         <span class="badge-name">${b.name}</span>
+        <span class="badge-desc">${b.desc}</span>
       </div>`;
     }).join("");
     const xpEl = document.getElementById("badges-xp");
     if (xpEl) xpEl.textContent = `${this.state.xp} XP · Level: ${this.level().name}`;
+  },
+
+  // V2.1: alles van Whiskers opnieuw beginnen (xp, badges, energie, skins)
+  resetAll() {
+    this.state = { xp: 0, badges: [], quest: null, questDone: false, energy: 100, lastEnergyDay: null };
+    this._rowStreak = 0;
+    this._mistakes = 0;
+    this._sinceMistakeStreak = 0;
+    this.correctToday = 0;
+    this.save();
+    if (typeof Whiskers !== "undefined" && Whiskers.setSkin) Whiskers.setSkin("oranje");
+    this.init();
   },
 
   init() {
