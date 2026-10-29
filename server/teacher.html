@@ -96,6 +96,16 @@
       <h2>Gebruik (laatste 30 dagen)</h2>
       <div class="card" id="usage-box"><p class="empty">Laden…</p></div>
 
+      <h2>Docentencodes <span class="last">(alleen admin)</span></h2>
+      <div class="card" id="codes-box">
+        <div class="row">
+          <input type="text" id="code-label" placeholder="Naam leerkracht, bv. Mevr. Janssens" autocomplete="off">
+          <button onclick="genCode()">Code genereren</button>
+        </div>
+        <p class="msg" id="code-msg"></p>
+        <div id="codes-list"></div>
+      </div>
+
       <h2>Feedback</h2>
       <div class="card"><div id="feedback-list"><p class="empty">Laden…</p></div></div>
     </div>
@@ -108,6 +118,7 @@
       "future-simple", "future-continuous", "future-perfect", "future-perfect-continuous"
     ];
     let token = sessionStorage.getItem("teacher-token") || "";
+    let amAdmin = sessionStorage.getItem("teacher-admin") === "1";
 
     const api = (path, opts = {}) => fetch(path, {
       ...opts,
@@ -138,7 +149,9 @@
         if (!r.ok) throw new Error((await r.json()).error);
         const data = await r.json();
         token = data.token;
+        amAdmin = !!data.isAdmin;
         sessionStorage.setItem("teacher-token", token);
+        sessionStorage.setItem("teacher-admin", amAdmin ? "1" : "0");
         document.getElementById("login-msg").textContent = data.firstTime ? "Code ingesteld — welkom!" : "";
         showDash(); refreshAll();
       } catch (e) {
@@ -153,7 +166,39 @@
       showLogin();
     }
 
-    async function refreshAll() { await Promise.all([loadKlassen(), loadTasks(), loadProgress(), loadUsage(), loadFeedback()]); }
+    async function refreshAll() {
+      const jobs = [loadKlassen(), loadTasks(), loadProgress(), loadUsage(), loadFeedback()];
+      if (amAdmin) jobs.push(loadCodes()); else document.getElementById("codes-box").style.display = "none";
+      await Promise.all(jobs);
+    }
+
+    // ---- docentencodes (admin) ----
+    async function loadCodes() {
+      const codes = await api("/api/teacher/codes");
+      const box = document.getElementById("codes-list");
+      if (!codes.length) { box.innerHTML = '<p class="empty">Nog geen extra docentencodes. Genereer er een en deel hem met je leerkrachten!</p>'; return; }
+      box.innerHTML = codes.map(c => `
+        <div class="row" style="justify-content:space-between">
+          <span><strong>${esc(c.code)}</strong> <span class="last">— ${esc(c.label)}${c.lastUsed ? " · gebruikt " + new Date(c.lastUsed).toLocaleDateString("nl-NL") : ""}</span></span>
+          <button class="danger" onclick="delCode('${c.code}')">Intrekken</button>
+        </div>`).join("");
+    }
+
+    async function genCode() {
+      const label = document.getElementById("code-label").value || "docent";
+      const m = document.getElementById("code-msg");
+      try {
+        const r = await api("/api/teacher/codes", { method: "POST", body: JSON.stringify({ label }) });
+        m.textContent = `Nieuwe code: ${r.code} — deel hem met ${esc(label)}.`; m.className = "msg ok";
+        document.getElementById("code-label").value = "";
+        loadCodes();
+      } catch (e) { m.textContent = e.message; m.className = "msg err"; }
+    }
+
+    async function delCode(code) {
+      await api("/api/teacher/codes/" + encodeURIComponent(code), { method: "DELETE" });
+      loadCodes();
+    }
 
     // ---- CSV-export ----
     async function loadCSV() {

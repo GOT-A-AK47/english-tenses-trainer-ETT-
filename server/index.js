@@ -81,7 +81,24 @@ function trackUsage(identity, newAnswers) {
 // Daarna: alleen die kode geldt. Sessies zijn in-memory tokens (vervallen bij herstart).
 
 const TEACHER_CODE_FILE = path.join(DATA_DIR, "teacher-code.json");
-const sessions = new Set();
+const TEACHERS_FILE = path.join(DATA_DIR, "teachers.json");
+// sessions: token -> { isAdmin }
+const sessions = new Map();
+
+// V1.6: docentenbeheer. Eén admin (hoofdcode) + extra docentencodes
+// die de admin zelf aanmaakt via het dashboard. Migratie: als er nog
+// alleen een oude teacher-code.json is, wordt die de admin-code.
+function loadTeachers() {
+  const old = teacherCode();
+  const t = loadJson(TEACHERS_FILE, null);
+  if (t && Array.isArray(t.codes)) return t;
+  if (old && old.code) {
+    const migrated = { adminCode: old.code, codes: [] };
+    saveJson(TEACHERS_FILE, migrated);
+    return migrated;
+  }
+  return null;
+}
 
 function teacherCode() {
   return loadJson(TEACHER_CODE_FILE, null);
@@ -94,6 +111,11 @@ function setTeacherCode(code) {
 function isTeacher(req) {
   const auth = req.headers["authorization"] || "";
   return auth.startsWith("Bearer ") && sessions.has(auth.slice(7));
+}
+
+function isAdmin(req) {
+  const auth = req.headers["authorization"] || "";
+  return auth.startsWith("Bearer ") && sessions.get(auth.slice(7)) === "admin";
 }
 
 // ---------- API ----------
@@ -154,19 +176,58 @@ async function handleApi(req, res) {
   if (req.method === "POST" && url === "/api/teacher/login") {
     const { code } = JSON.parse(await readBody(req) || "{}") || {};
     if (!code) return respond(res, 400, { error: "code verplicht" });
-    const stored = teacherCode();
-    if (!stored) {
-      setTeacherCode(String(code));
+    const teachers = loadTeachers();
+    if (!teachers || !teachers.adminCode) {
+      // allereerste login ooit: wordt de admin-code
+      saveJson(TEACHERS_FILE, { adminCode: String(code), codes: [] });
       const token = newToken();
-      sessions.add(token);
-      return respond(res, 200, { token, firstTime: true });
+      sessions.set(token, "admin");
+      return respond(res, 200, { token, firstTime: true, isAdmin: true });
     }
-    if (String(code) !== stored.code) {
-      return respond(res, 401, { error: "verkeerde code" });
+    const role = String(code) === teachers.adminCode ? "admin" : null;
+    if (!role) {
+      const extra = teachers.codes.find(c => c.code === String(code));
+      if (!extra) return respond(res, 401, { error: "verkeerde code" });
+      extra.lastUsed = new Date().toISOString();
+      saveJson(TEACHERS_FILE, teachers);
+      const token = newToken();
+      sessions.set(token, "teacher");
+      return respond(res, 200, { token, isAdmin: false });
     }
     const token = newToken();
-    sessions.add(token);
-    return respond(res, 200, { token });
+    sessions.set(token, role);
+    return respond(res, 200, { token, isAdmin: true });
+  }
+
+  // --- admin: docentencodes beheren ---
+  if (req.method === "GET" && url === "/api/teacher/codes") {
+    if (!isAdmin(req)) return respond(res, 401, { error: "alleen admin" });
+    const teachers = loadTeachers();
+    return respond(res, 200, teachers ? teachers.codes : []);
+  }
+
+  if (req.method === "POST" && url === "/api/teacher/codes") {
+    if (!isAdmin(req)) return respond(res, 401, { error: "alleen admin" });
+    const { label } = JSON.parse(await readBody(req) || "{}") || {};
+    const teachers = loadTeachers();
+    const code = "ETT-" + require("crypto").randomBytes(4).toString("hex").toUpperCase();
+    teachers.codes.push({
+      code,
+      label: String(label || "docent").slice(0, 60),
+      createdAt: new Date().toISOString(),
+      lastUsed: null
+    });
+    saveJson(TEACHERS_FILE, teachers);
+    return respond(res, 200, { ok: true, code });
+  }
+
+  if (req.method === "DELETE" && url.startsWith("/api/teacher/codes/")) {
+    if (!isAdmin(req)) return respond(res, 401, { error: "alleen admin" });
+    const code = decodeURIComponent(url.split("/").pop());
+    const teachers = loadTeachers();
+    teachers.codes = teachers.codes.filter(c => c.code !== code);
+    saveJson(TEACHERS_FILE, teachers);
+    return respond(res, 200, { ok: true });
   }
 
   // --- docenten: klassen ---
