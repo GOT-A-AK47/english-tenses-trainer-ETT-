@@ -1940,7 +1940,7 @@ const Whiskers = {
   showFeeding() {
     const holder = document.getElementById("companion-bubble");
     if (!holder) return;
-    this.say("🐟 *hap hap* Lekker visje! Bedankt!", 3500);
+    this.say("🐟 *nom nom* Yummy fish! Thank you!", 3500);
     this.setCompanionMood("excited");
   },
 
@@ -1967,10 +1967,10 @@ const Whiskers = {
 
   // ---- commentaar-regels ----
   LINES: {
-    praise: ["Purrrfect! 🐾", "Miauw, dat was goed!", "Whiskers is onder de indruk!", "Knap gedaan!", "*blij gekwispel*"],
-    comfort: ["Geeft niks, katten maken ook foutjes.", "Hmm, bijna! Kijk nog eens goed.", "*rekt zich uit* Probeer het nog eens.", "Niet opgeven hoor!"],
-    streak: ["Wauw, wat een reeks!", "Jij bent vandaag in vorm! 🐟"],
-    levelup: ["Ik voel me groter worden!", "Miauw! Wat een level!"]
+    praise: ["Purrrfect! 🐾", "Meow, that was right!", "Whiskers is impressed!", "Well done!", "*happy tail wiggle*"],
+    comfort: ["That's okay, cats make mistakes too.", "Hmm, almost! Look again.", "*stretches* Try once more.", "Don't give up!"],
+    streak: ["Wow, what a streak!", "You're on fire today! 🐟"],
+    levelup: ["I can feel myself growing!", "Meow! What a level!"]
   },
 
   pick(list) { return list[Math.floor(Math.random() * list.length)]; },
@@ -2028,7 +2028,7 @@ const Whiskers = {
 
   explain(tense, hint, explainText) {
     this.setCompanionMood("idle");
-    this.say(`${explainText || ""} ${hint || ""}`.trim() || "Vraag je leerkracht maar eens!", 9000);
+    this.say(`${explainText || ""} ${hint || ""}`.trim() || "Ask your teacher about this one!", 9000);
   }
 };
 
@@ -2915,7 +2915,7 @@ async function playDuel(id) {
   };
   showView("practice");
   Whiskers.showCompanion();
-  Whiskers.say("⚔️ Duel-modus! 10 vragen — ga ervoor!", 5000);
+  Whiskers.say("⚔️ Duel mode! 10 questions — go for it!", 5000);
   nextDuelQuestion();
 }
 
@@ -2944,9 +2944,9 @@ async function finishDuel() {
     const result = await Social.submitScore(id, score);
     if (result.state === "done") {
       const me = Social.who();
-      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("Gelijkspel — eerlijk gedeeld!", 6000); }
-      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("Gewonnennn! 🏆", 6000); Gamification.addXP(50); }
-      else { toast("😈 Verloren... revanche?"); Whiskers.say("Jammer — volgende keer beter!", 6000); Gamification.addXP(15); }
+      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("A draw — nicely shared!", 6000); }
+      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
+      else { toast("😈 Verloren... revanche?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
     } else {
       toast(`Score ingediend: ${score}/10 — wacht op je tegenstander!`);
     }

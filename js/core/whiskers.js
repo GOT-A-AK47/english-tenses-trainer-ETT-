@@ -188,7 +188,7 @@ const Whiskers = {
   showFeeding() {
     const holder = document.getElementById("companion-bubble");
     if (!holder) return;
-    this.say("🐟 *hap hap* Lekker visje! Bedankt!", 3500);
+    this.say("🐟 *nom nom* Yummy fish! Thank you!", 3500);
     this.setCompanionMood("excited");
   },
 
@@ -215,10 +215,10 @@ const Whiskers = {
 
   // ---- commentaar-regels ----
   LINES: {
-    praise: ["Purrrfect! 🐾", "Miauw, dat was goed!", "Whiskers is onder de indruk!", "Knap gedaan!", "*blij gekwispel*"],
-    comfort: ["Geeft niks, katten maken ook foutjes.", "Hmm, bijna! Kijk nog eens goed.", "*rekt zich uit* Probeer het nog eens.", "Niet opgeven hoor!"],
-    streak: ["Wauw, wat een reeks!", "Jij bent vandaag in vorm! 🐟"],
-    levelup: ["Ik voel me groter worden!", "Miauw! Wat een level!"]
+    praise: ["Purrrfect! 🐾", "Meow, that was right!", "Whiskers is impressed!", "Well done!", "*happy tail wiggle*"],
+    comfort: ["That's okay, cats make mistakes too.", "Hmm, almost! Look again.", "*stretches* Try once more.", "Don't give up!"],
+    streak: ["Wow, what a streak!", "You're on fire today! 🐟"],
+    levelup: ["I can feel myself growing!", "Meow! What a level!"]
   },
 
   pick(list) { return list[Math.floor(Math.random() * list.length)]; },
@@ -276,6 +276,6 @@ const Whiskers = {
 
   explain(tense, hint, explainText) {
     this.setCompanionMood("idle");
-    this.say(`${explainText || ""} ${hint || ""}`.trim() || "Vraag je leerkracht maar eens!", 9000);
+    this.say(`${explainText || ""} ${hint || ""}`.trim() || "Ask your teacher about this one!", 9000);
   }
 };

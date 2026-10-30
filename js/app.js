@@ -302,7 +302,7 @@ async function playDuel(id) {
   };
   showView("practice");
   Whiskers.showCompanion();
-  Whiskers.say("⚔️ Duel-modus! 10 vragen — ga ervoor!", 5000);
+  Whiskers.say("⚔️ Duel mode! 10 questions — go for it!", 5000);
   nextDuelQuestion();
 }
 
@@ -331,9 +331,9 @@ async function finishDuel() {
     const result = await Social.submitScore(id, score);
     if (result.state === "done") {
       const me = Social.who();
-      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("Gelijkspel — eerlijk gedeeld!", 6000); }
-      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("Gewonnennn! 🏆", 6000); Gamification.addXP(50); }
-      else { toast("😈 Verloren... revanche?"); Whiskers.say("Jammer — volgende keer beter!", 6000); Gamification.addXP(15); }
+      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("A draw — nicely shared!", 6000); }
+      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
+      else { toast("😈 Verloren... revanche?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
     } else {
       toast(`Score ingediend: ${score}/10 — wacht op je tegenstander!`);
     }
