@@ -439,7 +439,13 @@ function init() {
   $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", () => {
     const home = document.getElementById("view-home");
-    if (home && home.classList.contains("active")) showBadges();
+    if (!home || !home.classList.contains("active")) return;
+    const modal = $("badges-modal");
+    if (modal.style.display === "block") {
+      modal.style.display = "none"; // toggle: open -> dicht
+    } else {
+      showBadges();
+    }
   });
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("badges-reset").addEventListener("click", resetWhiskers);
