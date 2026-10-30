@@ -67,7 +67,8 @@ const ProgressStore = {
     const payload = {
       identity,
       progress: this.all(),
-      newAnswers
+      newAnswers,
+      game: (typeof Gamification !== "undefined" && Gamification.state) ? Gamification.state : null
     };
     return fetch("/api/progress", {
       method: "POST",
@@ -82,6 +83,10 @@ const ProgressStore = {
         if (data && data.progress) {
           this._cache = data.progress;
           this.backend.save(this._cache);
+        }
+        // V2.7: Whiskers-state samenvoegen (server = verzamelpunt)
+        if (data && data.game && typeof Gamification !== "undefined" && Gamification.mergeFromServer) {
+          Gamification.mergeFromServer(data.game);
         }
         return this.all();
       })

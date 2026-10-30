@@ -362,6 +362,40 @@ const Gamification = {
     if (xpEl) xpEl.textContent = `${this.state.xp} XP · Level: ${this.level().name}`;
   },
 
+  // V2.7: server-state samenvoegen na sync — zo volgt Whiskers je naar
+  // elk apparaat. Strategie: maximum-XP, union van badges, maximum energie,
+  // ver-doel: hoogste quest-stand van vandaag.
+  mergeFromServer(remote) {
+    if (!remote || !this.state) return;
+    let changed = false;
+    if ((remote.xp || 0) > this.state.xp) { this.state.xp = remote.xp; changed = true; }
+    if (Array.isArray(remote.badges)) {
+      for (const b of remote.badges) {
+        if (!this.state.badges.includes(b)) { this.state.badges.push(b); changed = true; }
+      }
+    }
+    if ((remote.energy || 0) > (this.state.energy || 0)) { this.state.energy = remote.energy; changed = true; }
+    if (remote.quest && this.state.quest && remote.quest.date === this.state.quest.date) {
+      if ((remote.quest.answered || 0) > (this.state.quest.answered || 0)) {
+        this.state.quest = remote.quest; changed = true;
+      }
+      if (remote.questDone) { this.state.questDone = true; changed = true; }
+    }
+    if (remote.lastEnergyDay && remote.lastEnergyDay < (this.state.lastEnergyDay || "9999")) {
+      // bewaar de oudste dag zodat de dag-decay op dit apparaat niet dubbel toe
+      this.state.lastEnergyDay = remote.lastEnergyDay;
+      changed = true;
+    }
+    if (changed) {
+      this.save();
+      this.renderBar();
+      this.renderQuest();
+      this.renderEnergy();
+      this.renderBadges();
+      this.renderWhiskers("idle");
+    }
+  },
+
   // V2.1: alles van Whiskers opnieuw beginnen (xp, badges, energie, skins)
   resetAll() {
     this.state = { xp: 0, badges: [], quest: null, questDone: false, energy: 100, lastEnergyDay: null };
