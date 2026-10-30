@@ -83,6 +83,8 @@
         </div>
         <p class="sub" style="margin:0.4rem 0 0">Vink aan welke tijden de leerlingen moeten oefenen:</p>
         <div class="tense-picks" id="task-tenses"></div>
+        <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>Voor wie?</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-whole-class" checked> hele klas</label></p>
+        <div id="task-students" class="student-picks" style="display:none"></div>
         <div class="row"><button onclick="addTask()">Taak toewijzen</button></div>
         <p class="msg" id="task-msg"></p>
       </div>
@@ -285,15 +287,55 @@
     function renderTaskTenses() {
       document.getElementById("task-tenses").innerHTML = TENSES.map(t =>
         `<label><input type="checkbox" value="${t}"> ${t.replace(/-/g, " ")}</label>`).join("");
+      // V2.3: leerlingen van de geselecteerde klas laden
+      const klasSel = document.getElementById("task-klas");
+      if (klasSel) {
+        klasSel.addEventListener("change", loadTaskStudents);
+        loadTaskStudents();
+      }
+      const whole = document.getElementById("task-whole-class");
+      if (whole) whole.addEventListener("change", () => {
+        document.getElementById("task-students").style.display = whole.checked ? "none" : "block";
+      });
+    }
+
+    async function loadTaskStudents() {
+      const klas = document.getElementById("task-klas").value;
+      if (!klas) return;
+      try {
+        const students = await api("/api/teacher/students?klas=" + encodeURIComponent(klas));
+        const box = document.getElementById("task-students");
+        box.innerHTML = students.length
+          ? students.map(st => `<label><input type="checkbox" value="${esc(st.name)}" class="student-check"> ${esc(st.name)}</label>`).join("")
+          : '<span class="empty">Nog geen leerlingen in deze klas.</span>';
+      } catch (e) {
+        document.getElementById("task-students").innerHTML = '<span class="empty">Kon leerlingen niet laden.</span>';
+      }
+    }
+
+    async function delStudent(name, klas) {
+      if (!confirm(`Leerling "${name}" (${klas}) verwijderen?\n\nAlle voortgang, kalender, vrienden en duels worden gewist. De leerling moet daarna opnieuw inloggen.`)) return;
+      await api("/api/teacher/student/" + encodeURIComponent(name) + "?klas=" + encodeURIComponent(klas), { method: "DELETE" });
+      loadProgress();
+      loadFeedback && loadTaskStudents();
     }
 
     async function addTask() {
       const title = document.getElementById("task-title").value;
       const klas = document.getElementById("task-klas").value;
       const tenseIds = [...document.querySelectorAll("#task-tenses input:checked")].map(i => i.value);
+      const whole = document.getElementById("task-whole-class").checked;
+      const students = whole ? null :
+        [...document.querySelectorAll(".student-check:checked")].map(i => i.value);
+      if (!whole && (!students || !students.length)) {
+        const m = document.getElementById("task-msg");
+        m.textContent = "Vink minstens één leerling aan (of kies 'hele klas').";
+        m.className = "msg err";
+        return;
+      }
       const m = document.getElementById("task-msg");
       try {
-        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds }) });
+        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds, students }) });
         m.textContent = "Taak toegekend!"; m.className = "msg ok";
         document.getElementById("task-title").value = "";
         document.querySelectorAll("#task-tenses input:checked").forEach(i => i.checked = false);
@@ -337,10 +379,11 @@
           const last = s.lastSeen ? new Date(s.lastSeen).toLocaleString("nl-NL") : "—";
           return `<tr><td>${esc(s.name)}</td><td>${totals.total}</td>
             <td><span class="pct ${pc}">${pct === null ? "—" : pct + "%"}</span></td>
-            <td>${weak ? esc(weak.name.replace(/-/g, " ")) : "—"}</td><td class="last">${last}</td></tr>`;
+            <td>${weak ? esc(weak.name.replace(/-/g, " ")) : "—"}</td><td class="last">${last}</td>
+            <td><button class="danger" style="padding:0.2rem 0.5rem;font-size:0.7rem" onclick="delStudent('${esc(s.name)}','${esc(klas)}')">🗑️</button></td></tr>`;
         }).join("");
         return `<div class="card"><h2 style="margin-top:0">Klas ${esc(klas)} <span class="last">(${students.length})</span></h2>
-          <table><thead><tr><th>Naam</th><th>Vragen</th><th>Score</th><th>Zwakste tijd</th><th>Laatst gezien</th></tr></thead>
+          <table><thead><tr><th>Naam</th><th>Vragen</th><th>Score</th><th>Zwakste tijd</th><th>Laatst gezien</th><th></th></tr></thead>
           <tbody>${rows}</tbody></table></div>`;
       }).join("");
     }

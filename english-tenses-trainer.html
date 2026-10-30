@@ -539,7 +539,24 @@ footer {
   padding: 1rem;
 }
 
-.feedback-link { position: absolute; right: 1.25rem; top: 2rem; }
+.feedback-link {
+  position: absolute;
+  right: 1.25rem;
+  top: 2rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(47, 111, 237, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.feedback-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(47, 111, 237, 0.45);
+}
 
 header { position: relative; }
 
@@ -785,6 +802,15 @@ header h1::after {
 .duel-won { border-color: #1e8e5a; background: #e9f7f0; }
 .duel-lost { border-color: #c94040; background: #fdefef; }
 .duel-draw { border-color: #c77f1e; background: #fdf5e6; }
+
+.student-picks { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0 0.6rem; }
+.student-picks label {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: #fff; border: 1px solid var(--line);
+  border-radius: 6px; padding: 0.3rem 0.6rem;
+  font-size: 0.82rem; font-weight: 500; cursor: pointer;
+}
+.student-picks input { accent-color: var(--accent); }
 
 </style>
 </head>
@@ -2579,6 +2605,26 @@ function fetchClassList() {
     .catch(() => null); // geen server: lokale fallback (vrije invoer)
 }
 
+// V2.3: bestaat deze leerling nog op de server? Zo niet: opnieuw inloggen.
+// (Offline of geen identiteit: gewoon doorgaan — verwijderd worden merk je
+// alleen als de server expliciet zegt dat je er niet meer bent.)
+function verifyIdentity() {
+  const id = Identity.get();
+  if (!id) return;
+  fetch(`/api/student/exists?name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (data && data.exists === false) {
+        Identity.clear();
+        MistakeStore.clear();
+        try { localStorage.removeItem("english-tenses-session"); } catch {}
+        toast("Je account is niet meer bekend — log opnieuw in.");
+        ensureIdentity();
+      }
+    })
+    .catch(() => { /* server onbereikbaar: lokaal verder */ });
+}
+
 function ensureIdentity() {
   if (Identity.get()) {
     updateIdentityLabel();
@@ -2623,7 +2669,7 @@ function saveIdentity() {
 function loadTasks() {
   const id = Identity.get();
   if (!id) return;
-  fetch("/api/tasks?klas=" + encodeURIComponent(id.klas))
+  fetch("/api/tasks?klas=" + encodeURIComponent(id.klas) + "&name=" + encodeURIComponent(id.name))
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(tasks => {
       const wrap = $("home-tasks");
@@ -2909,6 +2955,7 @@ function init() {
   Gamification.init();
   Whiskers.trackEyes();
   maybeShowIntro();
+  verifyIdentity();
   $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", () => {
     const home = document.getElementById("view-home");

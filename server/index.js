@@ -291,7 +291,7 @@ async function handleApi(req, res) {
 
   if (req.method === "POST" && url === "/api/teacher/tasks") {
     if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
-    const { title, klas, tenseIds } = JSON.parse(await readBody(req) || "{}") || {};
+    const { title, klas, tenseIds, students: payloadStudents } = JSON.parse(await readBody(req) || "{}") || {};
     if (!title || !klas || !Array.isArray(tenseIds) || !tenseIds.length) {
       return respond(res, 400, { error: "title, klas en tenseIds zijn verplicht" });
     }
@@ -305,6 +305,10 @@ async function handleApi(req, res) {
       title: String(title).trim(),
       klas: String(klas),
       tenseIds,
+      // V2.3: optioneel specifieke leerlingen; leeg/afwezig = hele klas
+      students: Array.isArray(payloadStudents) && payloadStudents.length
+        ? payloadStudents.map(n => String(n).trim())
+        : null,
       createdAt: new Date().toISOString()
     };
     tasks.push(task);
@@ -322,8 +326,20 @@ async function handleApi(req, res) {
   // --- leerlingen: taken voor mijn klas ---
   if (req.method === "GET" && url === "/api/tasks") {
     const klas = new URL(req.url, "http://x").searchParams.get("klas");
+    const name = new URL(req.url, "http://x").searchParams.get("name");
     if (!klas) return respond(res, 400, { error: "klas verplicht" });
-    return respond(res, 200, loadTasks().filter(t => t.klas === klas));
+    return respond(res, 200, loadTasks().filter(t =>
+      t.klas === klas && (!t.students || !name || t.students.includes(name))
+    ));
+  }
+
+  // --- bestaan-check leerling (V2.3; maakt niks aan) ---
+  if (req.method === "GET" && url === "/api/student/exists") {
+    const name = new URL(req.url, "http://x").searchParams.get("name");
+    const klas = new URL(req.url, "http://x").searchParams.get("klas");
+    if (!name || !klas) return respond(res, 400, { error: "naam en klas verplicht" });
+    const exists = !!loadProgress()[name + "|" + klas];
+    return respond(res, 200, { exists });
   }
 
   // --- feedback (openbaar posten, docenten lezen) ---
@@ -364,6 +380,50 @@ async function handleApi(req, res) {
     const id = url.split("/").pop();
     saveFeedback(loadFeedback().filter(f => f.id !== id));
     return respond(res, 200, { ok: true });
+  }
+
+  // --- leerling verwijderen (docenten) ---
+  // Verwijdert progress + kalender + vriendschappen + duels van de leerling.
+  // De client krijgt dan geen data meer en vraagt opnieuw om naam+klas.
+  if (req.method === "DELETE" && url.startsWith("/api/teacher/student/")) {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const name = decodeURIComponent(url.split("/").pop());
+    const klas = new URL(req.url, "http://x").searchParams.get("klas");
+    if (!name || !klas) return respond(res, 400, { error: "naam en klas verplicht" });
+    const who = name + "|" + klas;
+
+    const all = loadProgress();
+    delete all[who];
+    saveProgress(all);
+
+    const cal = loadCalendar();
+    delete cal[who];
+    saveCalendar(cal);
+
+    const friends = loadFriends();
+    delete friends[who];
+    for (const [key, list] of Object.entries(friends)) {
+      if (Array.isArray(list)) friends[key] = list.filter(f => f !== who);
+    }
+    saveFriends(friends);
+
+    saveDuels(loadDuels().filter(d => !d.players.includes(who)));
+
+    return respond(res, 200, { ok: true });
+  }
+
+  // --- leerlingen per klas (voor taak-toewijzing en verwijderen) ---
+  if (req.method === "GET" && url === "/api/teacher/students") {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const klas = new URL(req.url, "http://x").searchParams.get("klas");
+    if (!klas) return respond(res, 400, { error: "klas verplicht" });
+    const all = loadProgress();
+    const students = [];
+    for (const [key, entry] of Object.entries(all)) {
+      if (!entry._identity || entry._identity.klas !== klas) continue;
+      students.push({ name: entry._identity.name, lastSeen: entry._identity.lastSeen });
+    }
+    return respond(res, 200, students.sort((a, b) => a.name.localeCompare(b.name)));
   }
 
   // --- usage-statistieken (docenten) ---

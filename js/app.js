@@ -13,6 +13,26 @@ function fetchClassList() {
     .catch(() => null); // geen server: lokale fallback (vrije invoer)
 }
 
+// V2.3: bestaat deze leerling nog op de server? Zo niet: opnieuw inloggen.
+// (Offline of geen identiteit: gewoon doorgaan — verwijderd worden merk je
+// alleen als de server expliciet zegt dat je er niet meer bent.)
+function verifyIdentity() {
+  const id = Identity.get();
+  if (!id) return;
+  fetch(`/api/student/exists?name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`)
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      if (data && data.exists === false) {
+        Identity.clear();
+        MistakeStore.clear();
+        try { localStorage.removeItem("english-tenses-session"); } catch {}
+        toast("Je account is niet meer bekend — log opnieuw in.");
+        ensureIdentity();
+      }
+    })
+    .catch(() => { /* server onbereikbaar: lokaal verder */ });
+}
+
 function ensureIdentity() {
   if (Identity.get()) {
     updateIdentityLabel();
@@ -57,7 +77,7 @@ function saveIdentity() {
 function loadTasks() {
   const id = Identity.get();
   if (!id) return;
-  fetch("/api/tasks?klas=" + encodeURIComponent(id.klas))
+  fetch("/api/tasks?klas=" + encodeURIComponent(id.klas) + "&name=" + encodeURIComponent(id.name))
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(tasks => {
       const wrap = $("home-tasks");
@@ -343,6 +363,7 @@ function init() {
   Gamification.init();
   Whiskers.trackEyes();
   maybeShowIntro();
+  verifyIdentity();
   $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", () => {
     const home = document.getElementById("view-home");
