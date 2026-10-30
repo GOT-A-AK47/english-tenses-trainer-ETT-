@@ -2944,7 +2944,7 @@ async function finishDuel() {
     const result = await Social.submitScore(id, score);
     if (result.state === "done") {
       const me = Social.who();
-      if (result.winner === "draw") { toast("🤝 Gelijkspel!"); Whiskers.say("A draw — nicely shared!", 6000); }
+      if (result.winner === "draw") { toast("🤝 A draw!"); Whiskers.say("A draw — nicely shared!", 6000); }
       else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
       else { toast("😈 Verloren... revanche?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
     } else {
