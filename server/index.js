@@ -169,10 +169,6 @@ async function handleApi(req, res) {
       return respond(res, 400, { error: "identity en progress zijn verplicht" });
     }
     const newAnswers = Array.isArray(payload.newAnswers) ? payload.newAnswers : [];
-    // V2.7: Whiskers-game-state (XP, badges, energie, skin) meenemen per leerling
-    if (payload.game && typeof payload.game === "object") {
-      all[key]._game = payload.game;
-    }
     // V2.2: dagelijkse kalender per leerling
     const today = new Date().toISOString().slice(0, 10);
     const cal = loadCalendar();
@@ -185,6 +181,10 @@ async function handleApi(req, res) {
     const key = studentKey(identity);
     const all = loadProgress();
     all[key] = mergeProgress(all[key] || {}, progress);
+    // V2.7: Whiskers-game-state (XP, badges, energie) per leerling bewaren
+    if (payload.game && typeof payload.game === "object") {
+      all[key]._game = payload.game;
+    }
     all[key]._identity = { name: identity.name, klas: identity.klas, lastSeen: new Date().toISOString() };
     saveProgress(all);
     trackUsage(identity, newAnswers);
