@@ -812,6 +812,27 @@ header h1::after {
 }
 .student-picks input { accent-color: var(--accent); }
 
+
+/* V2.4: fout-feedback */
+@keyframes shakeWrong {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+#answer.wrong {
+  border-color: var(--bad);
+  background: #fdf2f2;
+  animation: shakeWrong 0.25s ease;
+}
+#answer.wrong:focus { outline: 2px solid rgba(201, 64, 64, 0.35); }
+#feedback.nok {
+  background: #fdeaea;
+  border-left: 3px solid var(--bad);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
 </style>
 </head>
 <body>
@@ -3116,19 +3137,41 @@ function newExercise() {
 
 function checkAnswer() {
   if (!currentExercise) return;
+  // V2.4: al correct beantwoord? — niet nog eens tellen bij extra Enter
+  if (currentExercise.solved) { newExercise(); return; }
   const isRepeat = !!currentExercise.isRepeat;
   const input = $("answer");
   const ok = currentExercise.check(input.value);
   count++;
   if (ok) {
     score++;
+    currentExercise.solved = true;
     input.classList.add("correct");
-    $("feedback").textContent = `Juist! "${currentExercise.answer}"`;
+    const attempts = currentExercise.attempts || 1;
+    $("feedback").textContent = attempts > 1
+      ? `Juist! "${currentExercise.answer}" — goed volgehouden!`
+      : `Juist! "${currentExercise.answer}"`;
     $("feedback").className = "ok";
   } else {
+    currentExercise.attempts = (currentExercise.attempts || 0) + 1;
     input.classList.add("wrong");
-    $("feedback").textContent = `Fout. Het juiste antwoord is "${currentExercise.answer}". ${currentExercise.explain || ""}`;
+    input.classList.remove("correct");
+    // V2.4: laat de leerling opnieuw proberen — antwoord niet weggeven,
+    // maar wel steeds duidelijker hulp bij herhaalde fouten.
+    const n = currentExercise.attempts;
+    let msg;
+    if (n === 1) {
+      msg = `Niet juist — probeer het nog eens! Let op de spelling en de tijd.`;
+    } else if (n === 2) {
+      msg = `Nog niet goed. ${currentExercise.explain || ""} Kijk nog eens goed naar de zin.`;
+    } else {
+      msg = `Poging ${n}... Tip: het antwoord begint met "${currentExercise.answer.slice(0, Math.max(1, Math.ceil(currentExercise.answer.length / 3)))}". Of druk op de hint-knop!`;
+    }
+    $("feedback").textContent = msg;
     $("feedback").className = "nok";
+    // focus terug in het veld en selecteer de foutieve tekst
+    input.focus();
+    input.select();
   }
   ProgressStore.record(currentExercise.tense.id, ok);
   ProgressStore.queueAnswer(currentExercise.tense.id, ok);

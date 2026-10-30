@@ -804,3 +804,24 @@ header h1::after {
   font-size: 0.82rem; font-weight: 500; cursor: pointer;
 }
 .student-picks input { accent-color: var(--accent); }
+
+
+/* V2.4: fout-feedback */
+@keyframes shakeWrong {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+#answer.wrong {
+  border-color: var(--bad);
+  background: #fdf2f2;
+  animation: shakeWrong 0.25s ease;
+}
+#answer.wrong:focus { outline: 2px solid rgba(201, 64, 64, 0.35); }
+#feedback.nok {
+  background: #fdeaea;
+  border-left: 3px solid var(--bad);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
