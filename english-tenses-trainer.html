@@ -649,7 +649,7 @@ header h1::after {
   margin: 0.75rem 0;
 }
 
-.badge {
+.badge-card {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.6rem;
@@ -657,10 +657,10 @@ header h1::after {
   font-size: 0.72rem;
   background: #fff;
 }
-.badge-icon { font-size: 1.4rem; display: block; margin-bottom: 0.2rem; }
-.badge-name { display: block; font-weight: 700; font-size: 0.78rem; }
-.badge-desc { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; }
-.badge.locked { opacity: 0.45; filter: grayscale(1); }
+.badge-card .badge-icon { font-size: 1.4rem; display: block; margin-bottom: 0.2rem; }
+.badge-card .badge-name { display: block; font-weight: 700; font-size: 0.78rem; }
+.badge-card .badge-desc { display: block; font-size: 0.68rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.4; }
+.badge-card.locked { opacity: 0.45; filter: grayscale(1); }
 
 /* Muis-mini-game */
 #bonus-mouse {
@@ -1668,7 +1668,7 @@ const Gamification = {
     if (!grid) return;
     grid.innerHTML = BADGES.map(b => {
       const earned = this.state.badges.includes(b.id);
-      return `<div class="badge ${earned ? "" : "locked"}" title="${b.desc}">
+      return `<div class="badge-card ${earned ? "" : "locked"}" title="${b.desc}">
         <span class="badge-icon">${earned ? b.icon : "🔒"}</span>
         <span class="badge-name">${b.name}</span>
         <span class="badge-desc">${b.desc}</span>
@@ -2910,7 +2910,10 @@ function init() {
   Whiskers.trackEyes();
   maybeShowIntro();
   $("intro-close").addEventListener("click", closeIntro);
-  $("whiskers").addEventListener("click", showBadges);
+  $("whiskers").addEventListener("click", () => {
+    const home = document.getElementById("view-home");
+    if (home && home.classList.contains("active")) showBadges();
+  });
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("badges-reset").addEventListener("click", resetWhiskers);
   $("add-friend").addEventListener("click", addFriend);

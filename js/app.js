@@ -344,7 +344,10 @@ function init() {
   Whiskers.trackEyes();
   maybeShowIntro();
   $("intro-close").addEventListener("click", closeIntro);
-  $("whiskers").addEventListener("click", showBadges);
+  $("whiskers").addEventListener("click", () => {
+    const home = document.getElementById("view-home");
+    if (home && home.classList.contains("active")) showBadges();
+  });
   $("badges-close").addEventListener("click", () => $("badges-modal").style.display = "none");
   $("badges-reset").addEventListener("click", resetWhiskers);
   $("add-friend").addEventListener("click", addFriend);

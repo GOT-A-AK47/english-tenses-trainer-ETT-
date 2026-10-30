@@ -352,7 +352,7 @@ const Gamification = {
     if (!grid) return;
     grid.innerHTML = BADGES.map(b => {
       const earned = this.state.badges.includes(b.id);
-      return `<div class="badge ${earned ? "" : "locked"}" title="${b.desc}">
+      return `<div class="badge-card ${earned ? "" : "locked"}" title="${b.desc}">
         <span class="badge-icon">${earned ? b.icon : "🔒"}</span>
         <span class="badge-name">${b.name}</span>
         <span class="badge-desc">${b.desc}</span>
