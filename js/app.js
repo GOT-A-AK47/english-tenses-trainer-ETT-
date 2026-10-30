@@ -286,6 +286,7 @@ function checkVocab() {
 // ---- V2.2: vrienden, duels, kalender ----
 async function renderSocial() {
   if (!Identity.get()) return;
+  renderRequests();
   const friends = await Social.loadFriends();
   const friendsList = $("friends-list");
 
@@ -323,9 +324,11 @@ async function renderSocial() {
         const cls = d.state !== "done" ? "" : d.winner === undefined ? "" : d.winner === "draw" ? "duel-draw" : (d.winner === me ? "duel-won" : "duel-lost");
         const scoreLabel = d.state === "done"
           ? `<span class="duel-score">${d.myScore ?? "?"} – ${d.theirScore ?? "?"}</span>`
-          : d.myScore !== null
-            ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
-            : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
+          : d.state === "waiting"
+            ? `<button class="secondary" data-play-duel="${d.id}">Wachtkamer — meedoen</button>`
+            : d.myScore !== null
+              ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
+              : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
         return `<div class="duel-item ${cls}">
           <span class="vs">⚔️ vs ${d.opponent.split("|")[0]}</span>
           ${scoreLabel}
@@ -341,13 +344,48 @@ async function addFriend() {
   const val = $("mate-select").value;
   if (!val) { $("friends-msg").textContent = "Kies eerst een klasgenoot."; return; }
   try {
-    await Social.addFriend(val);
+    await Social.requestFriend(val);
     $("friends-msg").textContent = "";
     renderSocial();
-    toast("🐱 Vriend toegevoegd!");
+    toast("📨 Vriendschapsverzoek verstuurd!");
   } catch (e) {
-    $("friends-msg").textContent = "Kon vriend niet toevoegen (server bereikbaar?)";
+    try {
+      const err = await e;
+      $("friends-msg").textContent = err && err.error ? err.error : "Verzoek mislukt";
+    } catch { $("friends-msg").textContent = "Kon verzoek niet sturen (server bereikbaar?)"; }
   }
+}
+
+// V2.6: openstaande vriendschapsverzoeken renderen met accepteren/afwijzen
+async function renderRequests() {
+  const box = $("requests-list");
+  if (!box) return;
+  const reqs = await Social.listRequests();
+  if (!reqs.length) { box.style.display = "none"; return; }
+  box.style.display = "block";
+  box.innerHTML = `
+    <h3 class="section-title">Vriendschapsverzoeken (${reqs.length})</h3>
+    ${reqs.map(from => `
+      <div class="friend-row">
+        <span><strong>${from.split("|")[0]}</strong> <span class="last">wil je vriend zijn</span></span>
+        <span class="btnrow" style="margin:0">
+          <button class="secondary" data-accept="${from}">✓ Accepteren</button>
+          <button class="secondary" data-decline="${from}">✕</button>
+        </span>
+      </div>`).join("")}`;
+  box.querySelectorAll("[data-accept]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await Social.acceptFriend(btn.dataset.accept);
+      toast("🐱 Vriendschap!");
+      renderSocial();
+    });
+  });
+  box.querySelectorAll("[data-decline]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      await Social.declineFriend(btn.dataset.decline);
+      renderSocial();
+    });
+  });
 }
 
 // ---- Duel spelen: 10 vragen in de practice-flow ----
@@ -357,15 +395,56 @@ async function startDuel() {
   const opponent = $("duel-opponent").value;
   if (!opponent) { toast("Kies eerst een vriend om tegen te duelleren."); return; }
   try {
-    const duel = await Social.newDuel(opponent);
-    await playDuel(duel.id);
+    const r = await Social.newDuel(opponent);
+    await joinDuelRoom(r.id);
   } catch (e) {
     toast("Duel starten mislukt — is de server bereikbaar?");
   }
 }
 
+// V2.6: wachtkamer — beide spelers moeten er zijn voordat het duel begint
+async function joinDuelRoom(id) {
+  showView("practice");
+  Whiskers.showCompanion();
+  $("tense-info").textContent = "⚔️ Wachtkamer...";
+  $("sentence").textContent = "Wachten tot je tegenstander ook klaarstaat...";
+  $("context").textContent = "";
+  $("answer").value = "";
+  $("answer").style.display = "none";
+  $("feedback").textContent = "";
+  $("duel-wait").style.display = "block";
+  $("check").style.display = "none";
+
+  const poll = async () => {
+    try {
+      const r = await Social.joinDuel(id);
+      if (r.state === "live") {
+        $("answer").style.display = "";
+        $("check").style.display = "";
+        $("duel-wait").style.display = "none";
+        duelState = {
+          id,
+          exercises: Social.buildDuelExercises(r.questions),
+          index: 0,
+          correct: 0
+        };
+        Whiskers.say("⚔️ Duel mode! Both players ready — go!", 5000);
+        nextDuelQuestion();
+        return;
+      }
+    } catch (e) { /* opnieuw proberen */ }
+    duelState = { id, waiting: true, timer: setTimeout(poll, 2000) };
+  };
+  poll();
+}
+
 async function playDuel(id) {
   const duel = await Social.getDuel(id);
+  if (duel.state === "waiting") return joinDuelRoom(id);
+  if (duel.state !== "live" || !duel.questions) {
+    toast("Duel is niet (meer) speelbaar.");
+    return;
+  }
   duelState = {
     id,
     exercises: Social.buildDuelExercises(duel.questions),
@@ -640,11 +719,17 @@ function checkAnswer() {
     input.focus();
     input.select();
   }
-  ProgressStore.record(currentExercise.tense.id, ok);
-  ProgressStore.queueAnswer(currentExercise.tense.id, ok);
-  Gamification.onAnswer(currentExercise.tense.id, ok);
-  Whiskers.react(ok, Gamification._rowStreak, Gamification._mistakes, currentExercise.tense.explain);
-  ProgressStore.sync();
+  // V2.6: duel-antwoorden zijn apart — niet in de gewone voortgang/sync
+  if (duelState && !duelState.waiting) {
+    // alleen Whiskers-reactie + duel-teller; geen ProgressStore/Gamification
+    Whiskers.react(ok, ok ? 1 : 0, ok ? 0 : 1, currentExercise.tense.explain);
+  } else {
+    ProgressStore.record(currentExercise.tense.id, ok);
+    ProgressStore.queueAnswer(currentExercise.tense.id, ok);
+    Gamification.onAnswer(currentExercise.tense.id, ok);
+    Whiskers.react(ok, Gamification._rowStreak, Gamification._mistakes, currentExercise.tense.explain);
+    ProgressStore.sync();
+  }
   if (!ok) {
     MistakeStore.add(currentExercise.tense.id, currentExercise.subject, currentExercise.verb);
   } else if (isRepeat) {

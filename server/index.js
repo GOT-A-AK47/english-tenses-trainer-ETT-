@@ -15,6 +15,7 @@ const TASKS_FILE = path.join(DATA_DIR, "tasks.json");
 const FEEDBACK_FILE = path.join(DATA_DIR, "feedback.json");
 const USAGE_FILE = path.join(DATA_DIR, "usage.json");
 const FRIENDS_FILE = path.join(DATA_DIR, "friends.json");
+const REQUESTS_FILE = path.join(DATA_DIR, "friend-requests.json");
 const DUELS_FILE = path.join(DATA_DIR, "duels.json");
 const CALENDAR_FILE = path.join(DATA_DIR, "calendar.json");
 const PORT = process.env.PORT || 3000;
@@ -51,6 +52,8 @@ const loadUsage = () => loadJson(USAGE_FILE, {});
 const saveUsage = d => saveJson(USAGE_FILE, d);
 const loadFriends = () => loadJson(FRIENDS_FILE, {});
 const saveFriends = d => saveJson(FRIENDS_FILE, d);
+const loadRequests = () => loadJson(REQUESTS_FILE, {});
+const saveRequests = d => saveJson(REQUESTS_FILE, d);
 const loadDuels = () => loadJson(DUELS_FILE, []);
 const saveDuels = d => saveJson(DUELS_FILE, d);
 const loadCalendar = () => loadJson(CALENDAR_FILE, {});
@@ -514,17 +517,56 @@ async function handleApi(req, res) {
     return respond(res, 200, mates.sort());
   }
 
-  // vriend maken (wederzijds: beide krijgen elkaar)
-  if (req.method === "POST" && url === "/api/friends/add") {
+  // V2.6: vriendschapsverzoek — de ander moet accepteren
+  if (req.method === "POST" && url === "/api/friends/request") {
     const { me, friend } = JSON.parse(await readBody(req) || "{}") || {};
     if (!me || !friend) return respond(res, 400, { error: "me en friend verplicht" });
-    if (me === friend) return respond(res, 400, { error: "jezelf toevoegen kan niet" });
+    if (me === friend) return respond(res, 400, { error: "jezelf kan niet" });
+    const friends = loadFriends();
+    if (friends[me] && friends[me].includes(friend)) {
+      return respond(res, 400, { error: "al vrienden" });
+    }
+    const requests = loadRequests();
+    if (!requests[friend]) requests[friend] = [];
+    if (!requests[friend].includes(me)) requests[friend].push(me);
+    saveRequests(requests);
+    return respond(res, 200, { ok: true });
+  }
+
+  // openstaande verzoeken voor mij
+  if (req.method === "GET" && url === "/api/friends/requests") {
+    const who = new URL(req.url, "http://x").searchParams.get("who");
+    if (!who) return respond(res, 400, { error: "who verplicht" });
+    const requests = loadRequests();
+    return respond(res, 200, requests[who] || []);
+  }
+
+  // verzoek accepteren -> wederzijdse vriendschap
+  if (req.method === "POST" && url === "/api/friends/accept") {
+    const { me, from } = JSON.parse(await readBody(req) || "{}") || {};
+    if (!me || !from) return respond(res, 400, { error: "me en from verplicht" });
+    const requests = loadRequests();
+    if (!requests[me] || !requests[me].includes(from)) {
+      return respond(res, 400, { error: "geen openstaand verzoek" });
+    }
+    requests[me] = requests[me].filter(f => f !== from);
+    saveRequests(requests);
     const friends = loadFriends();
     if (!friends[me]) friends[me] = [];
-    if (!friends[friend]) friends[friend] = [];
-    if (!friends[me].includes(friend)) friends[me].push(friend);
-    if (!friends[friend].includes(me)) friends[friend].push(me);
+    if (!friends[from]) friends[from] = [];
+    if (!friends[me].includes(from)) friends[me].push(from);
+    if (!friends[from].includes(me)) friends[from].push(me);
     saveFriends(friends);
+    return respond(res, 200, { ok: true });
+  }
+
+  // verzoek afwijzen
+  if (req.method === "POST" && url === "/api/friends/decline") {
+    const { me, from } = JSON.parse(await readBody(req) || "{}") || {};
+    if (!me || !from) return respond(res, 400, { error: "me en from verplicht" });
+    const requests = loadRequests();
+    if (requests[me]) requests[me] = requests[me].filter(f => f !== from);
+    saveRequests(requests);
     return respond(res, 200, { ok: true });
   }
 
@@ -567,14 +609,35 @@ async function handleApi(req, res) {
     const duel = {
       id: "d" + Date.now().toString(36),
       players: [me, opponent],
-      questions: genDuelQuestions(),
+      questions: null,           // pas als beide klaarstaan
       scores: { [me]: null, [opponent]: null },
-      state: "open",
+      joined: [me],              // wie zit er al in de wacht-kamer
+      state: "waiting",          // waiting -> live -> done
       createdAt: new Date().toISOString()
     };
     duels.push(duel);
     saveDuels(duels);
-    return respond(res, 200, { duel });
+    return respond(res, 200, { duel: { id: duel.id, state: duel.state } });
+  }
+
+  // duel/join: in de wacht-kamer; als beide er zijn gaat het duel live
+  if (req.method === "POST" && url === "/api/duel/join") {
+    const { id, who } = JSON.parse(await readBody(req) || "{}") || {};
+    const duels = loadDuels();
+    const duel = duels.find(d => d.id === id);
+    if (!duel) return respond(res, 404, { error: "duel bestaat niet" });
+    if (!duel.players.includes(who)) return respond(res, 403, { error: "je zit niet in dit duel" });
+    if (!duel.joined.includes(who)) duel.joined.push(who);
+    if (duel.joined.length === 2 && !duel.questions) {
+      duel.questions = genDuelQuestions();
+      duel.state = "live";
+    }
+    saveDuels(duels);
+    return respond(res, 200, {
+      state: duel.state,
+      joined: duel.joined.length,
+      questions: duel.state === "live" ? duel.questions : null
+    });
   }
 
   // mijn duels (open + afgerond)
@@ -592,13 +655,16 @@ async function handleApi(req, res) {
     })));
   }
 
-  // duel-details (vragen ophalen om te spelen)
+  // duel-details (vragen ophalen om te spelen; pas als live)
   if (req.method === "GET" && url === "/api/duel/get") {
     const id = new URL(req.url, "http://x").searchParams.get("id");
     const duels = loadDuels();
     const duel = duels.find(d => d.id === id);
     if (!duel) return respond(res, 404, { error: "duel bestaat niet" });
-    return respond(res, 200, duel);
+    // vragen zijn pas zichtbaar als het duel live is
+    const safe = { ...duel };
+    if (safe.state !== "live" && safe.state !== "done") safe.questions = null;
+    return respond(res, 200, safe);
   }
 
   // score indienen

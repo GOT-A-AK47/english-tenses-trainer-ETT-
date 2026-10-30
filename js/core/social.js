@@ -30,10 +30,29 @@ const Social = {
     return this.api(`/api/classmates?klas=${encodeURIComponent(id.klas)}&name=${encodeURIComponent(id.name)}`).catch(() => []);
   },
 
-  addFriend(friendWho) {
-    return this.api("/api/friends/add", {
+  // V2.6: vriendschapsverzoek (de ander accepteert)
+  requestFriend(friendWho) {
+    return this.api("/api/friends/request", {
       method: "POST",
       body: JSON.stringify({ me: this.who(), friend: friendWho })
+    });
+  },
+
+  listRequests() {
+    return this.api("/api/friends/requests?who=" + encodeURIComponent(this.who())).catch(() => []);
+  },
+
+  acceptFriend(from) {
+    return this.api("/api/friends/accept", {
+      method: "POST",
+      body: JSON.stringify({ me: this.who(), from })
+    });
+  },
+
+  declineFriend(from) {
+    return this.api("/api/friends/decline", {
+      method: "POST",
+      body: JSON.stringify({ me: this.who(), from })
     });
   },
 
@@ -58,6 +77,14 @@ const Social = {
 
   getDuel(id) {
     return this.api("/api/duel/get?id=" + encodeURIComponent(id));
+  },
+
+  // V2.6: join de wacht-kamer; server zegt of het duel live gaat
+  joinDuel(id) {
+    return this.api("/api/duel/join", {
+      method: "POST",
+      body: JSON.stringify({ id, who: this.who() })
+    });
   },
 
   submitScore(id, score) {
