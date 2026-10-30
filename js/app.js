@@ -211,6 +211,78 @@ function renderSkinPicker() {
   });
 }
 
+// ---- V2.5: vocabulaire oefenen ----
+function initVocab() {
+  const sel = $("vocab-list");
+  if (!sel) return;
+  sel.innerHTML = VOCAB_LISTS.map(l =>
+    `<option value="${l.id}">${l.name} (${l.words.length} woorden)</option>`).join("");
+  sel.addEventListener("change", updateVocabDesc);
+  updateVocabDesc();
+  $("vocab-start").addEventListener("click", startVocab);
+  $("vocab-check").addEventListener("click", checkVocab);
+  $("vocab-hint").addEventListener("click", () => {
+    VocabTrainer.hint($("vocab-feedback"));
+    $("vocab-next").style.display = "inline-block";
+  });
+  $("vocab-next").addEventListener("click", nextVocab);
+  $("vocab-answer").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); checkVocab(); }
+  });
+}
+
+function updateVocabDesc() {
+  const l = VOCAB_LISTS.find(x => x.id === $("vocab-list").value);
+  $("vocab-list-desc").textContent = l ? l.desc || "" : "";
+}
+
+function startVocab() {
+  const listId = $("vocab-list").value;
+  if (!VOCAB_LISTS.some(l => l.id === listId)) return;
+  $("vocab-picker-card").style.display = "none";
+  $("vocab-practice-card").style.display = "block";
+  Whiskers.showCompanion();
+  nextVocab();
+}
+
+function nextVocab() {
+  const listId = $("vocab-list").value;
+  const ex = VocabTrainer.generate(listId);
+  if (!ex) return;
+  $("vocab-question").textContent = `Hoe zeg je "${ex.word.nl}" in het Engels?`;
+  $("vocab-answer").value = "";
+  $("vocab-answer").classList.remove("correct", "wrong");
+  $("vocab-answer").focus();
+  $("vocab-feedback").textContent = "";
+  $("vocab-feedback").className = "";
+  $("vocab-next").style.display = "none";
+}
+
+function checkVocab() {
+  const input = $("vocab-answer");
+  if (!VocabTrainer.current) return;
+  // al goed? volgende
+  if (input.classList.contains("correct")) { nextVocab(); return; }
+  const ok = VocabTrainer.submit(input.value, $("vocab-feedback"));
+  input.classList.add(ok ? "correct" : "wrong");
+  if (ok) {
+    input.classList.remove("wrong");
+    $("vocab-next").style.display = "inline-block";
+    $("vocab-next").focus();
+    Whiskers.react(true, 1, 0, null);
+    Gamification.addXP(8);
+    ProgressStore.queueAnswer("vocab-" + VocabTrainer.current.list.id, true);
+    ProgressStore.sync();
+  } else {
+    input.select();
+    if (VocabTrainer.attempts >= 3) $("vocab-next").style.display = "inline-block";
+    Whiskers.react(false, 0, VocabTrainer.attempts, null);
+    Gamification.addXP(2);
+    ProgressStore.queueAnswer("vocab-" + VocabTrainer.current.list.id, false);
+    ProgressStore.sync();
+  }
+}
+
 // ---- V2.2: vrienden, duels, kalender ----
 async function renderSocial() {
   if (!Identity.get()) return;
@@ -374,6 +446,7 @@ function init() {
   $("add-friend").addEventListener("click", addFriend);
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
+  initVocab();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -389,6 +462,7 @@ function showView(id) {
   if (id === "progress") renderProgress();
   if (id === "table") renderTable();
   if (id === "social") renderSocial();
+  if (id === "vocab") { $("vocab-picker-card").style.display = "block"; $("vocab-practice-card").style.display = "none"; }
 }
 
 function bindNavigation() {

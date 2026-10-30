@@ -81,6 +81,10 @@
             <span class="tile-name">Onregelmatige werkwoorden</span>
             <span class="tile-desc">Past simple + past participle</span>
           </button>
+          <button class="tile" data-view="vocab">
+            <span class="tile-name">Woordjes</span>
+            <span class="tile-desc">Vocabulaire-lijsten oefenen</span>
+          </button>
           <button class="tile" data-view="table">
             <span class="tile-name">Naslagtabel</span>
             <span class="tile-desc">Vervoegingen per tijd bekijken</span>
@@ -311,6 +315,35 @@
       </div>
     </section>
 
+    <!-- VOCAB (V2.5) -->
+    <section id="view-vocab" class="view">
+      <div class="view-head">
+        <button class="back" data-view="home">← Startscherm</button>
+        <h2>Woordjes oefenen</h2>
+      </div>
+
+      <div class="card" id="vocab-picker-card">
+        <label>Lijst
+          <select id="vocab-list"></select>
+        </label>
+        <p class="context" id="vocab-list-desc"></p>
+        <div class="btnrow">
+          <button id="vocab-start">Starten</button>
+        </div>
+      </div>
+
+      <div class="card" id="vocab-practice-card" style="display:none">
+        <p class="lead" id="vocab-question"></p>
+        <input type="text" id="vocab-answer" placeholder="English word..." autocomplete="off" spellcheck="false">
+        <div class="btnrow">
+          <button id="vocab-check">Controleren</button>
+          <button id="vocab-hint" class="secondary">Hint</button>
+          <button id="vocab-next" class="secondary" style="display:none">Volgende</button>
+        </div>
+        <p id="vocab-feedback" class="context"></p>
+      </div>
+    </section>
+
     <footer>English Tenses Trainer — schoolproject</footer>
   </div>
 
@@ -321,6 +354,8 @@
   <script src="js/core/gamification.js"></script>
   <script src="js/core/whiskers.js"></script>
   <script src="js/core/social.js"></script>
+  <script src="js/data/vocab.js"></script>
+  <script src="js/core/vocab.js"></script>
   <script src="js/data/verbs.js"></script>
   <script src="js/data/templates.js"></script>
   <script src="js/tenses/_shared.js"></script>

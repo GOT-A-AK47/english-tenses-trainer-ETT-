@@ -16,6 +16,8 @@ const SCRIPT_ORDER = [
   "js/core/gamification.js",
   "js/core/whiskers.js",
   "js/core/social.js",
+  "js/data/vocab.js",
+  "js/core/vocab.js",
   "js/data/verbs.js",
   "js/data/templates.js",
   "js/tenses/_shared.js",

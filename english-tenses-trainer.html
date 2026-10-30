@@ -910,6 +910,10 @@ header h1::after {
             <span class="tile-name">Onregelmatige werkwoorden</span>
             <span class="tile-desc">Past simple + past participle</span>
           </button>
+          <button class="tile" data-view="vocab">
+            <span class="tile-name">Woordjes</span>
+            <span class="tile-desc">Vocabulaire-lijsten oefenen</span>
+          </button>
           <button class="tile" data-view="table">
             <span class="tile-name">Naslagtabel</span>
             <span class="tile-desc">Vervoegingen per tijd bekijken</span>
@@ -1137,6 +1141,35 @@ header h1::after {
           <button id="start-duel">⚔️ Duel starten</button>
         </div>
         <div id="duel-list" style="margin-top:0.75rem"></div>
+      </div>
+    </section>
+
+    <!-- VOCAB (V2.5) -->
+    <section id="view-vocab" class="view">
+      <div class="view-head">
+        <button class="back" data-view="home">← Startscherm</button>
+        <h2>Woordjes oefenen</h2>
+      </div>
+
+      <div class="card" id="vocab-picker-card">
+        <label>Lijst
+          <select id="vocab-list"></select>
+        </label>
+        <p class="context" id="vocab-list-desc"></p>
+        <div class="btnrow">
+          <button id="vocab-start">Starten</button>
+        </div>
+      </div>
+
+      <div class="card" id="vocab-practice-card" style="display:none">
+        <p class="lead" id="vocab-question"></p>
+        <input type="text" id="vocab-answer" placeholder="English word..." autocomplete="off" spellcheck="false">
+        <div class="btnrow">
+          <button id="vocab-check">Controleren</button>
+          <button id="vocab-hint" class="secondary">Hint</button>
+          <button id="vocab-next" class="secondary" style="display:none">Volgende</button>
+        </div>
+        <p id="vocab-feedback" class="context"></p>
       </div>
     </section>
 
@@ -2158,6 +2191,86 @@ const Calendar = {
 };
 
 ;
+// V2.5: vocabulaire-lijsten per eenheid/thema.
+// Structuur: per unit een lijst woordenparen { nl, en }.
+// Nieuwe lijsten toevoegen = hieronder een entry toevoegen; de UI en
+// de trainer pikken alles automatisch op.
+
+const VOCAB_LISTS = [
+  {
+    id: "sample",
+    name: "Voorbeeldlijst",
+    desc: "Demo — wordt vervangen door echte lijsten",
+    words: [
+      { nl: "de boter", en: "butter" },
+      { nl: "het brood", en: "bread" }
+    ]
+  }
+];
+
+;
+// V2.5: VocabTrainer — oefen NL -> EN invuloefeningen met herkansing.
+// Zelfde feedback-flow als de tenses (V2.4): opnieuw tot goed of hint.
+// Integreert met Whiskers/XP via Gamification.onAnswer.
+
+const VocabTrainer = {
+  current: null,   // actieve oefening { list, word, answer }
+  attempts: 0,
+
+  pickWord(listId) {
+    const list = VOCAB_LISTS.find(l => l.id === listId);
+    if (!list || !list.words.length) return null;
+    return list.words[Math.floor(Math.random() * list.words.length)];
+  },
+
+  generate(listId) {
+    const list = VOCAB_LISTS.find(l => l.id === listId);
+    const word = this.pickWord(listId);
+    if (!list || !word) return null;
+    this.attempts = 0;
+    this.current = {
+      list,
+      word,
+      answer: word.en,
+      check(input) {
+        const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ")
+          .replace(/[.!?,;]+$/, "");
+        return norm(input) === norm(this.answer);
+      }
+    };
+    return this.current;
+  },
+
+  // True = goed beantwoord; anders false (hulp-escalatie zoals de tenses)
+  submit(input, feedbackEl) {
+    if (!this.current) return null;
+    const ok = this.current.check(input);
+    if (ok) {
+      feedbackEl.textContent = `Correct! "${this.current.answer}"`;
+      feedbackEl.className = "ok";
+    } else {
+      this.attempts++;
+      if (this.attempts === 1) {
+        feedbackEl.textContent = `Not right — try again! Check your spelling.`;
+      } else if (this.attempts === 2) {
+        feedbackEl.textContent = `Still not right. The answer starts with "${this.current.answer.slice(0, 1)}".`;
+      } else {
+        const third = Math.max(1, Math.ceil(this.current.answer.length / 3));
+        feedbackEl.textContent = `Tip: it begins with "${this.current.answer.slice(0, third)}". Or use the hint!`;
+      }
+      feedbackEl.className = "nok";
+    }
+    return ok;
+  },
+
+  hint(feedbackEl) {
+    if (!this.current) return;
+    feedbackEl.textContent = `Het juiste antwoord is "${this.current.answer}".`;
+    feedbackEl.className = "ok";
+  }
+};
+
+;
 // Werkwoorden-data: regelmatig + onregelmatig.
 // vorm: { base, past, pastParticiple, third (optioneel, voor onregelmatige -s) }
 
@@ -2824,6 +2937,78 @@ function renderSkinPicker() {
   });
 }
 
+// ---- V2.5: vocabulaire oefenen ----
+function initVocab() {
+  const sel = $("vocab-list");
+  if (!sel) return;
+  sel.innerHTML = VOCAB_LISTS.map(l =>
+    `<option value="${l.id}">${l.name} (${l.words.length} woorden)</option>`).join("");
+  sel.addEventListener("change", updateVocabDesc);
+  updateVocabDesc();
+  $("vocab-start").addEventListener("click", startVocab);
+  $("vocab-check").addEventListener("click", checkVocab);
+  $("vocab-hint").addEventListener("click", () => {
+    VocabTrainer.hint($("vocab-feedback"));
+    $("vocab-next").style.display = "inline-block";
+  });
+  $("vocab-next").addEventListener("click", nextVocab);
+  $("vocab-answer").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); checkVocab(); }
+  });
+}
+
+function updateVocabDesc() {
+  const l = VOCAB_LISTS.find(x => x.id === $("vocab-list").value);
+  $("vocab-list-desc").textContent = l ? l.desc || "" : "";
+}
+
+function startVocab() {
+  const listId = $("vocab-list").value;
+  if (!VOCAB_LISTS.some(l => l.id === listId)) return;
+  $("vocab-picker-card").style.display = "none";
+  $("vocab-practice-card").style.display = "block";
+  Whiskers.showCompanion();
+  nextVocab();
+}
+
+function nextVocab() {
+  const listId = $("vocab-list").value;
+  const ex = VocabTrainer.generate(listId);
+  if (!ex) return;
+  $("vocab-question").textContent = `Hoe zeg je "${ex.word.nl}" in het Engels?`;
+  $("vocab-answer").value = "";
+  $("vocab-answer").classList.remove("correct", "wrong");
+  $("vocab-answer").focus();
+  $("vocab-feedback").textContent = "";
+  $("vocab-feedback").className = "";
+  $("vocab-next").style.display = "none";
+}
+
+function checkVocab() {
+  const input = $("vocab-answer");
+  if (!VocabTrainer.current) return;
+  // al goed? volgende
+  if (input.classList.contains("correct")) { nextVocab(); return; }
+  const ok = VocabTrainer.submit(input.value, $("vocab-feedback"));
+  input.classList.add(ok ? "correct" : "wrong");
+  if (ok) {
+    input.classList.remove("wrong");
+    $("vocab-next").style.display = "inline-block";
+    $("vocab-next").focus();
+    Whiskers.react(true, 1, 0, null);
+    Gamification.addXP(8);
+    ProgressStore.queueAnswer("vocab-" + VocabTrainer.current.list.id, true);
+    ProgressStore.sync();
+  } else {
+    input.select();
+    if (VocabTrainer.attempts >= 3) $("vocab-next").style.display = "inline-block";
+    Whiskers.react(false, 0, VocabTrainer.attempts, null);
+    Gamification.addXP(2);
+    ProgressStore.queueAnswer("vocab-" + VocabTrainer.current.list.id, false);
+    ProgressStore.sync();
+  }
+}
+
 // ---- V2.2: vrienden, duels, kalender ----
 async function renderSocial() {
   if (!Identity.get()) return;
@@ -2987,6 +3172,7 @@ function init() {
   $("add-friend").addEventListener("click", addFriend);
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
+  initVocab();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -3002,6 +3188,7 @@ function showView(id) {
   if (id === "progress") renderProgress();
   if (id === "table") renderTable();
   if (id === "social") renderSocial();
+  if (id === "vocab") { $("vocab-picker-card").style.display = "block"; $("vocab-practice-card").style.display = "none"; }
 }
 
 function bindNavigation() {
