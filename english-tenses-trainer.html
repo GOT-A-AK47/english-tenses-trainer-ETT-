@@ -606,6 +606,8 @@ header h1::after {
 #home-tasks .section-title { color: var(--accent-dark); }
 
 .stat { border-bottom: 3px solid var(--accent-soft); }
+.stats-row .stat .label { font-size: 0.62rem; }
+.stats-row { gap: 0.75rem; }
 .stat:nth-child(1) { border-bottom-color: var(--accent); }
 
 
@@ -961,8 +963,10 @@ header h1::after {
         </div>
 
         <div class="stats-row">
-          <div class="stat"><span class="value" id="score">0</span><span class="label">Score</span></div>
-          <div class="stat"><span class="value" id="count">0</span><span class="label">Vragen</span></div>
+          <div class="stat"><span class="value" id="score">0</span><span class="label">Score (deze sessie)</span></div>
+          <div class="stat"><span class="value" id="count">0</span><span class="label">Vragen (deze sessie)</span></div>
+          <div class="stat"><span class="value" id="total-correct">0</span><span class="label">Totaal goed</span></div>
+          <div class="stat"><span class="value" id="total-answers">0</span><span class="label">Totaal vragen</span></div>
         </div>
 
         <div class="card">
@@ -1520,6 +1524,11 @@ const Gamification = {
   renderEnergy() {
     const chip = document.getElementById("energy-chip");
     if (!chip) return;
+    // V2.8: pas tonen zodra er echt gespeeld is (niets overrompelen)
+    const played = (typeof ProgressStore !== "undefined" && ProgressStore.state && Object.keys(ProgressStore.state).some(k => !k.startsWith("_")))
+      || this.state.xp > 0;
+    if (!played) { chip.style.display = "none"; return; }
+    chip.style.display = "";
     const e = this.state.energy;
     const label = e >= 70 ? "voedzaam" : e >= 40 ? "hongerig" : e > 0 ? "heel hongerig!" : "uitgehongerd 😿";
     chip.innerHTML = e > 0
@@ -2927,10 +2936,9 @@ function sendFeedback() {
 function saveSession() {
   const id = Identity.get();
   if (!id) return;
+  // V2.8: alleen de gekozen tijd bewaren — score/count starten per sessie op 0
   localStorage.setItem("english-tenses-session", JSON.stringify({
-    tenseSelect: $("tense-select").value,
-    score,
-    count
+    tenseSelect: $("tense-select").value
   }));
 }
 
@@ -2942,10 +2950,7 @@ function restoreSession() {
     if (!sess || !sess.tenseSelect) return;
     $("tense-select").value = sess.tenseSelect;
     currentMix = sess.tenseSelect === "mix" ? TenseRegistry.all().map(t => t.id) : null;
-    score = sess.score || 0;
-    count = sess.count || 0;
-    $("score").textContent = score;
-    $("count").textContent = count;
+    // V2.8: sessie-score begint altijd op 0; totalen staan in de voortgang
   } catch { /* geen sessie */ }
 }
 
@@ -3326,6 +3331,7 @@ function init() {
   $("add-friend").addEventListener("click", addFriend);
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
+  renderTotals();
   initVocab();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
@@ -3539,6 +3545,9 @@ function checkAnswer() {
   updateMistakeBadge();
   $("score").textContent = score;
   $("count").textContent = count;
+  renderTotals();
+  // V2.8: kalender live bijwerken (geen handmatige herladen meer nodig)
+  if (!duelState) Calendar.render();
 
   // V2.2: duel-modus — na elk antwoord door naar de volgende vraag
   if (duelState && currentExercise) {
@@ -3667,6 +3676,23 @@ function repeatPractice() {
   newExercise();
   showView("practice");
   Whiskers.showCompanion();
+}
+
+// V2.8: totaal-statistieken (uit de voortgang) — naast de sessie-score
+function renderTotals() {
+  const p = ProgressStore.all();
+  let correct = 0, total = 0;
+  for (const [k, v] of Object.entries(p)) {
+    if (k.startsWith("_") || k.startsWith("vocab-")) continue;
+    if (typeof v === "object" && v.total !== undefined) {
+      total += v.total || 0;
+      correct += v.correct || 0;
+    }
+  }
+  const tc = $("total-correct");
+  if (tc) tc.textContent = correct;
+  const ta = $("total-answers");
+  if (ta) ta.textContent = total;
 }
 
 function updateMistakeBadge() {

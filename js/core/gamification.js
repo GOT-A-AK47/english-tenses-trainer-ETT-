@@ -116,6 +116,11 @@ const Gamification = {
   renderEnergy() {
     const chip = document.getElementById("energy-chip");
     if (!chip) return;
+    // V2.8: pas tonen zodra er echt gespeeld is (niets overrompelen)
+    const played = (typeof ProgressStore !== "undefined" && ProgressStore.state && Object.keys(ProgressStore.state).some(k => !k.startsWith("_")))
+      || this.state.xp > 0;
+    if (!played) { chip.style.display = "none"; return; }
+    chip.style.display = "";
     const e = this.state.energy;
     const label = e >= 70 ? "voedzaam" : e >= 40 ? "hongerig" : e > 0 ? "heel hongerig!" : "uitgehongerd 😿";
     chip.innerHTML = e > 0

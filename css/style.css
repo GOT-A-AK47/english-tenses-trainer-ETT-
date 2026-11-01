@@ -599,6 +599,8 @@ header h1::after {
 #home-tasks .section-title { color: var(--accent-dark); }
 
 .stat { border-bottom: 3px solid var(--accent-soft); }
+.stats-row .stat .label { font-size: 0.62rem; }
+.stats-row { gap: 0.75rem; }
 .stat:nth-child(1) { border-bottom-color: var(--accent); }
 
 

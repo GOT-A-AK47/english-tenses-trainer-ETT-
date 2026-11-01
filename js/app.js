@@ -132,10 +132,9 @@ function sendFeedback() {
 function saveSession() {
   const id = Identity.get();
   if (!id) return;
+  // V2.8: alleen de gekozen tijd bewaren — score/count starten per sessie op 0
   localStorage.setItem("english-tenses-session", JSON.stringify({
-    tenseSelect: $("tense-select").value,
-    score,
-    count
+    tenseSelect: $("tense-select").value
   }));
 }
 
@@ -147,10 +146,7 @@ function restoreSession() {
     if (!sess || !sess.tenseSelect) return;
     $("tense-select").value = sess.tenseSelect;
     currentMix = sess.tenseSelect === "mix" ? TenseRegistry.all().map(t => t.id) : null;
-    score = sess.score || 0;
-    count = sess.count || 0;
-    $("score").textContent = score;
-    $("count").textContent = count;
+    // V2.8: sessie-score begint altijd op 0; totalen staan in de voortgang
   } catch { /* geen sessie */ }
 }
 
@@ -531,6 +527,7 @@ function init() {
   $("add-friend").addEventListener("click", addFriend);
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
+  renderTotals();
   initVocab();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
@@ -744,6 +741,9 @@ function checkAnswer() {
   updateMistakeBadge();
   $("score").textContent = score;
   $("count").textContent = count;
+  renderTotals();
+  // V2.8: kalender live bijwerken (geen handmatige herladen meer nodig)
+  if (!duelState) Calendar.render();
 
   // V2.2: duel-modus — na elk antwoord door naar de volgende vraag
   if (duelState && currentExercise) {
@@ -872,6 +872,23 @@ function repeatPractice() {
   newExercise();
   showView("practice");
   Whiskers.showCompanion();
+}
+
+// V2.8: totaal-statistieken (uit de voortgang) — naast de sessie-score
+function renderTotals() {
+  const p = ProgressStore.all();
+  let correct = 0, total = 0;
+  for (const [k, v] of Object.entries(p)) {
+    if (k.startsWith("_") || k.startsWith("vocab-")) continue;
+    if (typeof v === "object" && v.total !== undefined) {
+      total += v.total || 0;
+      correct += v.correct || 0;
+    }
+  }
+  const tc = $("total-correct");
+  if (tc) tc.textContent = correct;
+  const ta = $("total-answers");
+  if (ta) ta.textContent = total;
 }
 
 function updateMistakeBadge() {
