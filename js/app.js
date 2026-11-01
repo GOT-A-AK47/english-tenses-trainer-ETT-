@@ -527,7 +527,6 @@ function init() {
   $("add-friend").addEventListener("click", addFriend);
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
-  renderTotals();
   initVocab();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
@@ -741,7 +740,6 @@ function checkAnswer() {
   updateMistakeBadge();
   $("score").textContent = score;
   $("count").textContent = count;
-  renderTotals();
   // V2.8: kalender live bijwerken (geen handmatige herladen meer nodig)
   if (!duelState) Calendar.render();
 
@@ -901,6 +899,7 @@ function updateMistakeBadge() {
 
 // ---- Voortgang ----
 function renderProgress() {
+  renderTotals();
   $("progress-list").innerHTML = TENSE_GROUPS.map(g => {
     const rows = g.tenses.map(id => {
       const t = TenseRegistry.get(id);

@@ -965,8 +965,6 @@ header h1::after {
         <div class="stats-row">
           <div class="stat"><span class="value" id="score">0</span><span class="label">Score (deze sessie)</span></div>
           <div class="stat"><span class="value" id="count">0</span><span class="label">Vragen (deze sessie)</span></div>
-          <div class="stat"><span class="value" id="total-correct">0</span><span class="label">Totaal goed</span></div>
-          <div class="stat"><span class="value" id="total-answers">0</span><span class="label">Totaal vragen</span></div>
         </div>
 
         <div class="card">
@@ -1038,6 +1036,10 @@ header h1::after {
         <div class="card">
           <span class="chip">Jouw voortgang</span>
           <p class="context">Wordt bewaard op dit toestel. In V1 synct dit met de server.</p>
+          <div class="stats-row" style="margin:0.75rem 0">
+            <div class="stat"><span class="value" id="total-correct">0</span><span class="label">Totaal goed</span></div>
+            <div class="stat"><span class="value" id="total-answers">0</span><span class="label">Totaal vragen</span></div>
+          </div>
           <div id="progress-list"></div>
           <div class="reset-row">
             <button id="reset-progress" class="secondary">Voortgang wissen</button>
@@ -3331,7 +3333,6 @@ function init() {
   $("add-friend").addEventListener("click", addFriend);
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
-  renderTotals();
   initVocab();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
@@ -3545,7 +3546,6 @@ function checkAnswer() {
   updateMistakeBadge();
   $("score").textContent = score;
   $("count").textContent = count;
-  renderTotals();
   // V2.8: kalender live bijwerken (geen handmatige herladen meer nodig)
   if (!duelState) Calendar.render();
 
@@ -3705,6 +3705,7 @@ function updateMistakeBadge() {
 
 // ---- Voortgang ----
 function renderProgress() {
+  renderTotals();
   $("progress-list").innerHTML = TENSE_GROUPS.map(g => {
     const rows = g.tenses.map(id => {
       const t = TenseRegistry.get(id);
