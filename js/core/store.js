@@ -68,7 +68,9 @@ const ProgressStore = {
       identity,
       progress: this.all(),
       newAnswers,
-      game: (typeof Gamification !== "undefined" && Gamification.state) ? Gamification.state : null
+      game: (typeof Gamification !== "undefined" && Gamification.state)
+        ? { ...Gamification.state, skin: (typeof Whiskers !== "undefined" && Whiskers.getSkin) ? Whiskers.getSkin().id : undefined }
+        : null
     };
     return fetch("/api/progress", {
       method: "POST",

@@ -391,6 +391,16 @@ const Gamification = {
       this.state.lastEnergyDay = remote.lastEnergyDay;
       changed = true;
     }
+    // V2.9: pels meenemen — de laatste gekozen skin volgt naar elk apparaat
+    if (typeof Whiskers !== "undefined" && Whiskers.setSkin && remote.skin) {
+      const cur = Whiskers.getSkin().id;
+      const skin = Whiskers.SKINS.find(s2 => s2.id === remote.skin);
+      const lvlIdx = (this.LEVELS_REF || []).indexOf(this.level()) + 1;
+      if (skin && skin.id !== cur && lvlIdx >= skin.level) {
+        Whiskers.setSkin(skin.id);
+        changed = true;
+      }
+    }
     if (changed) {
       this.save();
       this.renderBar();

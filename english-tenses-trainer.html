@@ -1296,7 +1296,9 @@ const ProgressStore = {
       identity,
       progress: this.all(),
       newAnswers,
-      game: (typeof Gamification !== "undefined" && Gamification.state) ? Gamification.state : null
+      game: (typeof Gamification !== "undefined" && Gamification.state)
+        ? { ...Gamification.state, skin: (typeof Whiskers !== "undefined" && Whiskers.getSkin) ? Whiskers.getSkin().id : undefined }
+        : null
     };
     return fetch("/api/progress", {
       method: "POST",
@@ -1800,6 +1802,16 @@ const Gamification = {
       // bewaar de oudste dag zodat de dag-decay op dit apparaat niet dubbel toe
       this.state.lastEnergyDay = remote.lastEnergyDay;
       changed = true;
+    }
+    // V2.9: pels meenemen — de laatste gekozen skin volgt naar elk apparaat
+    if (typeof Whiskers !== "undefined" && Whiskers.setSkin && remote.skin) {
+      const cur = Whiskers.getSkin().id;
+      const skin = Whiskers.SKINS.find(s2 => s2.id === remote.skin);
+      const lvlIdx = (this.LEVELS_REF || []).indexOf(this.level()) + 1;
+      if (skin && skin.id !== cur && lvlIdx >= skin.level) {
+        Whiskers.setSkin(skin.id);
+        changed = true;
+      }
     }
     if (changed) {
       this.save();
