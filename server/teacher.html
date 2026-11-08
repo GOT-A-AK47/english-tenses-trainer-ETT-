@@ -93,10 +93,10 @@
       <div class="card"><div id="task-list"></div></div>
 
       <h2>Progress per class</h2>
-      <div id="progress-list"><p class="empty">Laden…</p></div>
+      <div id="progress-list"><p class="empty">Loading…</p></div>
 
       <h2>Usage (last 30 days)</h2>
-      <div class="card" id="usage-box"><p class="empty">Laden…</p></div>
+      <div class="card" id="usage-box"><p class="empty">Loading…</p></div>
 
       <h2>Teacher codes <span class="last">(admin only)</span></h2>
       <div class="card" id="codes-box">
@@ -109,7 +109,7 @@
       </div>
 
       <h2>Feedback</h2>
-      <div class="card"><div id="feedback-list"><p class="empty">Laden…</p></div></div>
+      <div class="card"><div id="feedback-list"><p class="empty">Loading…</p></div></div>
     </div>
   </div>
 
@@ -169,9 +169,17 @@
     }
 
     async function refreshAll() {
-      const jobs = [loadKlassen(), loadTasks(), loadProgress(), loadUsage(), loadFeedback()];
-      if (amAdmin) jobs.push(loadCodes()); else document.getElementById("codes-box").style.display = "none";
-      await Promise.all(jobs);
+      try {
+        const jobs = [loadKlassen(), loadTasks(), loadProgress(), loadUsage(), loadFeedback()];
+        if (amAdmin) jobs.push(loadCodes()); else document.getElementById("codes-box").style.display = "none";
+        await Promise.all(jobs);
+      } catch (e) {
+        // zichtbare fout i.p.v. stille dood — behalve 401 (die toont al het loginscherm)
+        if (!String(e.message).includes("niet ingelogd")) {
+          const m = document.getElementById("code-msg") || document.getElementById("login-msg");
+          if (m) { m.textContent = "Refresh failed: " + e.message; m.className = "msg err"; }
+        }
+      }
     }
 
     // ---- docentencodes (admin) ----
@@ -290,7 +298,8 @@
       // V2.3: leerlingen van de geselecteerde klas laden
       const klasSel = document.getElementById("task-klas");
       if (klasSel) {
-        klasSel.addEventListener("change", loadTaskStudents);
+        // voorkom listener-stapeling bij herhaalde renders
+        klasSel.onchange = loadTaskStudents;
         loadTaskStudents();
       }
       const whole = document.getElementById("task-whole-class");

@@ -202,17 +202,20 @@ function respond(res, status, data) {
 // Security (V3.0): simpele rate-limit per IP. Beschermt login (brute force),
 // feedback en duels tegen spam. Schoolnetwerk = vaak gedeelde IP's, dus
 // limieten bewust ruim (60 req/min algemeen, 10/min voor login + feedback).
-const RATE_LIMITS = { default: 60, login: 10, feedback: 10 };
+const RATE_LIMITS = { default: 60, login: 10, feedback: 10, teacher: 300 };
 const rateBuckets = new Map(); // ip -> { count, reset, loginCount, loginReset, feedbackCount, feedbackReset }
 
 function rateLimited(req, kind) {
   const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "?").split(",")[0].trim();
   const now = Date.now();
-  if (!rateBuckets.has(ip)) rateBuckets.set(ip, { count: 0, reset: now + 60000, loginCount: 0, loginReset: now + 60000, feedbackCount: 0, feedbackReset: now + 60000 });
+  if (!rateBuckets.has(ip)) rateBuckets.set(ip, { count: 0, reset: now + 60000, loginCount: 0, loginReset: now + 60000, feedbackCount: 0, feedbackReset: now + 60000, teacherCount: 0, teacherReset: now + 60000 });
   const b = rateBuckets.get(ip);
-  // algemene bucket
-  if (b.reset < now) { b.count = 0; b.reset = now + 60000; }
-  b.count++;
+  // algemene bucket (docent-API's hebben hun eigen ruimere bucket en
+  // tellen niet mee in de algemene — anders tikt de 60/min eerst)
+  if (kind === "default") {
+    if (b.reset < now) { b.count = 0; b.reset = now + 60000; }
+    b.count++;
+  }
   if (kind === "login") {
     if (b.loginReset < now) { b.loginCount = 0; b.loginReset = now + 60000; }
     b.loginCount++;
@@ -221,16 +224,24 @@ function rateLimited(req, kind) {
     if (b.feedbackReset < now) { b.feedbackCount = 0; b.feedbackReset = now + 60000; }
     b.feedbackCount++;
   }
+  if (kind === "teacher") {
+    if (b.teacherReset < now) { b.teacherCount = 0; b.teacherReset = now + 60000; }
+    b.teacherCount++;
+  }
   if (b.count > RATE_LIMITS.default) return true;
   if (kind === "login" && b.loginCount > RATE_LIMITS.login) return true;
   if (kind === "feedback" && b.feedbackCount > RATE_LIMITS.feedback) return true;
+  if (kind === "teacher" && b.teacherCount > RATE_LIMITS.teacher) return true;
   return false;
 }
 
 async function handleApi(req, res) {
   const url = req.url.split("?")[0];
   // Security (V3.0): rate limiting
-  const kind = url === "/api/teacher/login" ? "login" : url === "/api/feedback" ? "feedback" : "default";
+  const kind = url === "/api/teacher/login" ? "login"
+    : url === "/api/feedback" ? "feedback"
+    : url.startsWith("/api/teacher/") ? "teacher"
+    : "default";
   if (rateLimited(req, kind)) {
     return respond(res, 429, { error: "te veel verzoeken — probeer over een minuut" });
   }
