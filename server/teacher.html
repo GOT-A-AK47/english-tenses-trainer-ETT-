@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leerkrachtdashboard — English Tenses Trainer</title>
+  <title>Teacher dashboard — English Tenses Trainer</title>
   <style>
     :root {
       --bg: #f7f7f5; --card: #fff; --ink: #21201c; --muted: #6e6a60;
@@ -46,63 +46,63 @@
 
     <!-- LOGIN -->
     <div id="login-box" class="card">
-      <h1>Leerkrachtdashboard</h1>
-      <p class="sub">Vul je docentencode in.</p>
+      <h1>Teacher dashboard</h1>
+      <p class="sub">Enter your teacher code.</p>
       <div class="row">
         <input type="password" id="code" placeholder="Docentencode" autocomplete="off">
-        <button onclick="login()">Inloggen</button>
+        <button onclick="login()">Log in</button>
       </div>
       <p class="msg" id="login-msg"></p>
-      <p class="sub">Eerste keer? Neem contact op met de beheerder voor uw docentencode.</p>
+      <p class="sub">First time? Contact the admin for your teacher code.</p>
     </div>
 
     <!-- DASHBOARD -->
     <div id="dash" class="hidden">
-      <h1>Leerkrachtdashboard</h1>
+      <h1>Teacher dashboard</h1>
       <div class="row">
-        <button class="secondary" onclick="refreshAll()">Verversen</button>
-        <button class="secondary" onclick="loadCSV()">📤 Voortgang downloaden (CSV)</button>
-        <button class="secondary" onclick="logout()">Uitloggen</button>
+        <button class="secondary" onclick="refreshAll()">Refresh</button>
+        <button class="secondary" onclick="loadCSV()">📤 Download progress (CSV)</button>
+        <button class="secondary" onclick="logout()">Log out</button>
       </div>
 
-      <h2>Klassen</h2>
+      <h2>Classes</h2>
       <div class="card">
         <div class="row">
           <input type="text" id="new-klas" placeholder="Nieuwe klas, bv. 7B" autocomplete="off">
-          <button onclick="addKlas()">Klas maken</button>
+          <button onclick="addKlas()">Create class</button>
         </div>
         <p class="msg" id="klas-msg"></p>
         <div id="klas-list"></div>
       </div>
 
-      <h2>Taak toewijzen</h2>
+      <h2>Assign task</h2>
       <div class="card">
         <div class="row">
           <input type="text" id="task-title" placeholder="Titel, bv. Huiswerk week 3" autocomplete="off">
           <select id="task-klas"></select>
         </div>
-        <p class="sub" style="margin:0.4rem 0 0">Vink aan welke tijden de leerlingen moeten oefenen:</p>
+        <p class="sub" style="margin:0.4rem 0 0">Tick which tenses the students should practise:</p>
         <div class="tense-picks" id="task-tenses"></div>
-        <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>Voor wie?</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-whole-class" checked> hele klas</label></p>
+        <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>For whom?</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-whole-class" checked> whole class</label></p>
         <div id="task-students" class="student-picks" style="display:none"></div>
-        <div class="row"><button onclick="addTask()">Taak toewijzen</button></div>
+        <div class="row"><button onclick="addTask()">Assign task</button></div>
         <p class="msg" id="task-msg"></p>
       </div>
 
-      <h2>Toegewezen taken</h2>
+      <h2>Assigned tasks</h2>
       <div class="card"><div id="task-list"></div></div>
 
-      <h2>Voortgang per klas</h2>
+      <h2>Progress per class</h2>
       <div id="progress-list"><p class="empty">Laden…</p></div>
 
-      <h2>Gebruik (laatste 30 dagen)</h2>
+      <h2>Usage (last 30 days)</h2>
       <div class="card" id="usage-box"><p class="empty">Laden…</p></div>
 
-      <h2>Docentencodes <span class="last">(alleen admin)</span></h2>
+      <h2>Teacher codes <span class="last">(admin only)</span></h2>
       <div class="card" id="codes-box">
         <div class="row">
-          <input type="text" id="code-label" placeholder="Naam leerkracht, bv. Mevr. Janssens" autocomplete="off">
-          <button onclick="genCode()">Code genereren</button>
+          <input type="text" id="code-label" placeholder="Teacher name, e.g. Mrs. Janssens" autocomplete="off">
+          <button onclick="genCode()">Generate code</button>
         </div>
         <p class="msg" id="code-msg"></p>
         <div id="codes-list"></div>
@@ -178,11 +178,11 @@
     async function loadCodes() {
       const codes = await api("/api/teacher/codes");
       const box = document.getElementById("codes-list");
-      if (!codes.length) { box.innerHTML = '<p class="empty">Nog geen extra docentencodes. Genereer er een en deel hem met je leerkrachten!</p>'; return; }
+      if (!codes.length) { box.innerHTML = '<p class="empty">No extra teacher codes yet. Generate one and share it with your teachers!</p>'; return; }
       box.innerHTML = codes.map(c => `
         <div class="row" style="justify-content:space-between">
-          <span><strong>${esc(c.code)}</strong> <span class="last">— ${esc(c.label)}${c.lastUsed ? " · gebruikt " + new Date(c.lastUsed).toLocaleDateString("nl-NL") : ""}</span></span>
-          <button class="danger" onclick="delCode('${c.code}')">Intrekken</button>
+          <span><strong>${esc(c.code)}</strong> <span class="last">— ${esc(c.label)}${c.lastUsed ? " · used " + new Date(c.lastUsed).toLocaleDateString("en-GB") : ""}</span></span>
+          <button class="danger" onclick="delCode('${c.code}')">Revoke</button>
         </div>`).join("");
     }
 
@@ -191,7 +191,7 @@
       const m = document.getElementById("code-msg");
       try {
         const r = await api("/api/teacher/codes", { method: "POST", body: JSON.stringify({ label }) });
-        m.textContent = `Nieuwe code: ${r.code} — deel hem met ${esc(label)}.`; m.className = "msg ok";
+        m.textContent = `New code: ${r.code} — share it with ${esc(label)}.`; m.className = "msg ok";
         document.getElementById("code-label").value = "";
         loadCodes();
       } catch (e) { m.textContent = e.message; m.className = "msg err"; }
@@ -218,7 +218,7 @@
     async function loadUsage() {
       const u = await api("/api/teacher/usage");
       const box = document.getElementById("usage-box");
-      if (!u.days.length) { box.innerHTML = '<p class="empty">Nog geen gebruik geregistreerd.</p>'; return; }
+      if (!u.days.length) { box.innerHTML = '<p class="empty">No usage registered yet.</p>'; return; }
       const dayRows = u.days.map(d =>
         `<tr><td>${d.date}</td><td>${d.students}</td><td>${d.answers}</td></tr>`).join("");
       const tenseRows = Object.entries(u.tenseTotals)
@@ -228,25 +228,25 @@
           return `<tr><td>${esc(t.replace(/-/g, " "))}</td><td>${st.total}</td><td><span class="pct ${pct >= 75 ? "good" : pct >= 50 ? "warn" : "bad"}">${pct}%</span></td></tr>`;
         }).join("");
       box.innerHTML = `
-        <p><strong>${u.totalStudents}</strong> unieke leerlingen · <strong>${u.totalAnswers}</strong> beantwoorde vragen</p>
-        <table><thead><tr><th>Dag</th><th>Leerlingen</th><th>Vragen</th></tr></thead><tbody>${dayRows}</tbody></table>
-        <h2 style="font-size:0.9rem">Populairste tijden</h2>
-        <table><thead><tr><th>Tijd</th><th>Vragen</th><th>Score</th></tr></thead><tbody>${tenseRows}</tbody></table>`;
+        <p><strong>${u.totalStudents}</strong> unieke leerlingen · <strong>${u.totalAnswers}</strong> questions answered</p>
+        <table><thead><tr><th>Day</th><th>Students</th><th>Questions</th></tr></thead><tbody>${dayRows}</tbody></table>
+        <h2 style="font-size:0.9rem">Most popular tenses</h2>
+        <table><thead><tr><th>Tense</th><th>Questions</th><th>Score</th></tr></thead><tbody>${tenseRows}</tbody></table>`;
     }
 
     // ---- feedback ----
     async function loadFeedback() {
       const list = await api("/api/teacher/feedback");
       const box = document.getElementById("feedback-list");
-      if (!list.length) { box.innerHTML = '<p class="empty">Nog geen feedback ontvangen.</p>'; return; }
+      if (!list.length) { box.innerHTML = '<p class="empty">No feedback received yet.</p>'; return; }
       box.innerHTML = list.map(f => `
         <div class="card" style="margin:0.5rem 0; ${f.read ? "opacity:0.6" : ""}">
           <strong>${esc(f.from)}</strong> <span class="chip">${esc(f.category)}</span>
-          <span class="last">${new Date(f.createdAt).toLocaleString("nl-NL")}</span>
+          <span class="last">${new Date(f.createdAt).toLocaleString("en-GB")}</span>
           <p style="margin:0.4rem 0">${esc(f.message)}</p>
           <div class="row">
-            ${f.read ? "" : `<button class="secondary" onclick="markRead('${f.id}')">Markeer gelezen</button>`}
-            <button class="danger" onclick="delFeedback('${f.id}')">Verwijderen</button>
+            ${f.read ? "" : `<button class="secondary" onclick="markRead('${f.id}')">Mark as read</button>`}
+            <button class="danger" onclick="delFeedback('${f.id}')">Delete</button>
           </div>
         </div>`).join("");
     }
@@ -266,7 +266,7 @@
       const classes = await api("/api/teacher/classes");
       document.getElementById("klas-list").innerHTML = classes.length
         ? classes.map(c => `<span class="chip">${esc(c.name)}</span> `).join("")
-        : '<p class="empty">Nog geen klassen.</p>';
+        : '<p class="empty">No classes yet.</p>';
       const sel = document.getElementById("task-klas");
       sel.innerHTML = classes.map(c => `<option>${esc(c.name)}</option>`).join("");
       renderTaskTenses();
@@ -307,14 +307,14 @@
         const box = document.getElementById("task-students");
         box.innerHTML = students.length
           ? students.map(st => `<label><input type="checkbox" value="${esc(st.name)}" class="student-check"> ${esc(st.name)}</label>`).join("")
-          : '<span class="empty">Nog geen leerlingen in deze klas.</span>';
+          : '<span class="empty">No students in this class yet.</span>';
       } catch (e) {
-        document.getElementById("task-students").innerHTML = '<span class="empty">Kon leerlingen niet laden.</span>';
+        document.getElementById("task-students").innerHTML = '<span class="empty">Could not load students.</span>';
       }
     }
 
     async function delStudent(name, klas) {
-      if (!confirm(`Leerling "${name}" (${klas}) verwijderen?\n\nAlle voortgang, kalender, vrienden en duels worden gewist. De leerling moet daarna opnieuw inloggen.`)) return;
+      if (!confirm(`Delete student "${name}" (${klas})?\n\nAll progress, calendar, friends and duels will be erased. The student will have to log in again.`)) return;
       await api("/api/teacher/student/" + encodeURIComponent(name) + "?klas=" + encodeURIComponent(klas), { method: "DELETE" });
       loadProgress();
       loadFeedback && loadTaskStudents();
@@ -329,14 +329,14 @@
         [...document.querySelectorAll(".student-check:checked")].map(i => i.value);
       if (!whole && (!students || !students.length)) {
         const m = document.getElementById("task-msg");
-        m.textContent = "Vink minstens één leerling aan (of kies 'hele klas').";
+        m.textContent = "Tick at least one student (or choose 'whole class').";
         m.className = "msg err";
         return;
       }
       const m = document.getElementById("task-msg");
       try {
         await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds, students }) });
-        m.textContent = "Taak toegekend!"; m.className = "msg ok";
+        m.textContent = "Task assigned!"; m.className = "msg ok";
         document.getElementById("task-title").value = "";
         document.querySelectorAll("#task-tenses input:checked").forEach(i => i.checked = false);
         loadTasks();
@@ -349,9 +349,9 @@
         ? tasks.map(t => `<div class="card" style="margin:0.5rem 0">
             <strong>${esc(t.title)}</strong> <span class="chip">${esc(t.klas)}</span>
             <div>${t.tenseIds.map(x => `<span class="task-tense">${esc(x.replace(/-/g, " "))}</span>`).join("")}</div>
-            <div class="row"><button class="danger" onclick="delTask('${t.id}')">Verwijderen</button></div>
+            <div class="row"><button class="danger" onclick="delTask('${t.id}')">Delete</button></div>
           </div>`).join("")
-        : '<p class="empty">Nog geen taken toegewezen.</p>';
+        : '<p class="empty">No tasks assigned yet.</p>';
     }
 
     async function delTask(id) {
@@ -365,7 +365,7 @@
       const holder = document.getElementById("progress-list");
       const klasNamen = Object.keys(classes).sort();
       if (!klasNamen.length) {
-        holder.innerHTML = '<p class="empty">Nog geen leerlingen hebben geoefend.</p>';
+        holder.innerHTML = '<p class="empty">No students have practised yet.</p>';
         return;
       }
       holder.innerHTML = klasNamen.map(klas => {
@@ -376,14 +376,14 @@
           const pct = totals.total ? Math.round((totals.correct / totals.total) * 100) : null;
           const weak = weakestTense(s.progress);
           const pc = pct === null ? "" : pct >= 75 ? "good" : pct >= 50 ? "warn" : "bad";
-          const last = s.lastSeen ? new Date(s.lastSeen).toLocaleString("nl-NL") : "—";
+          const last = s.lastSeen ? new Date(s.lastSeen).toLocaleString("en-GB") : "—";
           return `<tr><td>${esc(s.name)}</td><td>${totals.total}</td>
             <td><span class="pct ${pc}">${pct === null ? "—" : pct + "%"}</span></td>
             <td>${weak ? esc(weak.name.replace(/-/g, " ")) : "—"}</td><td class="last">${last}</td>
             <td><button class="danger" style="padding:0.2rem 0.5rem;font-size:0.7rem" onclick="delStudent('${esc(s.name)}','${esc(klas)}')">🗑️</button></td></tr>`;
         }).join("");
-        return `<div class="card"><h2 style="margin-top:0">Klas ${esc(klas)} <span class="last">(${students.length})</span></h2>
-          <table><thead><tr><th>Naam</th><th>Vragen</th><th>Score</th><th>Zwakste tijd</th><th>Laatst gezien</th><th></th></tr></thead>
+        return `<div class="card"><h2 style="margin-top:0">Class ${esc(klas)} <span class="last">(${students.length})</span></h2>
+          <table><thead><tr><th>Name</th><th>Questions</th><th>Score</th><th>Weakest tense</th><th>Last seen</th><th></th></tr></thead>
           <tbody>${rows}</tbody></table></div>`;
       }).join("");
     }

@@ -2,24 +2,24 @@
 // Whiskers de kat reageert op alles. Puur frontend; bewaard naast de voortgang.
 
 const LEVELS = [
-  { xp: 0,    name: "Katje",                scale: 0.9 },
-  { xp: 200,  name: "Jonge kat",            scale: 1.0 },
-  { xp: 600,  name: "Volwassen kat",       scale: 1.1 },
-  { xp: 1200, name: "Ervaren jager",        scale: 1.2 },
-  { xp: 2000, name: "Wijze kater",          scale: 1.3 },
-  { xp: 3200, name: "Legendarische leeuw",  scale: 1.45 }
+  { xp: 0,    name: "Kitten",                scale: 0.9 },
+  { xp: 200,  name: "Young cat",            scale: 1.0 },
+  { xp: 600,  name: "Adult cat",       scale: 1.1 },
+  { xp: 1200, name: "Experienced hunter",        scale: 1.2 },
+  { xp: 2000, name: "Wise tomcat",          scale: 1.3 },
+  { xp: 3200, name: "Legendary lion",  scale: 1.45 }
 ];
 
 const BADGES = [
-  { id: "first-correct", name: "Eerste vangst",        desc: "Beantwoord je eerste vraag goed.",       icon: "🐾" },
-  { id: "streak-10",     name: "Op jacht",             desc: "10 vragen op rij goed.",                 icon: "🎯" },
-  { id: "answers-100",   name: "Doorzetter",           desc: "100 vragen beantwoord.",                 icon: "💪" },
-  { id: "answers-500",   name: "Klimmer",              desc: "500 vragen beantwoord.",                 icon: "⛰️" },
-  { id: "all-tenses",    name: "Tijdentraveler",       desc: "Alle 12 tijden minstens 1x geoefend.",    icon: "⏳" },
-  { id: "comeback",      name: "Niet op je kop getrapt", desc: "Na 3 fouten 5 goede op rij.",           icon: "🔥" },
-  { id: "mouse-catch",   name: "Muisenvanger",         desc: "Vang Whiskers' muis in de bonusronde.",  icon: "🐁" },
-  { id: "quest-done",    name: "Dagvisser",            desc: "Haal de dagelijkse quest binnen.",       icon: "🐟" },
-  { id: "irregular-25",  name: "Onregelmatigheid te baas", desc: "25 onregelmatige werkwoorden goed.", icon: "📓" }
+  { id: "first-correct", name: "First catch",         desc: "Answer your first question correctly.",       icon: "🐾" },
+  { id: "streak-10",     name: "On the hunt",          desc: "10 questions in a row correct.",                 icon: "🎯" },
+  { id: "answers-100",   name: "Persistent",           desc: "Answer 100 questions.",                 icon: "💪" },
+  { id: "answers-500",   name: "Climber",              desc: "Answer 500 questions.",                 icon: "⛰️" },
+  { id: "all-tenses",    name: "Time traveller",       desc: "Practise all 12 tenses at least once.",    icon: "⏳" },
+  { id: "comeback",      name: "Unshakeable",          desc: "5 correct in a row after 3 mistakes.",           icon: "🔥" },
+  { id: "mouse-catch",   name: "Mouse catcher",       desc: "Catch Whiskers' mouse in the bonus round.",  icon: "🐁" },
+  { id: "quest-done",    name: "Daily angler",        desc: "Complete the daily quest.",       icon: "🐟" },
+  { id: "irregular-25",  name: "Irregular master",     desc: "25 irregular verbs correct.", icon: "📓" }
 ];
 
 const QUEST_GOAL = 10;      // vragen per dag
@@ -67,7 +67,7 @@ const Gamification = {
     this.save();
     this.renderBar();
     if (this.level() !== before && this.level().xp > before.xp) {
-      toast(`⬆️ Level up! Whiskers is nu een ${this.level().name}!`);
+      toast(`⬆️ Level up! Whiskers is now a ${this.level().name}!`);
       this.renderWhiskers("excited");
     } else if (amount > 0) {
       this.renderWhiskers("happy");
@@ -87,7 +87,7 @@ const Gamification = {
       this.state.energy = Math.min(130, this.state.energy + this.FEED_CAN_BONUS);
       this.save();
       this.renderEnergy();
-      toast("🥫 Bakje kattenvoeding! Whiskers zit extra vol (+30 energie)");
+      toast("🥫 A can of cat food! Whiskers is extra full (+30 energy)");
       if (typeof Whiskers !== "undefined" && Whiskers.showFeeding) Whiskers.showFeeding();
       return true;
     }
@@ -122,10 +122,10 @@ const Gamification = {
     if (!played) { chip.style.display = "none"; return; }
     chip.style.display = "";
     const e = this.state.energy;
-    const label = e >= 70 ? "voedzaam" : e >= 40 ? "hongerig" : e > 0 ? "heel hongerig!" : "uitgehongerd 😿";
+    const label = e >= 70 ? "well fed" : e >= 40 ? "hungry" : e > 0 ? "very hungry!" : "starving 😿";
     chip.innerHTML = e > 0
-      ? `🐱 Energie: ${e}/100 (${label})`
-      : "😿 Whiskers heeft honger! Oefen 5 vragen op rij voor een visje";
+      ? `🐱 Energy: ${e}/100 (${label})`
+      : "😿 Whiskers is hungry! Answer 5 questions in a row for a fish";
     chip.className = "chip energy-chip " + (e >= 70 ? "energy-ok" : e >= 40 ? "energy-warn" : "energy-bad");
   },
 
@@ -155,7 +155,7 @@ const Gamification = {
         this.state.questDone = true;
         this.earnBadge("quest-done");
         this.addXP(QUEST_REWARD);
-        toast("🐟 Dagelijkse quest voltooid! +25 XP");
+        toast("🐟 Daily quest complete! +25 XP");
       }
       this.save();
       this.renderQuest();
@@ -235,8 +235,8 @@ const Gamification = {
     chip.style.display = "inline-flex";
     const q = this.state.quest;
     chip.innerHTML = this.state.questDone
-      ? "🐟 Quest voltooid — Whiskers is blij!"
-      : `🎣 Dagelijkse quest: ${q.answered}/${QUEST_GOAL} vragen`;
+      ? "🐟 Quest complete — Whiskers is happy!"
+      : `🎣 Daily quest: ${q.answered}/${QUEST_GOAL} questions`;
   },
 
   // ---- Whiskers (8-bit pixelkat) ----

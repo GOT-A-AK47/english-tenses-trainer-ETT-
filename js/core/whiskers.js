@@ -7,11 +7,11 @@ const Whiskers = {
 
   // ---- pels-customisatie ----
   SKINS: [
-    { id: "oranje", name: "Klassiek oranje", level: 1,  fur: "#f4a742", light: "#ffb84d", stripe: "#c97d1c" },
-    { id: "grijs",  name: "Grijze poes",     level: 2,  fur: "#9aa0ab", light: "#c3c8d1", stripe: "#6d7280" },
-    { id: "zwart",  name: "Zwarte panter",  level: 3,  fur: "#3a3d45", light: "#565a64", stripe: "#212229" },
-    { id: "wit",    name: "Witte sneeuwkat", level: 4, fur: "#eef0f4", light: "#ffffff", stripe: "#c4c9d4" },
-    { id: "roze",   name: "Roze knuffelkat", level: 5, fur: "#f7a8c4", light: "#ffd3e3", stripe: "#d97ba3" }
+    { id: "oranje", name: "Classic orange", level: 1,  fur: "#f4a742", light: "#ffb84d", stripe: "#c97d1c" },
+    { id: "grijs",  name: "Grey cat",     level: 2,  fur: "#9aa0ab", light: "#c3c8d1", stripe: "#6d7280" },
+    { id: "zwart",  name: "Black panther",  level: 3,  fur: "#3a3d45", light: "#565a64", stripe: "#212229" },
+    { id: "wit",    name: "White snow cat", level: 4, fur: "#eef0f4", light: "#ffffff", stripe: "#c4c9d4" },
+    { id: "roze",   name: "Pink cuddly cat", level: 5, fur: "#f7a8c4", light: "#ffd3e3", stripe: "#d97ba3" }
   ],
 
   getSkin() {

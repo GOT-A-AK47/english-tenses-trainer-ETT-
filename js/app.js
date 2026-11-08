@@ -26,7 +26,7 @@ function verifyIdentity() {
         Identity.clear();
         MistakeStore.clear();
         try { localStorage.removeItem("english-tenses-session"); } catch {}
-        toast("Je account is niet meer bekend — log opnieuw in.");
+        toast("Your account no longer exists — please log in again.");
         ensureIdentity();
       }
     })
@@ -54,7 +54,7 @@ function ensureIdentity() {
 function updateIdentityLabel() {
   const id = Identity.get();
   const home = document.querySelector("#view-home .lead");
-  if (id && home) home.textContent = `Kies een tijd, ${id.name} (${id.klas}):`;
+  if (id && home) home.textContent = `Choose a tense, ${id.name} (${id.klas}):`;
 }
 
 function saveIdentity() {
@@ -62,7 +62,7 @@ function saveIdentity() {
   const klasEl = $("id-klas");
   const klas = klasEl.value;
   if (!name.trim() || !klas || !klas.trim()) {
-    $("id-feedback").textContent = "Vul je naam in en kies een klas.";
+    $("id-feedback").textContent = "Enter your name and choose a class.";
     return;
   }
   Identity.save(name, klas);
@@ -104,7 +104,7 @@ function openFeedback() {
 function sendFeedback() {
   const message = $("feedback-text").value;
   if (!message.trim()) {
-    $("feedback-msg").textContent = "Schrijf eerst een berichtje.";
+    $("feedback-msg").textContent = "Please write a message first.";
     return;
   }
   const payload = {
@@ -124,7 +124,7 @@ function sendFeedback() {
       toast("Bedankt voor je feedback!");
     })
     .catch(() => {
-      $("feedback-msg").textContent = "Versturen mislukt — probeer het later opnieuw.";
+      $("feedback-msg").textContent = "Sending failed — please try again later.";
     });
 }
 
@@ -158,10 +158,10 @@ function showBadges() {
 }
 
 function resetWhiskers() {
-  if (!confirm("Alles van Whiskers opnieuw beginnen?\n\nJe verliest: XP, level, badges, energie en pelskeuze.\nDit kan niet ongedaan gemaakt worden.")) return;
+  if (!confirm("Start over with Whiskers?\n\nYou will lose: XP, level, badges, energy and fur choice.\nThis cannot be undone.")) return;
   Gamification.resetAll();
   renderSkinPicker();
-  toast("🐾 Whiskers begint opnieuw als katje!");
+  toast("🐾 Whiskers starts over as a kitten!");
 }
 
 // ---- V1.9: introductie-scherm (eerste bezoek) ----
@@ -186,7 +186,7 @@ function renderSkinPicker() {
   holder.innerHTML = Whiskers.SKINS.map(s => {
     const unlocked = lvlIndex >= s.level;
     return `<button class="skin-swatch ${s.id === cur ? "selected" : ""} ${unlocked ? "" : "locked"}"
-      data-skin="${s.id}" title="${s.name}${unlocked ? "" : " — bereik level " + s.level}">
+      data-skin="${s.id}" title="${s.name}${unlocked ? "" : " — reach level " + s.level}">
       <span class="swatch" style="background:${s.fur}"></span>
       <span>${s.name}</span>
     </button>`;
@@ -196,13 +196,13 @@ function renderSkinPicker() {
       const skin = Whiskers.SKINS.find(s => s.id === btn.dataset.skin);
       const lvlNow = (Gamification.LEVELS_REF || []).indexOf(Gamification.level()) + 1;
       if (lvlNow < skin.level) {
-        toast(`🔒 ${skin.name} ontgrendelt op level ${skin.level}`);
+        toast(`🔒 ${skin.name} unlocks at level ${skin.level}`);
         return;
       }
       Whiskers.setSkin(skin.id);
       renderSkinPicker();
       Gamification.renderWhiskers("happy");
-      toast(`🐾 Whiskers draagt nu: ${skin.name}`);
+      toast(`🐾 Whiskers now wears: ${skin.name}`);
     });
   });
 }
@@ -245,7 +245,7 @@ function nextVocab() {
   const listId = $("vocab-list").value;
   const ex = VocabTrainer.generate(listId);
   if (!ex) return;
-  $("vocab-question").textContent = `Hoe zeg je "${ex.word.nl}" in het Engels?`;
+  $("vocab-question").textContent = `How do you say "${ex.word.nl}" in English?`;
   $("vocab-answer").value = "";
   $("vocab-answer").classList.remove("correct", "wrong");
   $("vocab-answer").focus();
@@ -297,9 +297,9 @@ async function renderSocial() {
     ? friends.map(f => `
       <div class="friend-row">
         <span><strong>${esc(f.name)}</strong> <span class="last">${f.total} vragen · ${f.total ? Math.round(f.correct / f.total * 100) : 0}% goed</span></span>
-        <button class="secondary" data-remove-friend="${f.who}">Verwijderen</button>
+        <button class="secondary" data-remove-friend="${f.who}">Remove</button>
       </div>`).join("")
-    : '<p class="empty">Nog geen vrienden — voeg er één toe uit je klas!</p>';
+    : '<p class="empty">No friends yet — add one from your class!</p>';
 
   friendsList.querySelectorAll("[data-remove-friend]").forEach(btn => {
     btn.addEventListener("click", async () => {
@@ -316,7 +316,7 @@ async function renderSocial() {
   $("mate-select").innerHTML = mateOptions;
   const friendWhos = friends.map(f => f.who);
   $("duel-opponent").innerHTML = friendWhos.length
-    ? '<option value="">— kies vriend —</option>' + friendWhos.map(f => `<option value="${esc(f)}">${esc(f.split("|")[0])}</option>`).join("")
+    ? '<option value="">— choose a friend —</option>' + friendWhos.map(f => `<option value="${esc(f)}">${esc(f.split("|")[0])}</option>`).join("")
     : '<option value="">Eerst vrienden toevoegen</option>';
 
   // duellijst
@@ -328,16 +328,16 @@ async function renderSocial() {
         const scoreLabel = d.state === "done"
           ? `<span class="duel-score">${d.myScore ?? "?"} – ${d.theirScore ?? "?"}</span>`
           : d.state === "waiting"
-            ? `<button class="secondary" data-play-duel="${d.id}">Wachtkamer — meedoen</button>`
+            ? `<button class="secondary" data-play-duel="${d.id}">Waiting room — join</button>`
             : d.myScore !== null
-              ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
-              : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
+              ? `<span class="duel-score">You: ${d.myScore}/10 — waiting for opponent</span>`
+              : `<button class="secondary" data-play-duel="${d.id}">Play</button>`;
         return `<div class="duel-item ${cls}">
           <span class="vs">⚔️ vs ${esc(d.opponent.split("|")[0])}</span>
           ${scoreLabel}
         </div>`;
       }).join("")
-    : '<p class="empty">Nog geen duels.</p>';
+    : '<p class="empty">No duels yet.</p>';
   $("duel-list").querySelectorAll("[data-play-duel]").forEach(btn => {
     btn.addEventListener("click", () => playDuel(btn.dataset.playDuel));
   });
@@ -345,17 +345,17 @@ async function renderSocial() {
 
 async function addFriend() {
   const val = $("mate-select").value;
-  if (!val) { $("friends-msg").textContent = "Kies eerst een klasgenoot."; return; }
+  if (!val) { $("friends-msg").textContent = "Please choose a classmate first."; return; }
   try {
     await Social.requestFriend(val);
     $("friends-msg").textContent = "";
     renderSocial();
-    toast("📨 Vriendschapsverzoek verstuurd!");
+    toast("📨 Friend request sent!");
   } catch (e) {
     try {
       const err = await e;
       $("friends-msg").textContent = err && err.error ? err.error : "Verzoek mislukt";
-    } catch { $("friends-msg").textContent = "Kon verzoek niet sturen (server bereikbaar?)"; }
+    } catch { $("friends-msg").textContent = "Could not send the request (is the server online?)"; }
   }
 }
 
@@ -367,19 +367,19 @@ async function renderRequests() {
   if (!reqs.length) { box.style.display = "none"; return; }
   box.style.display = "block";
   box.innerHTML = `
-    <h3 class="section-title">Vriendschapsverzoeken (${reqs.length})</h3>
+    <h3 class="section-title">Friend requests (${reqs.length})</h3>
     ${reqs.map(from => `
       <div class="friend-row">
-        <span><strong>${esc(from.split("|")[0])}</strong> <span class="last">wil je vriend zijn</span></span>
+        <span><strong>${esc(from.split("|")[0])}</strong> <span class="last">wants to be your friend</span></span>
         <span class="btnrow" style="margin:0">
-          <button class="secondary" data-accept="${from}">✓ Accepteren</button>
+          <button class="secondary" data-accept="${from}">✓ Accept</button>
           <button class="secondary" data-decline="${from}">✕</button>
         </span>
       </div>`).join("")}`;
   box.querySelectorAll("[data-accept]").forEach(btn => {
     btn.addEventListener("click", async () => {
       await Social.acceptFriend(btn.dataset.accept);
-      toast("🐱 Vriendschap!");
+      toast("🐱 You are friends now!");
       renderSocial();
     });
   });
@@ -396,12 +396,12 @@ let duelState = null;
 
 async function startDuel() {
   const opponent = $("duel-opponent").value;
-  if (!opponent) { toast("Kies eerst een vriend om tegen te duelleren."); return; }
+  if (!opponent) { toast("Choose a friend to duel with first."); return; }
   try {
     const r = await Social.newDuel(opponent);
     await joinDuelRoom(r.id);
   } catch (e) {
-    toast("Duel starten mislukt — is de server bereikbaar?");
+    toast("Could not start the duel — is the server online?");
   }
 }
 
@@ -409,8 +409,8 @@ async function startDuel() {
 async function joinDuelRoom(id) {
   showView("practice");
   Whiskers.showCompanion();
-  $("tense-info").textContent = "⚔️ Wachtkamer...";
-  $("sentence").textContent = "Wachten tot je tegenstander ook klaarstaat...";
+  $("tense-info").textContent = "⚔️ Waiting room...";
+  $("sentence").textContent = "Waiting for your opponent to join...";
   $("context").textContent = "";
   $("answer").value = "";
   $("answer").style.display = "none";
@@ -445,7 +445,7 @@ async function playDuel(id) {
   const duel = await Social.getDuel(id);
   if (duel.state === "waiting") return joinDuelRoom(id);
   if (duel.state !== "live" || !duel.questions) {
-    toast("Duel is niet (meer) speelbaar.");
+    toast("This duel is no longer playable.");
     return;
   }
   duelState = {
@@ -486,13 +486,13 @@ async function finishDuel() {
     if (result.state === "done") {
       const me = Social.who();
       if (result.winner === "draw") { toast("🤝 A draw!"); Whiskers.say("A draw — nicely shared!", 6000); }
-      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
-      else { toast("😈 Verloren... revanche?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
+      else if (result.winner === me) { toast("🏆 You won the duel!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
+      else { toast("😈 You lost... rematch?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
     } else {
-      toast(`Score ingediend: ${score}/10 — wacht op je tegenstander!`);
+      toast(`Score submitted: ${score}/10 — waiting for your opponent!`);
     }
   } catch (e) {
-    toast("Score kon niet indienen (offline?) — jammer!");
+    toast("Could not submit your score (offline?) — too bad!");
   }
   showView("social");
   renderSocial();
@@ -634,7 +634,7 @@ function startPractice(tenseId, mixIds) {
 
 // ---- Selects ----
 function initTenseSelectors() {
-  let opts = `<option value="mix">Mix (alle tijden)</option>`;
+  let opts = `<option value="mix">Mix (all tenses)</option>`;
   TENSE_GROUPS.forEach(g => {
     opts += `<optgroup label="${g.name}">` +
       g.tenses.map(id => {
@@ -698,8 +698,8 @@ function checkAnswer() {
     input.classList.add("correct");
     const attempts = currentExercise.attempts || 1;
     $("feedback").textContent = attempts > 1
-      ? `Juist! "${currentExercise.answer}" — goed volgehouden!`
-      : `Juist! "${currentExercise.answer}"`;
+      ? `Correct! "${currentExercise.answer}" — well done for persisting!`
+      : `Correct! "${currentExercise.answer}"`;
     $("feedback").className = "ok";
   } else {
     currentExercise.attempts = (currentExercise.attempts || 0) + 1;
@@ -710,11 +710,11 @@ function checkAnswer() {
     const n = currentExercise.attempts;
     let msg;
     if (n === 1) {
-      msg = `Niet juist — probeer het nog eens! Let op de spelling en de tijd.`;
+      msg = `Not correct — try again! Watch your spelling and the tense.`;
     } else if (n === 2) {
-      msg = `Nog niet goed. ${currentExercise.explain || ""} Kijk nog eens goed naar de zin.`;
+      msg = `Still not right. ${currentExercise.explain || ""} Take another look at the sentence.`;
     } else {
-      msg = `Poging ${n}... Tip: het antwoord begint met "${currentExercise.answer.slice(0, Math.max(1, Math.ceil(currentExercise.answer.length / 3)))}". Of druk op de hint-knop!`;
+      msg = `Attempt ${n}... Tip: the answer starts with "${currentExercise.answer.slice(0, Math.max(1, Math.ceil(currentExercise.answer.length / 3)))}". Or press the hint button!`;
     }
     $("feedback").textContent = msg;
     $("feedback").className = "nok";
@@ -741,7 +741,7 @@ function checkAnswer() {
     if (next) {
       repeatNext = next;
     } else {
-      toast("Alle fouten zijn herhaald! ");
+      toast("All mistakes have been repeated! ");
     }
   }
   updateMistakeBadge();
@@ -774,7 +774,7 @@ function shareTask() {
   url.searchParams.set("task", "practice");
   const link = url.toString();
   navigator.clipboard.writeText(link)
-    .then(() => toast("Link gekopieerd — deel hem met je klas! "))
+    .then(() => toast("Link copied — share it with your class! "))
     .catch(() => prompt("Kopieer deze link:", link));
 }
 
@@ -824,11 +824,11 @@ function checkIrregular() {
   $("irr-past").classList.add(result.pastOk ? "correct" : "wrong");
   $("irr-pp").classList.add(result.ppOk ? "correct" : "wrong");
   if (result.pastOk && result.ppOk) {
-    $("irr-feedback").textContent = "Allebei juist! ";
+    $("irr-feedback").textContent = "Both correct! ";
     $("irr-feedback").className = "ok";
   } else {
     $("irr-feedback").textContent =
-      `Juist is: ${IrregularTrainer.current().base} — ${result.past} — ${result.pp}`;
+      `The correct forms are: ${IrregularTrainer.current().base} — ${result.past} — ${result.pp}`;
     $("irr-feedback").className = "nok";
   }
   $("irr-score").textContent = IrregularTrainer.score;
@@ -855,7 +855,7 @@ function startCustom() {
   const checked = [...document.querySelectorAll("#custom-groups input:checked")]
     .map(i => i.value).filter(id => TenseRegistry.get(id));
   if (!checked.length) {
-    $("custom-feedback").textContent = "Vink minstens één tijd aan.";
+    $("custom-feedback").textContent = "Tick at least one tense.";
     return;
   }
   startPractice("mix", checked);
@@ -865,7 +865,7 @@ function startCustom() {
 function repeatPractice() {
   const next = MistakeStore.takeNext();
   if (!next) {
-    toast("Geen fouten om te herhalen! ");
+    toast("No mistakes to repeat! ");
     return;
   }
   repeatNext = next;
@@ -948,7 +948,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("reset-progress").addEventListener("click", () => {
     ProgressStore.reset();
     renderProgress();
-    toast("Voortgang gewist");
+    toast("Progress cleared");
   });
   $("answer").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); checkAnswer(); newExercise(); }

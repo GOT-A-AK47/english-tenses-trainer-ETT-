@@ -844,31 +844,31 @@ header h1::after {
         <span class="logo-badge">EN</span>
         <h1>English Tenses Trainer</h1>
       </button>
-      <button id="feedback-btn" class="link-btn feedback-link" title="Stuur feedback naar de beheerder">💬 Feedback</button>
+      <button id="feedback-btn" class="link-btn feedback-link" title="Send feedback to the admin">💬 Feedback</button>
     </header>
 
     <main>
       <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
       <section id="view-home" class="view active">
-        <p class="lead">Kies een tijd:</p>
+        <p class="lead">Choose a tense:</p>
 
         <div class="grid big" id="group-grid">
           <button class="tile big-tile" data-group="present">
             <span class="tile-name">Present</span>
-            <span class="tile-desc">Nu, gewoontes en bezig</span>
+            <span class="tile-desc">Now, habits and ongoing</span>
           </button>
           <button class="tile big-tile" data-group="past">
             <span class="tile-name">Past</span>
-            <span class="tile-desc">Gisteren en vroeger</span>
+            <span class="tile-desc">Yesterday and the past</span>
           </button>
           <button class="tile big-tile" data-group="future">
             <span class="tile-name">Future</span>
-            <span class="tile-desc">Morgen en straks</span>
+            <span class="tile-desc">Tomorrow and later</span>
           </button>
         </div>
 
         <div class="whiskers-row">
-      <div id="whiskers" class="whiskers-cat whiskers-clickable" role="button" tabindex="0" title="Klik op Whiskers voor jouw beloningen!"></div>
+      <div id="whiskers" class="whiskers-cat whiskers-clickable" role="button" tabindex="0" title="Click Whiskers for your rewards!"></div>
       <div class="xp-track">
         <div class="xp-top">
           <span id="level-badge" class="chip">Katje</span>
@@ -881,48 +881,48 @@ header h1::after {
     </div>
 
     <div class="whiskers-row" style="flex-direction:column;align-items:stretch">
-      <div class="xp-top"><span class="chip">📅 Oefenkalender</span><span id="calendar-streak" class="last"></span></div>
+      <div class="xp-top"><span class="chip">📅 Practice calendar</span><span id="calendar-streak" class="last"></span></div>
       <div id="calendar-grid" class="calendar-grid"></div>
     </div>
 
     <div id="home-tasks" style="display:none">
-          <h2 class="section-title">Taken van je leerkracht</h2>
+          <h2 class="section-title">Tasks from your teacher</h2>
           <div class="grid" id="task-grid"></div>
         </div>
 
-        <h2 class="section-title">Vrienden & duels</h2>
+        <h2 class="section-title">Friends & duels</h2>
         <div class="grid">
           <button class="tile" data-view="social">
-            <span class="tile-name">🐱 Vrienden</span>
-            <span class="tile-desc">Vrienden, duels en het klasgenoten-overzicht</span>
+            <span class="tile-name">🐱 Friends</span>
+            <span class="tile-desc">Friends, duels and classmates overview</span>
           </button>
         </div>
 
-        <h2 class="section-title">Meer</h2>
+        <h2 class="section-title">More</h2>
         <div class="grid">
           <button class="tile" data-action="custom">
             <span class="tile-name">Zelf kiezen</span>
-            <span class="tile-desc">Vink zelf aan welke tijden je door elkaar wilt oefenen</span>
+            <span class="tile-desc">Choose yourself which tenses to mix</span>
           </button>
           <button class="tile" id="mistake-tile" data-action="repeat" style="display:none">
-            <span class="tile-name">Fouten herhalen <span class="badge" id="mistake-badge"></span></span>
-            <span class="tile-desc">Jouw foutieve antwoorden opnieuw</span>
+            <span class="tile-name">Repeat mistakes <span class="badge" id="mistake-badge"></span></span>
+            <span class="tile-desc">Redo your incorrect answers</span>
           </button>
           <button class="tile" data-view="irregular">
-            <span class="tile-name">Onregelmatige werkwoorden</span>
+            <span class="tile-name">Irregular verbs</span>
             <span class="tile-desc">Past simple + past participle</span>
           </button>
           <button class="tile" data-view="vocab">
-            <span class="tile-name">Woordjes</span>
-            <span class="tile-desc">Vocabulaire-lijsten oefenen</span>
+            <span class="tile-name">Vocabulary</span>
+            <span class="tile-desc">Practise vocabulary lists</span>
           </button>
           <button class="tile" data-view="table">
             <span class="tile-name">Naslagtabel</span>
-            <span class="tile-desc">Vervoegingen per tijd bekijken</span>
+            <span class="tile-desc">View conjugations per tense</span>
           </button>
           <button class="tile" data-view="progress">
-            <span class="tile-name">Voortgang</span>
-            <span class="tile-desc">Jouw scores per tijd</span>
+            <span class="tile-name">Progress</span>
+            <span class="tile-desc">Your scores per tense</span>
           </button>
         </div>
       </section>
@@ -930,7 +930,7 @@ header h1::after {
       <!-- SUBTIJDEN per groep -->
       <section id="view-group" class="view">
         <div class="view-head">
-          <button class="back" data-view="home">← Startscherm</button>
+          <button class="back" data-view="home">← Home</button>
         </div>
         <p class="lead" id="group-lead"></p>
         <div class="grid" id="group-tense-grid"></div>
@@ -942,12 +942,12 @@ header h1::after {
       <!-- ZELF KIEZEN -->
       <section id="view-custom" class="view">
         <div class="view-head">
-          <button class="back" data-view="home">← Startscherm</button>
+          <button class="back" data-view="home">← Home</button>
         </div>
-        <p class="lead">Vink aan wat je wilt oefenen:</p>
+        <p class="lead">Tick what you want to practise:</p>
         <div id="custom-groups"></div>
         <div class="btnrow start-row">
-          <button id="start-custom">Start oefening</button>
+          <button id="start-custom">Start practising</button>
         </div>
         <p id="custom-feedback" class="context"></p>
       </section>
@@ -955,16 +955,16 @@ header h1::after {
       <!-- OEFENEN -->
       <section id="view-practice" class="view">
         <div class="view-head">
-          <button class="back" data-view="home">← Startscherm</button>
+          <button class="back" data-view="home">← Home</button>
           <div class="controls">
-            <label for="tense-select">Tijd:</label>
+            <label for="tense-select">Tense:</label>
             <select id="tense-select"></select>
           </div>
         </div>
 
         <div class="stats-row">
-          <div class="stat"><span class="value" id="score">0</span><span class="label">Score (deze sessie)</span></div>
-          <div class="stat"><span class="value" id="count">0</span><span class="label">Vragen (deze sessie)</span></div>
+          <div class="stat"><span class="value" id="score">0</span><span class="label">Score (this session)</span></div>
+          <div class="stat"><span class="value" id="count">0</span><span class="label">Questions (this session)</span></div>
         </div>
 
         <div class="card">
@@ -974,38 +974,38 @@ header h1::after {
           </div>
           <p id="sentence" class="sentence"></p>
           <p id="context" class="context"></p>
-          <input type="text" id="answer" placeholder="Vul hier je antwoord in..." autocomplete="off" spellcheck="false">
+          <input type="text" id="answer" placeholder="Type your answer here..." autocomplete="off" spellcheck="false">
           <div class="btnrow">
-            <button id="check">Controleer</button>
-            <button id="next" class="secondary">Volgende</button>
+            <button id="check">Check</button>
+            <button id="next" class="secondary">Next</button>
             <button id="show-hint" class="secondary">Hint</button>
           </div>
           <p id="feedback"></p>
-        <p id="duel-wait" class="context" style="display:none">⏳ Wachten op je tegenstander... (elke 2 sec gecheckt)</p>
+        <p id="duel-wait" class="context" style="display:none">⏳ Waiting for your opponent... (checked every 2 seconds)</p>
         </div>
       </section>
 
       <!-- ONREGELMATIGE WERKWOORDEN -->
       <section id="view-irregular" class="view">
         <div class="view-head">
-          <button class="back" data-view="home">← Startscherm</button>
+          <button class="back" data-view="home">← Home</button>
         </div>
         <div class="stats-row">
-          <div class="stat"><span class="value" id="irr-score">0</span><span class="label">Goed</span></div>
-          <div class="stat"><span class="value" id="irr-total">0</span><span class="label">Pogingen</span></div>
+          <div class="stat"><span class="value" id="irr-score">0</span><span class="label">Correct</span></div>
+          <div class="stat"><span class="value" id="irr-total">0</span><span class="label">Attempts</span></div>
         </div>
         <div class="card">
           <p class="base-word">Base form <strong id="irr-base">—</strong></p>
           <label>Past simple <input type="text" id="irr-past" autocomplete="off" spellcheck="false"></label>
           <label>Past participle <input type="text" id="irr-pp" autocomplete="off" spellcheck="false"></label>
           <div class="btnrow">
-            <button id="irr-check">Controleer</button>
-            <button id="irr-next" class="secondary">Volgende</button>
+            <button id="irr-check">Check</button>
+            <button id="irr-next" class="secondary">Next</button>
           </div>
           <p id="irr-feedback"></p>
         </div>
         <details>
-          <summary>Lijst bekijken</summary>
+          <summary>View list</summary>
           <table id="irr-table">
             <thead><tr><th>Base</th><th>Past</th><th>Past participle</th></tr></thead>
             <tbody></tbody>
@@ -1016,9 +1016,9 @@ header h1::after {
       <!-- NASLAGTABEL -->
       <section id="view-table" class="view">
         <div class="view-head">
-          <button class="back" data-view="home">← Startscherm</button>
+          <button class="back" data-view="home">← Home</button>
           <div class="controls">
-            <label for="table-select">Tijd:</label>
+            <label for="table-select">Tense:</label>
             <select id="table-select"></select>
           </div>
         </div>
@@ -1031,18 +1031,18 @@ header h1::after {
       <!-- VOORTGANG -->
       <section id="view-progress" class="view">
         <div class="view-head">
-          <button class="back" data-view="home">← Startscherm</button>
+          <button class="back" data-view="home">← Home</button>
         </div>
         <div class="card">
-          <span class="chip">Jouw voortgang</span>
-          <p class="context">Wordt bewaard op dit toestel. In V1 synct dit met de server.</p>
+          <span class="chip">Your progress</span>
+          <p class="context">Saved on this device and synced with the server.</p>
           <div class="stats-row" style="margin:0.75rem 0">
-            <div class="stat"><span class="value" id="total-correct">0</span><span class="label">Totaal goed</span></div>
-            <div class="stat"><span class="value" id="total-answers">0</span><span class="label">Totaal vragen</span></div>
+            <div class="stat"><span class="value" id="total-correct">0</span><span class="label">Total correct</span></div>
+            <div class="stat"><span class="value" id="total-answers">0</span><span class="label">Total questions</span></div>
           </div>
           <div id="progress-list"></div>
           <div class="reset-row">
-            <button id="reset-progress" class="secondary">Voortgang wissen</button>
+            <button id="reset-progress" class="secondary">Progress wissen</button>
           </div>
         </div>
       </section>
@@ -1052,16 +1052,16 @@ header h1::after {
     <div id="intro-modal" style="display:none">
       <div class="card identity-card">
         <div class="intro-cat" id="intro-cat"></div>
-        <span class="chip">🐱 Ontmoet Whiskers!</span>
-        <p class="context">Dit is <strong>Whiskers</strong>, jouw huisdier tijdens het oefenen van Engelse tijden.</p>
+        <span class="chip">🐱 Meet Whiskers!</span>
+        <p class="context">This is <strong>Whiskers</strong>, your pet companion while practising English tenses.</p>
         <ul class="intro-list">
-          <li>🐟 <strong>Houd hem in leven:</strong> elke dag wordt hij hongeriger. 5 goede antwoorden op rij = een visje!</li>
-          <li>⭐ <strong>Verdien XP</strong> enWhiskers groeit van katje tot legendarische leeuw.</li>
-          <li>🏅 <strong>Badges</strong> voor bijzondere prestaties — klik op Whiskers om ze te zien.</li>
-          <li>🎨 <strong>Kleed hem aan:</strong> bij hogere levels ontgrendel je nieuwe pelskleuren.</li>
+          <li>🐟 <strong>Keep him alive:</strong> he gets hungrier every day. 5 correct answers in a row = a fish!</li>
+          <li>⭐ <strong>Earn XP</strong> and Whiskers grows from kitten to legendary lion.</li>
+          <li>🏅 <strong>Badges</strong> for special achievements — click Whiskers to see them.</li>
+          <li>🎨 <strong>Dress him up:</strong> higher levels unlock new fur colours.</li>
         </ul>
         <div class="btnrow">
-          <button id="intro-close">Laten we oefenen!</button>
+          <button id="intro-close">Let's practise!</button>
         </div>
       </div>
     </div>
@@ -1071,12 +1071,12 @@ header h1::after {
       <div class="card identity-card">
         <span class="chip">🐱 Whiskers</span>
         <p id="badges-xp" class="context"></p>
-        <p class="context" style="margin-bottom:0.2rem"><strong>Pels van Whiskers</strong> — wissel hieronder:</p>
+        <p class="context" style="margin-bottom:0.2rem"><strong>Whiskers' fur</strong> — switch below:</p>
         <div id="skin-picker" class="skin-picker"></div>
         <div id="badges-grid" class="badges-grid"></div>
         <div class="btnrow">
-          <button id="badges-reset" class="secondary">Whiskers opnieuw beginnen</button>
-          <button id="badges-close" class="secondary">Sluiten</button>
+          <button id="badges-reset" class="secondary">Start over with Whiskers</button>
+          <button id="badges-close" class="secondary">Close</button>
         </div>
       </div>
     </div>
@@ -1086,19 +1086,19 @@ header h1::after {
       <div class="card identity-card">
         <span class="chip">Feedback</span>
         <p class="context" id="feedback-from"></p>
-        <label>Categorie
+        <label>Category
           <select id="feedback-category">
-            <option value="idee">Idee</option>
+            <option value="idee">Idea</option>
             <option value="bug">Bug</option>
-            <option value="klacht">Klacht</option>
-            <option value="anders">Anders</option>
+            <option value="klacht">Complaint</option>
+            <option value="anders">Other</option>
           </select>
         </label>
-        <label>Bericht
-          <textarea id="feedback-text" rows="4" placeholder="Wat wil je doorgeven?" spellcheck="false"></textarea>
+        <label>Message
+          <textarea id="feedback-text" rows="4" placeholder="What would you like to tell us?" spellcheck="false"></textarea>
         </label>
         <div class="btnrow">
-          <button id="feedback-send">Versturen</button>
+          <button id="feedback-send">Send</button>
           <button id="feedback-cancel" class="secondary">Annuleren</button>
         </div>
         <p id="feedback-msg" class="context"></p>
@@ -1109,15 +1109,15 @@ header h1::after {
     <div id="identity-modal" style="display:none">
       <div class="card identity-card">
         <span class="chip">Wie ben jij?</span>
-        <p class="context">Vul je naam en klas in, zodat je voortgang bewaard blijft.</p>
-        <label>Naam
-          <input type="text" id="id-name" placeholder="bv. Anna" autocomplete="off" spellcheck="false">
+        <p class="context">Enter your name and class so your progress is saved.</p>
+        <label>Name
+          <input type="text" id="id-name" placeholder="e.g. Anna" autocomplete="off" spellcheck="false">
         </label>
-        <label>Klas
+        <label>Class
           <select id="id-klas"></select>
         </label>
         <div class="btnrow">
-          <button id="id-save">Beginnen</button>
+          <button id="id-save">Start</button>
         </div>
         <p id="id-feedback" class="context"></p>
       </div>
@@ -1126,28 +1126,28 @@ header h1::after {
     <!-- SOCIAL (V2.2) -->
     <section id="view-social" class="view">
       <div class="view-head">
-        <button class="back" data-view="home">← Startscherm</button>
-        <h2>Vrienden & duels</h2>
+        <button class="back" data-view="home">← Home</button>
+        <h2>Friends & duels</h2>
       </div>
 
       <div class="card" id="requests-list" style="display:none"></div>
 
       <div class="card">
-        <h3 class="section-title">Mijn vrienden</h3>
+        <h3 class="section-title">My friends</h3>
         <div id="friends-list" class="friends-list"></div>
         <div class="btnrow" style="margin-top:0.75rem">
           <select id="mate-select"></select>
-          <button id="add-friend" class="secondary">Vriend toevoegen</button>
+          <button id="add-friend" class="secondary">Add friend</button>
         </div>
         <p id="friends-msg" class="context"></p>
       </div>
 
       <div class="card">
         <h3 class="section-title">Duels</h3>
-        <p class="context">Daag een vriend uit: jullie krijgen dezelfde 10 vragen. Hoogste score wint!</p>
+        <p class="context">Challenge a friend: you both get the same 10 questions. Highest score wins!</p>
         <div class="btnrow">
           <select id="duel-opponent"></select>
-          <button id="start-duel">⚔️ Duel starten</button>
+          <button id="start-duel">⚔️ Start duel</button>
         </div>
         <div id="duel-list" style="margin-top:0.75rem"></div>
       </div>
@@ -1156,8 +1156,8 @@ header h1::after {
     <!-- VOCAB (V2.5) -->
     <section id="view-vocab" class="view">
       <div class="view-head">
-        <button class="back" data-view="home">← Startscherm</button>
-        <h2>Woordjes oefenen</h2>
+        <button class="back" data-view="home">← Home</button>
+        <h2>Vocabulary practice</h2>
       </div>
 
       <div class="card" id="vocab-picker-card">
@@ -1166,7 +1166,7 @@ header h1::after {
         </label>
         <p class="context" id="vocab-list-desc"></p>
         <div class="btnrow">
-          <button id="vocab-start">Starten</button>
+          <button id="vocab-start">Start</button>
         </div>
       </div>
 
@@ -1174,9 +1174,9 @@ header h1::after {
         <p class="lead" id="vocab-question"></p>
         <input type="text" id="vocab-answer" placeholder="English word..." autocomplete="off" spellcheck="false">
         <div class="btnrow">
-          <button id="vocab-check">Controleren</button>
+          <button id="vocab-check">Check</button>
           <button id="vocab-hint" class="secondary">Hint</button>
-          <button id="vocab-next" class="secondary" style="display:none">Volgende</button>
+          <button id="vocab-next" class="secondary" style="display:none">Next</button>
         </div>
         <p id="vocab-feedback" class="context"></p>
       </div>
@@ -1414,24 +1414,24 @@ const Identity = {
 // Whiskers de kat reageert op alles. Puur frontend; bewaard naast de voortgang.
 
 const LEVELS = [
-  { xp: 0,    name: "Katje",                scale: 0.9 },
-  { xp: 200,  name: "Jonge kat",            scale: 1.0 },
-  { xp: 600,  name: "Volwassen kat",       scale: 1.1 },
-  { xp: 1200, name: "Ervaren jager",        scale: 1.2 },
-  { xp: 2000, name: "Wijze kater",          scale: 1.3 },
-  { xp: 3200, name: "Legendarische leeuw",  scale: 1.45 }
+  { xp: 0,    name: "Kitten",                scale: 0.9 },
+  { xp: 200,  name: "Young cat",            scale: 1.0 },
+  { xp: 600,  name: "Adult cat",       scale: 1.1 },
+  { xp: 1200, name: "Experienced hunter",        scale: 1.2 },
+  { xp: 2000, name: "Wise tomcat",          scale: 1.3 },
+  { xp: 3200, name: "Legendary lion",  scale: 1.45 }
 ];
 
 const BADGES = [
-  { id: "first-correct", name: "Eerste vangst",        desc: "Beantwoord je eerste vraag goed.",       icon: "🐾" },
-  { id: "streak-10",     name: "Op jacht",             desc: "10 vragen op rij goed.",                 icon: "🎯" },
-  { id: "answers-100",   name: "Doorzetter",           desc: "100 vragen beantwoord.",                 icon: "💪" },
-  { id: "answers-500",   name: "Klimmer",              desc: "500 vragen beantwoord.",                 icon: "⛰️" },
-  { id: "all-tenses",    name: "Tijdentraveler",       desc: "Alle 12 tijden minstens 1x geoefend.",    icon: "⏳" },
-  { id: "comeback",      name: "Niet op je kop getrapt", desc: "Na 3 fouten 5 goede op rij.",           icon: "🔥" },
-  { id: "mouse-catch",   name: "Muisenvanger",         desc: "Vang Whiskers' muis in de bonusronde.",  icon: "🐁" },
-  { id: "quest-done",    name: "Dagvisser",            desc: "Haal de dagelijkse quest binnen.",       icon: "🐟" },
-  { id: "irregular-25",  name: "Onregelmatigheid te baas", desc: "25 onregelmatige werkwoorden goed.", icon: "📓" }
+  { id: "first-correct", name: "First catch",         desc: "Answer your first question correctly.",       icon: "🐾" },
+  { id: "streak-10",     name: "On the hunt",          desc: "10 questions in a row correct.",                 icon: "🎯" },
+  { id: "answers-100",   name: "Persistent",           desc: "Answer 100 questions.",                 icon: "💪" },
+  { id: "answers-500",   name: "Climber",              desc: "Answer 500 questions.",                 icon: "⛰️" },
+  { id: "all-tenses",    name: "Time traveller",       desc: "Practise all 12 tenses at least once.",    icon: "⏳" },
+  { id: "comeback",      name: "Unshakeable",          desc: "5 correct in a row after 3 mistakes.",           icon: "🔥" },
+  { id: "mouse-catch",   name: "Mouse catcher",       desc: "Catch Whiskers' mouse in the bonus round.",  icon: "🐁" },
+  { id: "quest-done",    name: "Daily angler",        desc: "Complete the daily quest.",       icon: "🐟" },
+  { id: "irregular-25",  name: "Irregular master",     desc: "25 irregular verbs correct.", icon: "📓" }
 ];
 
 const QUEST_GOAL = 10;      // vragen per dag
@@ -1479,7 +1479,7 @@ const Gamification = {
     this.save();
     this.renderBar();
     if (this.level() !== before && this.level().xp > before.xp) {
-      toast(`⬆️ Level up! Whiskers is nu een ${this.level().name}!`);
+      toast(`⬆️ Level up! Whiskers is now a ${this.level().name}!`);
       this.renderWhiskers("excited");
     } else if (amount > 0) {
       this.renderWhiskers("happy");
@@ -1499,7 +1499,7 @@ const Gamification = {
       this.state.energy = Math.min(130, this.state.energy + this.FEED_CAN_BONUS);
       this.save();
       this.renderEnergy();
-      toast("🥫 Bakje kattenvoeding! Whiskers zit extra vol (+30 energie)");
+      toast("🥫 A can of cat food! Whiskers is extra full (+30 energy)");
       if (typeof Whiskers !== "undefined" && Whiskers.showFeeding) Whiskers.showFeeding();
       return true;
     }
@@ -1534,10 +1534,10 @@ const Gamification = {
     if (!played) { chip.style.display = "none"; return; }
     chip.style.display = "";
     const e = this.state.energy;
-    const label = e >= 70 ? "voedzaam" : e >= 40 ? "hongerig" : e > 0 ? "heel hongerig!" : "uitgehongerd 😿";
+    const label = e >= 70 ? "well fed" : e >= 40 ? "hungry" : e > 0 ? "very hungry!" : "starving 😿";
     chip.innerHTML = e > 0
-      ? `🐱 Energie: ${e}/100 (${label})`
-      : "😿 Whiskers heeft honger! Oefen 5 vragen op rij voor een visje";
+      ? `🐱 Energy: ${e}/100 (${label})`
+      : "😿 Whiskers is hungry! Answer 5 questions in a row for a fish";
     chip.className = "chip energy-chip " + (e >= 70 ? "energy-ok" : e >= 40 ? "energy-warn" : "energy-bad");
   },
 
@@ -1567,7 +1567,7 @@ const Gamification = {
         this.state.questDone = true;
         this.earnBadge("quest-done");
         this.addXP(QUEST_REWARD);
-        toast("🐟 Dagelijkse quest voltooid! +25 XP");
+        toast("🐟 Daily quest complete! +25 XP");
       }
       this.save();
       this.renderQuest();
@@ -1647,8 +1647,8 @@ const Gamification = {
     chip.style.display = "inline-flex";
     const q = this.state.quest;
     chip.innerHTML = this.state.questDone
-      ? "🐟 Quest voltooid — Whiskers is blij!"
-      : `🎣 Dagelijkse quest: ${q.answered}/${QUEST_GOAL} vragen`;
+      ? "🐟 Quest complete — Whiskers is happy!"
+      : `🎣 Daily quest: ${q.answered}/${QUEST_GOAL} questions`;
   },
 
   // ---- Whiskers (8-bit pixelkat) ----
@@ -1857,11 +1857,11 @@ const Whiskers = {
 
   // ---- pels-customisatie ----
   SKINS: [
-    { id: "oranje", name: "Klassiek oranje", level: 1,  fur: "#f4a742", light: "#ffb84d", stripe: "#c97d1c" },
-    { id: "grijs",  name: "Grijze poes",     level: 2,  fur: "#9aa0ab", light: "#c3c8d1", stripe: "#6d7280" },
-    { id: "zwart",  name: "Zwarte panter",  level: 3,  fur: "#3a3d45", light: "#565a64", stripe: "#212229" },
-    { id: "wit",    name: "Witte sneeuwkat", level: 4, fur: "#eef0f4", light: "#ffffff", stripe: "#c4c9d4" },
-    { id: "roze",   name: "Roze knuffelkat", level: 5, fur: "#f7a8c4", light: "#ffd3e3", stripe: "#d97ba3" }
+    { id: "oranje", name: "Classic orange", level: 1,  fur: "#f4a742", light: "#ffb84d", stripe: "#c97d1c" },
+    { id: "grijs",  name: "Grey cat",     level: 2,  fur: "#9aa0ab", light: "#c3c8d1", stripe: "#6d7280" },
+    { id: "zwart",  name: "Black panther",  level: 3,  fur: "#3a3d45", light: "#565a64", stripe: "#212229" },
+    { id: "wit",    name: "White snow cat", level: 4, fur: "#eef0f4", light: "#ffffff", stripe: "#c4c9d4" },
+    { id: "roze",   name: "Pink cuddly cat", level: 5, fur: "#f7a8c4", light: "#ffd3e3", stripe: "#d97ba3" }
   ],
 
   getSkin() {
@@ -2259,13 +2259,13 @@ const Calendar = {
         s.answers < 5 ? "cal-low" :
         s.answers < 15 ? "cal-mid" : "cal-high";
       const title = s
-        ? `${day.d.toLocaleDateString("nl-NL")}: ${s.answers} vragen (${s.correct} goed)`
-        : `${day.d.toLocaleDateString("nl-NL")}: niet geoefend`;
+        ? `${day.d.toLocaleDateString("en-GB")}: ${s.answers} questions (${s.correct} correct)`
+        : `${day.d.toLocaleDateString("en-GB")}: not practised`;
       return `<div class="cal-day ${cls}" title="${title}"></div>`;
     }).join("");
     const streak = this.calcStreak(data);
     const label = document.getElementById("calendar-streak");
-    if (label) label.textContent = streak >= 2 ? `🔥 ${streak} dagen op rij geoefend!` : "Oefen vandaag voor je eerste vinkje!";
+    if (label) label.textContent = streak >= 2 ? `🔥 ${streak} days in a row!` : "Practise today for your first tick!";
   },
 
   calcStreak(data) {
@@ -2951,7 +2951,7 @@ function verifyIdentity() {
         Identity.clear();
         MistakeStore.clear();
         try { localStorage.removeItem("english-tenses-session"); } catch {}
-        toast("Je account is niet meer bekend — log opnieuw in.");
+        toast("Your account no longer exists — please log in again.");
         ensureIdentity();
       }
     })
@@ -2979,7 +2979,7 @@ function ensureIdentity() {
 function updateIdentityLabel() {
   const id = Identity.get();
   const home = document.querySelector("#view-home .lead");
-  if (id && home) home.textContent = `Kies een tijd, ${id.name} (${id.klas}):`;
+  if (id && home) home.textContent = `Choose a tense, ${id.name} (${id.klas}):`;
 }
 
 function saveIdentity() {
@@ -2987,7 +2987,7 @@ function saveIdentity() {
   const klasEl = $("id-klas");
   const klas = klasEl.value;
   if (!name.trim() || !klas || !klas.trim()) {
-    $("id-feedback").textContent = "Vul je naam in en kies een klas.";
+    $("id-feedback").textContent = "Enter your name and choose a class.";
     return;
   }
   Identity.save(name, klas);
@@ -3029,7 +3029,7 @@ function openFeedback() {
 function sendFeedback() {
   const message = $("feedback-text").value;
   if (!message.trim()) {
-    $("feedback-msg").textContent = "Schrijf eerst een berichtje.";
+    $("feedback-msg").textContent = "Please write a message first.";
     return;
   }
   const payload = {
@@ -3049,7 +3049,7 @@ function sendFeedback() {
       toast("Bedankt voor je feedback!");
     })
     .catch(() => {
-      $("feedback-msg").textContent = "Versturen mislukt — probeer het later opnieuw.";
+      $("feedback-msg").textContent = "Sending failed — please try again later.";
     });
 }
 
@@ -3083,10 +3083,10 @@ function showBadges() {
 }
 
 function resetWhiskers() {
-  if (!confirm("Alles van Whiskers opnieuw beginnen?\n\nJe verliest: XP, level, badges, energie en pelskeuze.\nDit kan niet ongedaan gemaakt worden.")) return;
+  if (!confirm("Start over with Whiskers?\n\nYou will lose: XP, level, badges, energy and fur choice.\nThis cannot be undone.")) return;
   Gamification.resetAll();
   renderSkinPicker();
-  toast("🐾 Whiskers begint opnieuw als katje!");
+  toast("🐾 Whiskers starts over as a kitten!");
 }
 
 // ---- V1.9: introductie-scherm (eerste bezoek) ----
@@ -3111,7 +3111,7 @@ function renderSkinPicker() {
   holder.innerHTML = Whiskers.SKINS.map(s => {
     const unlocked = lvlIndex >= s.level;
     return `<button class="skin-swatch ${s.id === cur ? "selected" : ""} ${unlocked ? "" : "locked"}"
-      data-skin="${s.id}" title="${s.name}${unlocked ? "" : " — bereik level " + s.level}">
+      data-skin="${s.id}" title="${s.name}${unlocked ? "" : " — reach level " + s.level}">
       <span class="swatch" style="background:${s.fur}"></span>
       <span>${s.name}</span>
     </button>`;
@@ -3121,13 +3121,13 @@ function renderSkinPicker() {
       const skin = Whiskers.SKINS.find(s => s.id === btn.dataset.skin);
       const lvlNow = (Gamification.LEVELS_REF || []).indexOf(Gamification.level()) + 1;
       if (lvlNow < skin.level) {
-        toast(`🔒 ${skin.name} ontgrendelt op level ${skin.level}`);
+        toast(`🔒 ${skin.name} unlocks at level ${skin.level}`);
         return;
       }
       Whiskers.setSkin(skin.id);
       renderSkinPicker();
       Gamification.renderWhiskers("happy");
-      toast(`🐾 Whiskers draagt nu: ${skin.name}`);
+      toast(`🐾 Whiskers now wears: ${skin.name}`);
     });
   });
 }
@@ -3170,7 +3170,7 @@ function nextVocab() {
   const listId = $("vocab-list").value;
   const ex = VocabTrainer.generate(listId);
   if (!ex) return;
-  $("vocab-question").textContent = `Hoe zeg je "${ex.word.nl}" in het Engels?`;
+  $("vocab-question").textContent = `How do you say "${ex.word.nl}" in English?`;
   $("vocab-answer").value = "";
   $("vocab-answer").classList.remove("correct", "wrong");
   $("vocab-answer").focus();
@@ -3222,9 +3222,9 @@ async function renderSocial() {
     ? friends.map(f => `
       <div class="friend-row">
         <span><strong>${esc(f.name)}</strong> <span class="last">${f.total} vragen · ${f.total ? Math.round(f.correct / f.total * 100) : 0}% goed</span></span>
-        <button class="secondary" data-remove-friend="${f.who}">Verwijderen</button>
+        <button class="secondary" data-remove-friend="${f.who}">Remove</button>
       </div>`).join("")
-    : '<p class="empty">Nog geen vrienden — voeg er één toe uit je klas!</p>';
+    : '<p class="empty">No friends yet — add one from your class!</p>';
 
   friendsList.querySelectorAll("[data-remove-friend]").forEach(btn => {
     btn.addEventListener("click", async () => {
@@ -3241,7 +3241,7 @@ async function renderSocial() {
   $("mate-select").innerHTML = mateOptions;
   const friendWhos = friends.map(f => f.who);
   $("duel-opponent").innerHTML = friendWhos.length
-    ? '<option value="">— kies vriend —</option>' + friendWhos.map(f => `<option value="${esc(f)}">${esc(f.split("|")[0])}</option>`).join("")
+    ? '<option value="">— choose a friend —</option>' + friendWhos.map(f => `<option value="${esc(f)}">${esc(f.split("|")[0])}</option>`).join("")
     : '<option value="">Eerst vrienden toevoegen</option>';
 
   // duellijst
@@ -3253,16 +3253,16 @@ async function renderSocial() {
         const scoreLabel = d.state === "done"
           ? `<span class="duel-score">${d.myScore ?? "?"} – ${d.theirScore ?? "?"}</span>`
           : d.state === "waiting"
-            ? `<button class="secondary" data-play-duel="${d.id}">Wachtkamer — meedoen</button>`
+            ? `<button class="secondary" data-play-duel="${d.id}">Waiting room — join</button>`
             : d.myScore !== null
-              ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
-              : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
+              ? `<span class="duel-score">You: ${d.myScore}/10 — waiting for opponent</span>`
+              : `<button class="secondary" data-play-duel="${d.id}">Play</button>`;
         return `<div class="duel-item ${cls}">
           <span class="vs">⚔️ vs ${esc(d.opponent.split("|")[0])}</span>
           ${scoreLabel}
         </div>`;
       }).join("")
-    : '<p class="empty">Nog geen duels.</p>';
+    : '<p class="empty">No duels yet.</p>';
   $("duel-list").querySelectorAll("[data-play-duel]").forEach(btn => {
     btn.addEventListener("click", () => playDuel(btn.dataset.playDuel));
   });
@@ -3270,17 +3270,17 @@ async function renderSocial() {
 
 async function addFriend() {
   const val = $("mate-select").value;
-  if (!val) { $("friends-msg").textContent = "Kies eerst een klasgenoot."; return; }
+  if (!val) { $("friends-msg").textContent = "Please choose a classmate first."; return; }
   try {
     await Social.requestFriend(val);
     $("friends-msg").textContent = "";
     renderSocial();
-    toast("📨 Vriendschapsverzoek verstuurd!");
+    toast("📨 Friend request sent!");
   } catch (e) {
     try {
       const err = await e;
       $("friends-msg").textContent = err && err.error ? err.error : "Verzoek mislukt";
-    } catch { $("friends-msg").textContent = "Kon verzoek niet sturen (server bereikbaar?)"; }
+    } catch { $("friends-msg").textContent = "Could not send the request (is the server online?)"; }
   }
 }
 
@@ -3292,19 +3292,19 @@ async function renderRequests() {
   if (!reqs.length) { box.style.display = "none"; return; }
   box.style.display = "block";
   box.innerHTML = `
-    <h3 class="section-title">Vriendschapsverzoeken (${reqs.length})</h3>
+    <h3 class="section-title">Friend requests (${reqs.length})</h3>
     ${reqs.map(from => `
       <div class="friend-row">
-        <span><strong>${esc(from.split("|")[0])}</strong> <span class="last">wil je vriend zijn</span></span>
+        <span><strong>${esc(from.split("|")[0])}</strong> <span class="last">wants to be your friend</span></span>
         <span class="btnrow" style="margin:0">
-          <button class="secondary" data-accept="${from}">✓ Accepteren</button>
+          <button class="secondary" data-accept="${from}">✓ Accept</button>
           <button class="secondary" data-decline="${from}">✕</button>
         </span>
       </div>`).join("")}`;
   box.querySelectorAll("[data-accept]").forEach(btn => {
     btn.addEventListener("click", async () => {
       await Social.acceptFriend(btn.dataset.accept);
-      toast("🐱 Vriendschap!");
+      toast("🐱 You are friends now!");
       renderSocial();
     });
   });
@@ -3321,12 +3321,12 @@ let duelState = null;
 
 async function startDuel() {
   const opponent = $("duel-opponent").value;
-  if (!opponent) { toast("Kies eerst een vriend om tegen te duelleren."); return; }
+  if (!opponent) { toast("Choose a friend to duel with first."); return; }
   try {
     const r = await Social.newDuel(opponent);
     await joinDuelRoom(r.id);
   } catch (e) {
-    toast("Duel starten mislukt — is de server bereikbaar?");
+    toast("Could not start the duel — is the server online?");
   }
 }
 
@@ -3334,8 +3334,8 @@ async function startDuel() {
 async function joinDuelRoom(id) {
   showView("practice");
   Whiskers.showCompanion();
-  $("tense-info").textContent = "⚔️ Wachtkamer...";
-  $("sentence").textContent = "Wachten tot je tegenstander ook klaarstaat...";
+  $("tense-info").textContent = "⚔️ Waiting room...";
+  $("sentence").textContent = "Waiting for your opponent to join...";
   $("context").textContent = "";
   $("answer").value = "";
   $("answer").style.display = "none";
@@ -3370,7 +3370,7 @@ async function playDuel(id) {
   const duel = await Social.getDuel(id);
   if (duel.state === "waiting") return joinDuelRoom(id);
   if (duel.state !== "live" || !duel.questions) {
-    toast("Duel is niet (meer) speelbaar.");
+    toast("This duel is no longer playable.");
     return;
   }
   duelState = {
@@ -3411,13 +3411,13 @@ async function finishDuel() {
     if (result.state === "done") {
       const me = Social.who();
       if (result.winner === "draw") { toast("🤝 A draw!"); Whiskers.say("A draw — nicely shared!", 6000); }
-      else if (result.winner === me) { toast("🏆 Je hebt het duel gewonnen!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
-      else { toast("😈 Verloren... revanche?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
+      else if (result.winner === me) { toast("🏆 You won the duel!"); Whiskers.say("We woooone! 🏆", 6000); Gamification.addXP(50); }
+      else { toast("😈 You lost... rematch?"); Whiskers.say("Too bad — you'll get them next time!", 6000); Gamification.addXP(15); }
     } else {
-      toast(`Score ingediend: ${score}/10 — wacht op je tegenstander!`);
+      toast(`Score submitted: ${score}/10 — waiting for your opponent!`);
     }
   } catch (e) {
-    toast("Score kon niet indienen (offline?) — jammer!");
+    toast("Could not submit your score (offline?) — too bad!");
   }
   showView("social");
   renderSocial();
@@ -3559,7 +3559,7 @@ function startPractice(tenseId, mixIds) {
 
 // ---- Selects ----
 function initTenseSelectors() {
-  let opts = `<option value="mix">Mix (alle tijden)</option>`;
+  let opts = `<option value="mix">Mix (all tenses)</option>`;
   TENSE_GROUPS.forEach(g => {
     opts += `<optgroup label="${g.name}">` +
       g.tenses.map(id => {
@@ -3623,8 +3623,8 @@ function checkAnswer() {
     input.classList.add("correct");
     const attempts = currentExercise.attempts || 1;
     $("feedback").textContent = attempts > 1
-      ? `Juist! "${currentExercise.answer}" — goed volgehouden!`
-      : `Juist! "${currentExercise.answer}"`;
+      ? `Correct! "${currentExercise.answer}" — well done for persisting!`
+      : `Correct! "${currentExercise.answer}"`;
     $("feedback").className = "ok";
   } else {
     currentExercise.attempts = (currentExercise.attempts || 0) + 1;
@@ -3635,11 +3635,11 @@ function checkAnswer() {
     const n = currentExercise.attempts;
     let msg;
     if (n === 1) {
-      msg = `Niet juist — probeer het nog eens! Let op de spelling en de tijd.`;
+      msg = `Not correct — try again! Watch your spelling and the tense.`;
     } else if (n === 2) {
-      msg = `Nog niet goed. ${currentExercise.explain || ""} Kijk nog eens goed naar de zin.`;
+      msg = `Still not right. ${currentExercise.explain || ""} Take another look at the sentence.`;
     } else {
-      msg = `Poging ${n}... Tip: het antwoord begint met "${currentExercise.answer.slice(0, Math.max(1, Math.ceil(currentExercise.answer.length / 3)))}". Of druk op de hint-knop!`;
+      msg = `Attempt ${n}... Tip: the answer starts with "${currentExercise.answer.slice(0, Math.max(1, Math.ceil(currentExercise.answer.length / 3)))}". Or press the hint button!`;
     }
     $("feedback").textContent = msg;
     $("feedback").className = "nok";
@@ -3666,7 +3666,7 @@ function checkAnswer() {
     if (next) {
       repeatNext = next;
     } else {
-      toast("Alle fouten zijn herhaald! ");
+      toast("All mistakes have been repeated! ");
     }
   }
   updateMistakeBadge();
@@ -3699,7 +3699,7 @@ function shareTask() {
   url.searchParams.set("task", "practice");
   const link = url.toString();
   navigator.clipboard.writeText(link)
-    .then(() => toast("Link gekopieerd — deel hem met je klas! "))
+    .then(() => toast("Link copied — share it with your class! "))
     .catch(() => prompt("Kopieer deze link:", link));
 }
 
@@ -3749,11 +3749,11 @@ function checkIrregular() {
   $("irr-past").classList.add(result.pastOk ? "correct" : "wrong");
   $("irr-pp").classList.add(result.ppOk ? "correct" : "wrong");
   if (result.pastOk && result.ppOk) {
-    $("irr-feedback").textContent = "Allebei juist! ";
+    $("irr-feedback").textContent = "Both correct! ";
     $("irr-feedback").className = "ok";
   } else {
     $("irr-feedback").textContent =
-      `Juist is: ${IrregularTrainer.current().base} — ${result.past} — ${result.pp}`;
+      `The correct forms are: ${IrregularTrainer.current().base} — ${result.past} — ${result.pp}`;
     $("irr-feedback").className = "nok";
   }
   $("irr-score").textContent = IrregularTrainer.score;
@@ -3780,7 +3780,7 @@ function startCustom() {
   const checked = [...document.querySelectorAll("#custom-groups input:checked")]
     .map(i => i.value).filter(id => TenseRegistry.get(id));
   if (!checked.length) {
-    $("custom-feedback").textContent = "Vink minstens één tijd aan.";
+    $("custom-feedback").textContent = "Tick at least one tense.";
     return;
   }
   startPractice("mix", checked);
@@ -3790,7 +3790,7 @@ function startCustom() {
 function repeatPractice() {
   const next = MistakeStore.takeNext();
   if (!next) {
-    toast("Geen fouten om te herhalen! ");
+    toast("No mistakes to repeat! ");
     return;
   }
   repeatNext = next;
@@ -3873,7 +3873,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $("reset-progress").addEventListener("click", () => {
     ProgressStore.reset();
     renderProgress();
-    toast("Voortgang gewist");
+    toast("Progress cleared");
   });
   $("answer").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); checkAnswer(); newExercise(); }

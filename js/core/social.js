@@ -126,13 +126,13 @@ const Calendar = {
         s.answers < 5 ? "cal-low" :
         s.answers < 15 ? "cal-mid" : "cal-high";
       const title = s
-        ? `${day.d.toLocaleDateString("nl-NL")}: ${s.answers} vragen (${s.correct} goed)`
-        : `${day.d.toLocaleDateString("nl-NL")}: niet geoefend`;
+        ? `${day.d.toLocaleDateString("en-GB")}: ${s.answers} questions (${s.correct} correct)`
+        : `${day.d.toLocaleDateString("en-GB")}: not practised`;
       return `<div class="cal-day ${cls}" title="${title}"></div>`;
     }).join("");
     const streak = this.calcStreak(data);
     const label = document.getElementById("calendar-streak");
-    if (label) label.textContent = streak >= 2 ? `🔥 ${streak} dagen op rij geoefend!` : "Oefen vandaag voor je eerste vinkje!";
+    if (label) label.textContent = streak >= 2 ? `🔥 ${streak} days in a row!` : "Practise today for your first tick!";
   },
 
   calcStreak(data) {
