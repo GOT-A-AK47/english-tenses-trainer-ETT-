@@ -63,6 +63,23 @@ function studentKey(identity) {
   return `${identity.name}|${identity.klas}`;
 }
 
+// Security (V3.0): leerling-namen/-klassen sanitizen — stopt XSS-injectie
+// via namen en houdt data-sleutels betrouwbaar.
+function sanitizeName(raw) {
+  return String(raw || "")
+    .replace(/[\u0000-\u001f<>|"'`]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 40);
+}
+
+// who-keys ("Naam|Klas") sanitizen
+function sanitizeWho(who) {
+  const parts = String(who || "").split("|");
+  if (parts.length !== 2) return "";
+  return sanitizeName(parts[0]) + "|" + sanitizeName(parts[1]);
+}
+
 function mergeProgress(existing, incoming) {
   const merged = { ...existing };
   for (const [tenseId, stats] of Object.entries(incoming)) {
@@ -102,8 +119,10 @@ function trackUsage(identity, newAnswers) {
 
 const TEACHER_CODE_FILE = path.join(DATA_DIR, "teacher-code.json");
 const TEACHERS_FILE = path.join(DATA_DIR, "teachers.json");
-// sessions: token -> { isAdmin }
-const sessions = new Map();
+// sessions: token -> "admin" | "teacher"
+// Security (V3.0): tokens verlopen na 8 uur
+const SESSION_TTL = 8 * 60 * 60 * 1000;
+const sessions = new Map(); // token -> { role, expires }
 
 // V1.6: docentenbeheer. Eén admin (hoofdcode) + extra docentencodes
 // die de admin zelf aanmaakt via het dashboard. Migratie: als er nog
@@ -128,33 +147,103 @@ function setTeacherCode(code) {
   saveJson(TEACHER_CODE_FILE, { code });
 }
 
+function sessionValid(token) {
+  const s = sessions.get(token);
+  if (!s) return null;
+  if (Date.now() > s.expires) { sessions.delete(token); return null; }
+  return s.role;
+}
+
 function isTeacher(req) {
   const auth = req.headers["authorization"] || "";
-  return auth.startsWith("Bearer ") && sessions.has(auth.slice(7));
+  return auth.startsWith("Bearer ") && !!sessionValid(auth.slice(7));
 }
 
 function isAdmin(req) {
   const auth = req.headers["authorization"] || "";
-  return auth.startsWith("Bearer ") && sessions.get(auth.slice(7)) === "admin";
+  return auth.startsWith("Bearer ") && sessionValid(auth.slice(7)) === "admin";
 }
 
 // ---------- API ----------
 
+const MAX_BODY = 100 * 1024; // 100 KB — genoeg voor alle payloads, stopt geheugen-DoS
+
 function readBody(req) {
   return new Promise(resolve => {
     let body = "";
-    req.on("data", chunk => { body += chunk; });
-    req.on("end", () => resolve(body));
+    let oversized = false;
+    req.on("data", chunk => {
+      body += chunk;
+      if (body.length > MAX_BODY) { oversized = true; body = ""; req.destroy(); }
+    });
+    req.on("end", () => resolve(oversized ? null : body));
+    req.on("error", () => resolve(null));
+  });
+}
+
+// Veilig JSON parsen: kapot request-body kan de server nooit meer crashen
+function readJson(req) {
+  return readBody(req).then(b => {
+    if (b === null) throw new Error("body too large");
+    if (!b) return {};
+    try { return JSON.parse(b); }
+    catch { throw new Error("invalid json"); }
   });
 }
 
 function respond(res, status, data) {
-  res.writeHead(status, { "Content-Type": "application/json" });
+  res.writeHead(status, {
+    "Content-Type": "application/json",
+    "X-Content-Type-Options": "nosniff"
+  });
   res.end(JSON.stringify(data));
+}
+
+// Security (V3.0): simpele rate-limit per IP. Beschermt login (brute force),
+// feedback en duels tegen spam. Schoolnetwerk = vaak gedeelde IP's, dus
+// limieten bewust ruim (60 req/min algemeen, 10/min voor login + feedback).
+const RATE_LIMITS = { default: 60, login: 10, feedback: 10 };
+const rateBuckets = new Map(); // ip -> { count, reset, loginCount, loginReset, feedbackCount, feedbackReset }
+
+function rateLimited(req, kind) {
+  const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "?").split(",")[0].trim();
+  const now = Date.now();
+  if (!rateBuckets.has(ip)) rateBuckets.set(ip, { count: 0, reset: now + 60000, loginCount: 0, loginReset: now + 60000, feedbackCount: 0, feedbackReset: now + 60000 });
+  const b = rateBuckets.get(ip);
+  // algemene bucket
+  if (b.reset < now) { b.count = 0; b.reset = now + 60000; }
+  b.count++;
+  if (kind === "login") {
+    if (b.loginReset < now) { b.loginCount = 0; b.loginReset = now + 60000; }
+    b.loginCount++;
+  }
+  if (kind === "feedback") {
+    if (b.feedbackReset < now) { b.feedbackCount = 0; b.feedbackReset = now + 60000; }
+    b.feedbackCount++;
+  }
+  if (b.count > RATE_LIMITS.default) return true;
+  if (kind === "login" && b.loginCount > RATE_LIMITS.login) return true;
+  if (kind === "feedback" && b.feedbackCount > RATE_LIMITS.feedback) return true;
+  return false;
 }
 
 async function handleApi(req, res) {
   const url = req.url.split("?")[0];
+  // Security (V3.0): rate limiting
+  const kind = url === "/api/teacher/login" ? "login" : url === "/api/feedback" ? "feedback" : "default";
+  if (rateLimited(req, kind)) {
+    return respond(res, 429, { error: "te veel verzoeken — probeer over een minuut" });
+  }
+  // Security (V3.0): requests met een Origin van een ándere site blokkeren
+  // (stopt cross-site misbruik vanuit de browser van een leerling)
+  const origin = req.headers["origin"];
+  if (origin) {
+    try {
+      const o = new URL(origin);
+      const host = req.headers["host"] || "";
+      if (o.host !== host) return respond(res, 403, { error: "niet toegestaan" });
+    } catch { return respond(res, 403, { error: "niet toegestaan" }); }
+  }
 
   // --- publiek ---
   if (req.method === "GET" && url === "/api/classes/list") {
@@ -163,10 +252,15 @@ async function handleApi(req, res) {
   }
 
   if (req.method === "POST" && url === "/api/progress") {
-    const payload = JSON.parse(await readBody(req) || "{}");
+    const payload = await readJson(req);
     const { identity, progress } = payload || {};
     if (!identity || !identity.name || !identity.klas || typeof progress !== "object") {
       return respond(res, 400, { error: "identity en progress zijn verplicht" });
+    }
+    identity.name = sanitizeName(identity.name);
+    identity.klas = sanitizeName(identity.klas);
+    if (!identity.name || !identity.klas) {
+      return respond(res, 400, { error: "ongeldige naam of klas" });
     }
     const newAnswers = Array.isArray(payload.newAnswers) ? payload.newAnswers : [];
     // V2.2: dagelijkse kalender per leerling
@@ -207,14 +301,14 @@ async function handleApi(req, res) {
 
   // --- docenten-auth ---
   if (req.method === "POST" && url === "/api/teacher/login") {
-    const { code } = JSON.parse(await readBody(req) || "{}") || {};
+    const { code } = (await readJson(req));
     if (!code) return respond(res, 400, { error: "code verplicht" });
     const teachers = loadTeachers();
     if (!teachers || !teachers.adminCode) {
       // allereerste login ooit: wordt de admin-code
       saveJson(TEACHERS_FILE, { adminCode: String(code), codes: [] });
       const token = newToken();
-      sessions.set(token, "admin");
+      sessions.set(token, { role: "admin", expires: Date.now() + SESSION_TTL });
       return respond(res, 200, { token, firstTime: true, isAdmin: true });
     }
     const role = String(code) === teachers.adminCode ? "admin" : null;
@@ -224,11 +318,11 @@ async function handleApi(req, res) {
       extra.lastUsed = new Date().toISOString();
       saveJson(TEACHERS_FILE, teachers);
       const token = newToken();
-      sessions.set(token, "teacher");
+      sessions.set(token, { role: "teacher", expires: Date.now() + SESSION_TTL });
       return respond(res, 200, { token, isAdmin: false });
     }
     const token = newToken();
-    sessions.set(token, role);
+    sessions.set(token, { role, expires: Date.now() + SESSION_TTL });
     return respond(res, 200, { token, isAdmin: true });
   }
 
@@ -241,7 +335,7 @@ async function handleApi(req, res) {
 
   if (req.method === "POST" && url === "/api/teacher/codes") {
     if (!isAdmin(req)) return respond(res, 401, { error: "alleen admin" });
-    const { label } = JSON.parse(await readBody(req) || "{}") || {};
+    const { label } = (await readJson(req));
     const teachers = loadTeachers();
     const code = "ETT-" + require("crypto").randomBytes(4).toString("hex").toUpperCase();
     teachers.codes.push({
@@ -271,7 +365,7 @@ async function handleApi(req, res) {
 
   if (req.method === "POST" && url === "/api/teacher/classes") {
     if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
-    const { name } = JSON.parse(await readBody(req) || "{}") || {};
+    const { name } = (await readJson(req));
     if (!name || !name.trim()) return respond(res, 400, { error: "naam verplicht" });
     const classes = loadClasses();
     if (classes.some(c => c.name === name.trim())) {
@@ -298,7 +392,7 @@ async function handleApi(req, res) {
 
   if (req.method === "POST" && url === "/api/teacher/tasks") {
     if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
-    const { title, klas, tenseIds, students: payloadStudents } = JSON.parse(await readBody(req) || "{}") || {};
+    const { title, klas, tenseIds, students: payloadStudents } = (await readJson(req));
     if (!title || !klas || !Array.isArray(tenseIds) || !tenseIds.length) {
       return respond(res, 400, { error: "title, klas en tenseIds zijn verplicht" });
     }
@@ -351,7 +445,7 @@ async function handleApi(req, res) {
 
   // --- feedback (openbaar posten, docenten lezen) ---
   if (req.method === "POST" && url === "/api/feedback") {
-    const { message, identity, category } = JSON.parse(await readBody(req) || "{}") || {};
+    const { message, identity, category } = (await readJson(req));
     if (!message || !String(message).trim()) {
       return respond(res, 400, { error: "bericht is leeg" });
     }
@@ -360,7 +454,7 @@ async function handleApi(req, res) {
       id: "f" + Date.now().toString(36),
       message: String(message).trim().slice(0, 2000),
       category: ["bug", "idee", "klacht", "anders"].includes(category) ? category : "anders",
-      from: identity ? `${identity.name} (${identity.klas})` : "anoniem",
+      from: identity ? `${sanitizeName(identity.name)} (${sanitizeName(identity.klas)})` : "anoniem",
       createdAt: new Date().toISOString(),
       read: false
     });
@@ -475,7 +569,12 @@ async function handleApi(req, res) {
       return cells;
     });
     const csv = [cols, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .map(r => r.map(v => {
+        let cell = String(v).replace(/"/g, '""');
+        // Security (V3.0): spreadsheet-formule-injectie blokkeren
+        if (/^[=+@\-]/.test(cell)) cell = "'" + cell;
+        return `"${cell}"`;
+      }).join(","))
       .join("\r\n");
     res.writeHead(200, {
       "Content-Type": "text/csv; charset=utf-8",
@@ -523,7 +622,8 @@ async function handleApi(req, res) {
 
   // V2.6: vriendschapsverzoek — de ander moet accepteren
   if (req.method === "POST" && url === "/api/friends/request") {
-    const { me, friend } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const me = sanitizeWho(body.me), friend = sanitizeWho(body.friend);
     if (!me || !friend) return respond(res, 400, { error: "me en friend verplicht" });
     if (me === friend) return respond(res, 400, { error: "jezelf kan niet" });
     const friends = loadFriends();
@@ -547,7 +647,8 @@ async function handleApi(req, res) {
 
   // verzoek accepteren -> wederzijdse vriendschap
   if (req.method === "POST" && url === "/api/friends/accept") {
-    const { me, from } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const me = sanitizeWho(body.me), from = sanitizeWho(body.from);
     if (!me || !from) return respond(res, 400, { error: "me en from verplicht" });
     const requests = loadRequests();
     if (!requests[me] || !requests[me].includes(from)) {
@@ -566,7 +667,8 @@ async function handleApi(req, res) {
 
   // verzoek afwijzen
   if (req.method === "POST" && url === "/api/friends/decline") {
-    const { me, from } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const me = sanitizeWho(body.me), from = sanitizeWho(body.from);
     if (!me || !from) return respond(res, 400, { error: "me en from verplicht" });
     const requests = loadRequests();
     if (requests[me]) requests[me] = requests[me].filter(f => f !== from);
@@ -576,7 +678,8 @@ async function handleApi(req, res) {
 
   // vriend verwijderen (wederzijds)
   if (req.method === "POST" && url === "/api/friends/remove") {
-    const { me, friend } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const me = sanitizeWho(body.me), friend = sanitizeWho(body.friend);
     if (!me || !friend) return respond(res, 400, { error: "me en friend verplicht" });
     const friends = loadFriends();
     if (friends[me]) friends[me] = friends[me].filter(f => f !== friend);
@@ -606,7 +709,8 @@ async function handleApi(req, res) {
   }
 
   if (req.method === "POST" && url === "/api/duel/new") {
-    const { me, opponent } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const me = sanitizeWho(body.me), opponent = sanitizeWho(body.opponent);
     if (!me || !opponent) return respond(res, 400, { error: "me en opponent verplicht" });
     if (me === opponent) return respond(res, 400, { error: "tegen jezelf kan niet" });
     const duels = loadDuels();
@@ -626,7 +730,8 @@ async function handleApi(req, res) {
 
   // duel/join: in de wacht-kamer; als beide er zijn gaat het duel live
   if (req.method === "POST" && url === "/api/duel/join") {
-    const { id, who } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const id = String(body.id || ""), who = sanitizeWho(body.who);
     const duels = loadDuels();
     const duel = duels.find(d => d.id === id);
     if (!duel) return respond(res, 404, { error: "duel bestaat niet" });
@@ -673,7 +778,8 @@ async function handleApi(req, res) {
 
   // score indienen
   if (req.method === "POST" && url === "/api/duel/score") {
-    const { id, who, score } = JSON.parse(await readBody(req) || "{}") || {};
+    const body = await readJson(req);
+    const id = String(body.id || ""), who = sanitizeWho(body.who), score = body.score;
     const duels = loadDuels();
     const duel = duels.find(d => d.id === id);
     if (!duel) return respond(res, 404, { error: "duel bestaat niet" });
@@ -745,7 +851,10 @@ function serveStatic(req, res) {
 const server = http.createServer((req, res) => {
   if (req.url.startsWith("/api/")) {
     handleApi(req, res).catch(e => {
-      respond(res, 500, { error: e.message });
+      // bekende request-fouten nette status geven; rest is server-fout
+      if (e && e.message === "body too large") return respond(res, 413, { error: "payload te groot" });
+      if (e && e.message === "invalid json") return respond(res, 400, { error: "ongeldige JSON" });
+      respond(res, 500, { error: "serverfout" });
     });
     return;
   }

@@ -279,6 +279,13 @@ function checkVocab() {
   }
 }
 
+// Security (V3.0): HTML-escaping voor alle gebruikersnamen in innerHTML
+function esc(s) {
+  return String(s || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
+
 // ---- V2.2: vrienden, duels, kalender ----
 async function renderSocial() {
   if (!Identity.get()) return;
@@ -289,7 +296,7 @@ async function renderSocial() {
   friendsList.innerHTML = friends.length
     ? friends.map(f => `
       <div class="friend-row">
-        <span><strong>${f.name}</strong> <span class="last">${f.total} vragen · ${f.total ? Math.round(f.correct / f.total * 100) : 0}% goed</span></span>
+        <span><strong>${esc(f.name)}</strong> <span class="last">${f.total} vragen · ${f.total ? Math.round(f.correct / f.total * 100) : 0}% goed</span></span>
         <button class="secondary" data-remove-friend="${f.who}">Verwijderen</button>
       </div>`).join("")
     : '<p class="empty">Nog geen vrienden — voeg er één toe uit je klas!</p>';
@@ -305,11 +312,11 @@ async function renderSocial() {
   const mates = await Social.loadClassmates();
   const cur = Identity.get();
   const mateOptions = ['<option value="">— kies —</option>']
-    .concat(mates.map(m => `<option value="${m}|${cur.klas}">${m}</option>`)).join("");
+    .concat(mates.map(m => `<option value="${esc(m)}|${esc(cur.klas)}">${esc(m)}</option>`)).join("");
   $("mate-select").innerHTML = mateOptions;
   const friendWhos = friends.map(f => f.who);
   $("duel-opponent").innerHTML = friendWhos.length
-    ? '<option value="">— kies vriend —</option>' + friendWhos.map(f => `<option value="${f}">${f.split("|")[0]}</option>`).join("")
+    ? '<option value="">— kies vriend —</option>' + friendWhos.map(f => `<option value="${esc(f)}">${esc(f.split("|")[0])}</option>`).join("")
     : '<option value="">Eerst vrienden toevoegen</option>';
 
   // duellijst
@@ -326,7 +333,7 @@ async function renderSocial() {
               ? `<span class="duel-score">Jij: ${d.myScore}/10 — wacht op tegenstander</span>`
               : `<button class="secondary" data-play-duel="${d.id}">Spelen</button>`;
         return `<div class="duel-item ${cls}">
-          <span class="vs">⚔️ vs ${d.opponent.split("|")[0]}</span>
+          <span class="vs">⚔️ vs ${esc(d.opponent.split("|")[0])}</span>
           ${scoreLabel}
         </div>`;
       }).join("")
@@ -363,7 +370,7 @@ async function renderRequests() {
     <h3 class="section-title">Vriendschapsverzoeken (${reqs.length})</h3>
     ${reqs.map(from => `
       <div class="friend-row">
-        <span><strong>${from.split("|")[0]}</strong> <span class="last">wil je vriend zijn</span></span>
+        <span><strong>${esc(from.split("|")[0])}</strong> <span class="last">wil je vriend zijn</span></span>
         <span class="btnrow" style="margin:0">
           <button class="secondary" data-accept="${from}">✓ Accepteren</button>
           <button class="secondary" data-decline="${from}">✕</button>
