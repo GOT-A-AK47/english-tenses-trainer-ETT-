@@ -567,7 +567,7 @@ async function handleApi(req, res) {
     for (const entry of Object.values(all)) {
       Object.keys(entry).forEach(k => { if (!k.startsWith("_")) tenseIds.add(k); });
     }
-    const cols = ["naam", "klas", ...tenseIds, "totaal_correct", "totaal_vragen"];
+    const cols = ["name", "class", ...tenseIds, "total_correct", "total_questions"];
     const rows = Object.values(all).filter(e => e._identity).map(e => {
       let c = 0, t = 0;
       const cells = [e._identity.name, e._identity.klas];
@@ -589,7 +589,7 @@ async function handleApi(req, res) {
       .join("\r\n");
     res.writeHead(200, {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="voortgang.csv"'
+      "Content-Disposition": 'attachment; filename="progress.csv"'
     });
     return res.end("\uFEFF" + csv);
   }

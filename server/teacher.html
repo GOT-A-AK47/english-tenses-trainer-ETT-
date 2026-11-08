@@ -39,6 +39,22 @@
     .tense-picks { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0; }
     .tense-picks label { display: inline-flex; align-items: center; gap: 0.3rem; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 0.3rem 0.6rem; font-size: 0.82rem; font-weight: 500; cursor: pointer; }
     .tense-picks input { accent-color: var(--accent); }
+    /* ===== Mobiel dashboard (V3.2) ===== */
+    @media (max-width: 640px) {
+      .wrap { padding: 1rem 0.7rem 3rem; }
+      h1 { font-size: 1.1rem; }
+      h2 { font-size: 0.95rem; }
+      .card { padding: 0.85rem; }
+      .row { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+      .row .row { flex-direction: row; }
+      table { display: block; overflow-x: auto; white-space: nowrap; }
+      table thead, table tbody { display: table; width: max-content; }
+      input[type="text"], select { font-size: 16px; width: 100%; }
+      button { min-height: 44px; }
+      .tense-picks, .student-picks { gap: 0.4rem; }
+      .tense-picks label, .student-picks label { font-size: 0.75rem; padding: 0.4rem 0.6rem; }
+      .btnrow, .row > button { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -212,14 +228,22 @@
 
     // ---- CSV-export ----
     async function loadCSV() {
-      const r = await fetch("/api/teacher/export.csv", { headers: { "Authorization": "Bearer " + token } });
-      if (!r.ok) return alert("Export mislukt");
-      const blob = await r.blob();
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "voortgang.csv";
-      a.click();
-      URL.revokeObjectURL(a.href);
+      try {
+        const r = await fetch("/api/teacher/export.csv", { headers: { "Authorization": "Bearer " + token } });
+        if (r.status === 401) { showLogin(); return; }
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          return alert("Export failed: " + (err.error || r.status));
+        }
+        const blob = await r.blob();
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "progress.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) {
+        alert("Export failed: " + e.message);
+      }
     }
 
     // ---- usage ----

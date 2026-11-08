@@ -483,26 +483,76 @@ footer {
   to { opacity: 1; transform: translate(-50%, 0); }
 }
 
+/* ===== Mobiele versie (V3.2) ===== */
 @media (max-width: 560px) {
-  .app { padding: 1.25rem 0.85rem 2rem; }
-  .card { padding: 1.1rem; }
-  .grid { grid-template-columns: 1fr 1fr; }
+  .app { padding: 1.1rem 0.75rem 7rem; } /* extra onderruimte voor companion */
+  header { margin-bottom: 1.25rem; }
+  .card { padding: 1rem; }
+
+  /* tegels: 2 kolommen, grote tegels 1 */
+  .grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
   .grid.big { grid-template-columns: 1fr; }
+  .tile { padding: 0.7rem; }
+  .tile-name { font-size: 0.85rem; }
+  .tile-desc { font-size: 0.66rem; }
+
+  /* stats: 2 per rij */
   .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
   .stat .value { font-size: 1.1rem; }
-  .sentence { font-size: 1.1rem; }
-  .view-head { justify-content: flex-start; }
+  .stats-row .stat .label { font-size: 0.58rem; }
+
+  .sentence { font-size: 1.05rem; }
+  .view-head { justify-content: flex-start; flex-wrap: wrap; gap: 0.4rem; }
+  .view-head h2 { font-size: 1.15rem; }
+
+  /* header-knoppen: stapelen i.p.v. absoluut naast elkaar */
+  .feedback-link { position: static; display: block; width: fit-content; margin-top: 0.5rem; padding: 0.45rem 0.9rem; }
+
+  /* Whiskers-rij: kat boven de balk */
+  .whiskers-row { flex-direction: column; align-items: stretch; gap: 0.6rem; padding: 0.8rem; }
+  .whiskers-cat { width: 72px; height: 66px; margin: 0 auto; }
+  .xp-top { flex-wrap: wrap; }
+  .chip { font-size: 0.72rem; }
+
+  /* kalender: 14 kolommen blijft, vakjes klein */
+  .calendar-grid { grid-template-columns: repeat(14, 1fr); gap: 2px; }
+
+  /* tabellen: horizontaal scrollbaar binnen een wrapper */
+  .progress-table, table { display: block; overflow-x: auto; white-space: nowrap; }
+  .progress-table tbody, table tbody { display: table; width: max-content; }
+  .progress-table thead, table thead { display: table; width: max-content; }
+
+  /* invoer + knoppen: vingervriendelijk */
+  input[type="text"], select, textarea { font-size: 16px; } /* voorkom zoom-in iOS */
+  button { min-height: 44px; }
+  .btnrow { flex-wrap: wrap; gap: 0.5rem; }
+
+  /* companion: kleiner en hoger, bedekt geen content */
+  #whiskers-companion { right: 8px; bottom: 8px; }
+  .companion-cat svg { width: 56px !important; height: 47px !important; }
+  .companion-bubble { max-width: 200px; font-size: 0.78rem; }
+
+  /* modals: bijna volledig scherm */
+  #identity-modal .card, #intro-modal .card, #badges-modal .card, #feedback-modal .card {
+    max-width: 100%; max-height: 88vh; overflow-y: auto; margin: 0.5rem;
+  }
+  .badges-grid { grid-template-columns: repeat(2, 1fr); }
+  .skin-picker { gap: 0.35rem; }
+  .skin-swatch { font-size: 0.68rem; padding: 0.3rem 0.45rem; }
+
+  /* muis-mini-game sneller (moeilijker op touch) */
+  #bonus-mouse { font-size: 1.6rem; }
+
+  /* social view */
+  .friend-row { flex-wrap: wrap; gap: 0.4rem; }
+  .duel-item { flex-wrap: wrap; gap: 0.4rem; }
 }
 
-@media (max-width: 560px) {
-  .app { padding: 1.25rem 0.85rem 2rem; }
-  .card { padding: 1.1rem; }
-  .grid { grid-template-columns: 1fr 1fr; }
-  .grid.big { grid-template-columns: 1fr; }
-  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
-  .stat .value { font-size: 1.1rem; }
-  .sentence { font-size: 1.1rem; }
-  .view-head { justify-content: flex-start; }
+/* Zeer kleine schermen (<380px): alles 1 kolom */
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .badges-grid { grid-template-columns: 1fr; }
 }
 
 /* Identity-modal (V1: naam + klas) */
