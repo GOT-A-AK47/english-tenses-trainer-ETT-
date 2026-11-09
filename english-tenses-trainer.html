@@ -890,68 +890,167 @@ header h1::after {
 }
 
 
-/* ===== Boot-animatie (V3.8: cinematische intro) ===== */
+/* ===== BOOT-INTRO (V3.9: Whiskers aan het werk) ===== */
 #boot-overlay {
   position: fixed;
   inset: 0;
-  background: radial-gradient(120% 120% at 50% 0%, #1d3a7a 0%, #101a33 55%, #0a0f1f 100%);
+  background: #0a0f1f;
   z-index: 100;
+  cursor: pointer;
+  overflow: hidden;
+}
+#boot-overlay.done { display: none; }
+
+/* --- de kamer (JS stuurt de zoom via .zoomed) --- */
+.boot-scene {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #101a33 0%, #1d3a7a 100%);
+  transform-origin: 68% 64%;          /* het laptopscherm */
+  transition: transform 1.15s cubic-bezier(0.55, 0, 0.9, 0.6);
+}
+.boot-scene.zoomed { transform: scale(7); }
+.boot-scene.dark { filter: brightness(0.75); }
+
+/* raam met maan en sterren */
+.boot-window {
+  position: absolute;
+  top: 9%; left: 12%;
+  width: 24%; height: 34%;
+  background: linear-gradient(180deg, #0d1c3f, #16294f);
+  border: 4px solid #2b1f14;
+  border-radius: 10px;
+}
+.boot-moon {
+  position: absolute;
+  top: 18%; right: 20%;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #f4e9c7;
+  box-shadow: 0 0 18px rgba(244, 233, 199, 0.55);
+}
+.boot-wstar {
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  animation: bootTwinkle 2s ease infinite;
+}
+.boot-wstar:nth-child(2) { top: 30%; left: 22%; }
+.boot-wstar:nth-child(3) { top: 60%; left: 55%; animation-delay: 0.6s; }
+.boot-wstar:nth-child(4) { top: 15%; left: 60%; animation-delay: 1.1s; }
+.boot-wstar:nth-child(5) { top: 75%; left: 30%; animation-delay: 0.3s; }
+@keyframes bootTwinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.95; }
+}
+
+/* bureaulamp */
+.boot-lamp {
+  position: absolute;
+  top: 14%; right: 14%;
+  width: 60px; height: 14px;
+  background: #2b1f14;
+  border-radius: 8px 8px 2px 2px;
+  box-shadow: 0 22px 60px 24px rgba(244, 210, 130, 0.22);
+}
+.boot-lamp::after {
+  content: "";
+  position: absolute;
+  left: 24px; bottom: -46px;
+  width: 2px; height: 46px;
+  background: #2b1f14;
+}
+
+/* Whiskers achter de laptop: zacht op-en-neer (typen) */
+.boot-cat-holder {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  transform: translateX(-50%);
+  animation: bootType 0.55s ease-in-out infinite alternate;
+}
+@keyframes bootType {
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(3px); }
+}
+.boot-cat-holder svg {
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+}
+
+/* laptop (pixel-SVG via JS) vóór de kat op het bureau */
+.boot-laptop-holder {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.boot-laptop-holder svg { filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)); }
+
+/* schermgloed flikkert zacht */
+.boot-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180px; height: 120px;
+  transform: translate(-50%, -30%);
+  background: radial-gradient(ellipse at center, rgba(157, 184, 232, 0.35) 0%, transparent 70%);
+  animation: bootGlow 0.9s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes bootGlow {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+/* bureau */
+.boot-desk {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 26%;
+  background: linear-gradient(180deg, #8a5a2b 0%, #6e4420 100%);
+  border-top: 5px solid #4d2f13;
+}
+
+/* koffiemok */
+.boot-mug {
+  position: absolute;
+  right: 22%; bottom: 22%;
+  width: 22px; height: 20px;
+  background: #d94f4f;
+  border-radius: 3px 3px 5px 5px;
+  box-shadow: inset -4px 0 0 rgba(0, 0, 0, 0.2);
+}
+.boot-mug::after {
+  content: "";
+  position: absolute;
+  right: -8px; top: 4px;
+  width: 8px; height: 10px;
+  border: 3px solid #d94f4f;
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+}
+
+/* --- het 'in het scherm'-stadium (JS toont met .show) --- */
+.boot-stage {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
-  animation: bootShake 0.3s ease 0.75s; /* impact van de badge */
-}
-#boot-overlay.done { display: none; }
-@keyframes bootShake {
-  0%, 100% { transform: none; }
-  20% { transform: translate(-6px, 3px); }
-  40% { transform: translate(5px, -3px); }
-  60% { transform: translate(-4px, 2px); }
-  80% { transform: translate(3px, -1px); }
-}
-#boot-overlay.boot-out {
-  animation: bootZoomOut 0.45s cubic-bezier(0.5, 0, 0.75, 0) forwards;
-}
-@keyframes bootZoomOut {
-  to { opacity: 0; transform: scale(1.35); }
-}
-
-/* sterrenhemel */
-.boot-stars { position: absolute; inset: 0; pointer-events: none; }
-.boot-stars span {
-  position: absolute;
-  color: #fff;
-  opacity: 0;
-  font-size: 14px;
-  animation: bootTwinkle 2.2s ease infinite;
-}
-.boot-stars span:nth-child(1) { top: 12%; left: 18%; animation-delay: 0.1s; }
-.boot-stars span:nth-child(2) { top: 25%; left: 78%; animation-delay: 0.5s; font-size: 10px; }
-.boot-stars span:nth-child(3) { top: 8%; left: 55%; animation-delay: 0.9s; }
-.boot-stars span:nth-child(4) { top: 38%; left: 8%; animation-delay: 0.3s; font-size: 11px; }
-.boot-stars span:nth-child(5) { top: 18%; left: 88%; animation-delay: 0.7s; }
-.boot-stars span:nth-child(6) { top: 55%; left: 12%; animation-delay: 1.1s; font-size: 10px; }
-.boot-stars span:nth-child(7) { top: 70%; left: 85%; animation-delay: 0.2s; }
-.boot-stars span:nth-child(8) { top: 82%; left: 22%; animation-delay: 0.8s; font-size: 11px; }
-.boot-stars span:nth-child(9) { top: 62%; left: 70%; animation-delay: 1.4s; font-size: 9px; }
-.boot-stars span:nth-child(10) { top: 90%; left: 60%; animation-delay: 0.4s; }
-@keyframes bootTwinkle {
-  0%, 100% { opacity: 0.1; transform: scale(0.8); }
-  50% { opacity: 0.9; transform: scale(1.2); }
-}
-
-.boot-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 0.7rem;
-  z-index: 1;
+  background: radial-gradient(120% 120% at 50% 0%, #1d3a7a 0%, #101a33 55%, #0a0f1f 100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease;
+  z-index: 3;
 }
+.boot-stage.show { opacity: 1; visibility: visible; }
 
-/* badge: valt binnen en kaatst met impact-schaduw */
+/* badge valt pas als het stadium zichtbaar is (JS-getriggerd = betrouwbaar) */
 .boot-badge {
   display: inline-flex;
   align-items: center;
@@ -965,37 +1064,19 @@ header h1::after {
   font-size: 1.9rem;
   letter-spacing: 0.05em;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.35);
-  animation: bootDrop 0.75s cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
+  opacity: 0;
+}
+.boot-stage.show .boot-badge {
+  animation: bootDrop 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.4) 0.15s forwards;
 }
 @keyframes bootDrop {
-  0% { transform: translateY(-140px) scale(1.4) rotate(8deg); opacity: 0; }
-  60% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-  75% { transform: translateY(-14px) scale(1.05); }
-  100% { transform: translateY(0) scale(1); }
+  0% { transform: translateY(-160px) scale(1.35) rotate(7deg); opacity: 0; }
+  55% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+  72% { transform: translateY(-16px) scale(1.06); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-/* Whiskers wandelt van links het podium op */
-#boot-cat {
-  animation: bootWalkIn 1s cubic-bezier(0.3, 0.8, 0.4, 1) 0.9s both;
-}
-@keyframes bootWalkIn {
-  0% { transform: translateX(-160px) scale(0.7); opacity: 0; }
-  40% { opacity: 1; }
-  55% { transform: translateX(-20px) scale(0.95) translateY(-8px); }
-  70% { transform: translateX(6px) scale(1.02); }
-  100% { transform: translateX(0) scale(1); }
-}
-#boot-cat svg {
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
-  animation: bootTailWag 0.55s ease-in-out 1.9s 3;
-}
-@keyframes bootTailWag {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-4deg); }
-  75% { transform: rotate(4deg); }
-}
-
-/* titel: letters ploppen één voor één (delays via JS) */
+/* titel: letters ploppen (delays via JS) */
 .boot-title {
   display: flex;
   gap: 1px;
@@ -1008,7 +1089,10 @@ header h1::after {
 }
 .boot-title span {
   display: inline-block;
-  animation: bootLetterPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  opacity: 0;
+}
+.boot-stage.show .boot-title span {
+  animation: bootLetterPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 @keyframes bootLetterPop {
   0% { transform: scale(0) rotate(-15deg); opacity: 0; }
@@ -1019,31 +1103,28 @@ header h1::after {
   font-size: 0.85rem;
   color: #9db8e8;
   min-height: 1.3em;
-  animation: bootSlideUp 0.5s ease 1.6s both;
+  opacity: 0;
 }
-@keyframes bootSlideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: none; opacity: 1; }
-}
+.boot-stage.show .boot-sub { animation: bootFadeIn 0.5s ease 0.9s forwards; }
+@keyframes bootFadeIn { to { opacity: 1; } }
 
-/* laadbalk met pootje */
+/* laadbalk met rennend pootje */
 .boot-bar {
   position: relative;
   width: 190px;
   height: 7px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
-  overflow: visible;
-  margin-top: 0.3rem;
-  animation: bootSlideUp 0.5s ease 1.7s both;
+  opacity: 0;
 }
+.boot-stage.show .boot-bar { animation: bootFadeIn 0.5s ease 1.05s forwards; }
 .boot-bar-fill {
   height: 100%;
   width: 0;
   border-radius: 999px;
   background: linear-gradient(90deg, #5b9bff, #9db8e8);
-  animation: bootProgress 1.15s ease 1.8s forwards;
 }
+.boot-stage.show .boot-bar-fill { animation: bootProgress 1.1s ease 1.1s forwards; }
 @keyframes bootProgress {
   from { width: 4%; }
   to { width: 100%; }
@@ -1052,34 +1133,48 @@ header h1::after {
   position: absolute;
   top: -14px;
   font-size: 1.1rem;
-  animation: bootPawRun 1.15s linear 1.8s forwards;
+  left: -6px;
+  opacity: 0;
 }
+.boot-stage.show .boot-paw { animation: bootPawRun 1.1s linear 1.1s forwards; }
 @keyframes bootPawRun {
-  from { left: -6px; }
-  to { left: calc(100% - 14px); }
+  0% { left: -6px; opacity: 1; }
+  100% { left: calc(100% - 14px); opacity: 1; }
 }
 
 .boot-skip {
   position: absolute;
   bottom: 22px;
+  left: 0; right: 0;
+  text-align: center;
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.4);
   letter-spacing: 0.06em;
-  animation: bootSlideUp 0.5s ease 2s both;
+  z-index: 4;
+}
+
+/* exit */
+#boot-overlay.boot-out { animation: bootZoomOut 0.45s ease forwards; }
+@keyframes bootZoomOut {
+  to { opacity: 0; transform: scale(1.3); }
 }
 
 </style>
 </head>
 <body>
-    <!-- BOOT-ANIMATIE (V3.8: cinematische intro) -->
+    <!-- BOOT-INTRO (V3.9: Whiskers aan het werk — cinematisch) -->
     <div id="boot-overlay" title="Click to skip">
-      <div class="boot-stars" aria-hidden="true">
-        <span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span>
-        <span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✧</span>
+      <div class="boot-scene" id="boot-scene">
+        <div class="boot-window"><span class="boot-moon"></span><span class="boot-wstar"></span><span class="boot-wstar"></span><span class="boot-wstar"></span><span class="boot-wstar"></span></div>
+        <div class="boot-lamp"></div>
+        <div class="boot-cat-holder" id="boot-cat"></div>
+        <div class="boot-laptop-holder" id="boot-laptop"></div>
+        <div class="boot-glow" id="boot-glow"></div>
+        <div class="boot-desk"></div>
+        <div class="boot-mug"></div>
       </div>
-      <div class="boot-stage">
+      <div class="boot-stage" id="boot-stage">
         <div class="boot-badge">EN</div>
-        <div id="boot-cat"></div>
         <div class="boot-title" id="boot-title"></div>
         <div class="boot-sub" id="boot-sub">Whiskers is waking up...</div>
         <div class="boot-bar"><div class="boot-bar-fill"></div><span class="boot-paw">🐾</span></div>
@@ -4567,46 +4662,80 @@ function toast(msg) {
   setTimeout(() => el.remove(), 2600);
 }
 
-// V3.8: cinematische boot-intro — badge valt in, Whiskers wandelt op,
-// letters ploppen, laadbalk met pootje, zoom-out naar de app.
+// V3.9: cinematische intro — Whiskers typt achter zijn laptop, de camera
+// zoemt in op zijn scherm, en daarbinnen start de boot. JS-tijdlijn: elke
+// stap krijgt expliciet een klasse/timeout — betrouwbaar i.p.v. CSS-ketens.
+function bootLaptopSVG() {
+  // pixel-laptop: donker frame, gloeiend scherm, knipperende cursor
+  const W = 20, H = 13, px = 4;
+  const grid = Array.from({ length: H }, () => Array(W).fill("."));
+  const set = (x, y, ch) => { if (y >= 0 && y < H && x >= 0 && x < W) grid[y][x] = ch; };
+  const rect = (x, y, w, h, ch) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, ch); };
+  // scherm (frame + bezel + gloed)
+  rect(2, 1, 16, 1, "k"); rect(2, 2, 16, 7, "K");
+  rect(1, 2, 1, 7, "k"); rect(18, 2, 1, 7, "k");
+  rect(3, 3, 14, 5, "G");
+  // inhoud op scherm: kleine EN-balk + cursor
+  rect(5, 4, 4, 1, "b"); rect(5, 6, 2, 1, "c"); rect(8, 6, 1, 1, "c");
+  // basis (keyboard)
+  rect(1, 9, 18, 1, "k"); rect(2, 10, 16, 2, "d");
+  rect(0, 12, 20, 1, "k");
+  const colors = { k: "#21201c", K: "#2b2f3a", G: "#9db8e8", b: "#5b9bff", c: "#e8f0fe", d: "#3a3f4d" };
+  let out = "";
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const ch = grid[y][x];
+    if (ch !== ".") out += `<rect x="${x*px}" y="${y*px}" width="${px}" height="${px}" fill="${colors[ch]}"/>`;
+  }
+  return `<svg viewBox="0 0 80 52" width="200" shape-rendering="crispEdges" aria-hidden="true">${out}</svg>`;
+}
+
 function initBoot() {
   const overlay = $("boot-overlay");
   if (!overlay) return;
+
+  // scène vullen
   const cat = $("boot-cat");
   if (cat && typeof Whiskers !== "undefined" && Whiskers.pixelSVG) {
-    cat.innerHTML = Whiskers.pixelSVG({ size: 110, mood: "happy", id: "boot-cat-svg" });
+    cat.innerHTML = Whiskers.pixelSVG({ size: 120, mood: "idle", id: "boot-cat-svg" });
   }
-  // titel: letters ploppen één voor één
+  const laptop = $("boot-laptop");
+  if (laptop) laptop.innerHTML = bootLaptopSVG();
+
+  // titel-letters met individuele delays (start zodra het stadium toont)
   const title = $("boot-title");
   if (title) {
-    const text = "English Tenses Trainer";
-    let delay = 1150;
-    title.innerHTML = [...text].map(ch => {
+    let delay = 700;
+    title.innerHTML = [..."English Tenses Trainer"].map(ch => {
       const d = delay;
       delay += ch === " " ? 40 : 55;
       return `<span style="animation-delay:${d}ms">${ch === " " ? "&nbsp;" : ch}</span>`;
     }).join("");
   }
-  // wisselende status-teksten
+
+  // tijdlijn (ms): t=0 kamer+typen -> 1700 zoom -> 2850 in het scherm -> 4600 exit
+  const stage = $("boot-stage");
+  const scene = $("boot-scene");
   const sub = $("boot-sub");
-  const msgs = ["Whiskers is waking up...", "Brushing his fur...", "Sharpening the tenses..."];
-  let mi = 0;
-  const msgTimer = setInterval(() => {
-    mi++;
-    if (mi < msgs.length && sub) sub.textContent = msgs[mi];
-    else clearInterval(msgTimer);
-  }, 750);
+  let timers = [];
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+  at(1700, () => scene.classList.add("zoomed"));
+  at(2700, () => scene.classList.add("dark"));
+  at(2850, () => stage.classList.add("show"));
+  at(3200, () => { if (sub) sub.textContent = "Brushing his fur..."; });
+  at(3950, () => { if (sub) sub.textContent = "Sharpening the tenses..."; });
+  at(4750, () => finish());
 
   let finished = false;
-  const finish = () => {
+  function finish() {
     if (finished) return;
     finished = true;
-    clearInterval(msgTimer);
+    timers.forEach(clearTimeout);
     overlay.classList.add("boot-out");
-    setTimeout(() => overlay.classList.add("done"), 460);
-  };
+    setTimeout(() => overlay.classList.add("done"), 470);
+  }
   overlay.addEventListener("click", finish);
-  setTimeout(finish, 3200); // vangnet: altijd weg, ook als animatie faalt
+  at(5600, finish); // vangnet: altijd weg, wat er ook misgaat
 }
 
 document.addEventListener("DOMContentLoaded", () => {
