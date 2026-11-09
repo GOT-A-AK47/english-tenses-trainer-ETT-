@@ -74,6 +74,30 @@ function sanitizeName(raw) {
 }
 
 // who-keys ("Naam|Klas") sanitizen
+// V3.10: game-states samenvoegen — hoogste XP, union badges, hoogste
+// energie, beste quest-stand; skin van de laatste sync wint (cosmetisch).
+function mergeGame(existing, incoming) {
+  if (!existing) return incoming;
+  const merged = { ...existing };
+  merged.xp = Math.max(existing.xp || 0, incoming.xp || 0);
+  if (Array.isArray(incoming.badges)) {
+    merged.badges = Array.from(new Set([...(existing.badges || []), ...incoming.badges]));
+  }
+  merged.energy = Math.max(existing.energy || 0, incoming.energy || 0);
+  if (incoming.quest && existing.quest && incoming.quest.date === existing.quest.date) {
+    if ((incoming.quest.answered || 0) > (existing.quest.answered || 0)) merged.quest = incoming.quest;
+    merged.questDone = !!(existing.questDone || incoming.questDone);
+  } else if (incoming.quest) {
+    merged.quest = incoming.quest;
+    merged.questDone = !!incoming.questDone;
+  }
+  if (incoming.lastEnergyDay && (!existing.lastEnergyDay || incoming.lastEnergyDay < existing.lastEnergyDay)) {
+    merged.lastEnergyDay = incoming.lastEnergyDay;
+  }
+  if (incoming.skin) merged.skin = incoming.skin;
+  return merged;
+}
+
 function sanitizeWho(who) {
   const parts = String(who || "").split("|");
   if (parts.length !== 2) return "";
@@ -286,9 +310,11 @@ async function handleApi(req, res) {
     const key = studentKey(identity);
     const all = loadProgress();
     all[key] = mergeProgress(all[key] || {}, progress);
-    // V2.7: Whiskers-game-state (XP, badges, energie) per leerling bewaren
+    // V2.7/V3.10: Whiskers-game-state per leerling MERGEN — vervangen zou
+    // de server achteruit kunnen laten gaan als een apparaat met oudere
+    // state synct (vers apparaat zou dan oude data ontvangen).
     if (payload.game && typeof payload.game === "object") {
-      all[key]._game = payload.game;
+      all[key]._game = mergeGame(all[key]._game || null, payload.game);
     }
     all[key]._identity = { name: identity.name, klas: identity.klas, lastSeen: new Date().toISOString() };
     saveProgress(all);

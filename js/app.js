@@ -70,7 +70,7 @@ function saveIdentity() {
   updateIdentityLabel();
   ProgressStore.sync();
   loadTasks();
-  toast(`Welkom, ${name.trim()}!`);
+  toast(`Welcome, ${name.trim()}!`);
 }
 
 // ---- Taken van de leerkracht (V1.4) ----
@@ -685,6 +685,9 @@ function init() {
   Calendar.render();
   initVocab();
   initDetective();
+  // V3.10: direct syncen bij openen — Whiskers-state en voortgang van de
+  // server worden opgehaald zonder eerst een vraag te moeten beantwoorden
+  if (Identity.get()) ProgressStore.sync();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
