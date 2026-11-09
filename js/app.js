@@ -101,6 +101,49 @@ function openFeedback() {
   $("feedback-text").focus();
 }
 
+// V3.5: diagnostische snapshot — wat zag de leerling toen het probleem
+// optrad? (view, oefening, getypte antwoord, verwachte antwoord, scores)
+function buildSnapshot() {
+  const lines = [];
+  // actieve view
+  const active = document.querySelector(".view.active");
+  lines.push("View: " + (active ? active.id.replace("view-", "") : "unknown"));
+  // huidige oefening (practice)
+  if (currentExercise && currentExercise.tense) {
+    lines.push("Exercise tense: " + currentExercise.tense.name);
+    lines.push("Sentence: " + currentExercise.sentence);
+    const typed = $("answer") ? $("answer").value : "";
+    if (typed) lines.push("Their input: \"" + typed + "\"");
+    lines.push("Expected answer: " + currentExercise.answer);
+    lines.push("Attempts: " + (currentExercise.attempts || 0) + (currentExercise.hintUsed ? " (hint used)" : ""));
+  }
+  // detective
+  if (typeof DetectiveTrainer !== "undefined" && DetectiveTrainer.current) {
+    lines.push("Detective sentence: " + DetectiveTrainer.current.sentence);
+    lines.push("Detective expected: " + DetectiveTrainer.current.answer);
+    const typed = $("detective-answer") ? $("detective-answer").value : "";
+    if (typed) lines.push("Their input: \"" + typed + "\"");
+  }
+  // vocab
+  if (typeof VocabTrainer !== "undefined" && VocabTrainer.current) {
+    lines.push("Vocab question: " + VocabTrainer.current.word.nl + " -> " + VocabTrainer.current.answer);
+    const typed = $("vocab-answer") ? $("vocab-answer").value : "";
+    if (typed) lines.push("Their input: \"" + typed + "\"");
+  }
+  // sessie-scores + Whiskers
+  lines.push("Session score: " + score + "/" + count);
+  if (typeof Gamification !== "undefined" && Gamification.state) {
+    lines.push("Whiskers: " + Gamification.state.xp + " XP, level " + Gamification.level().name + ", energy " + Gamification.state.energy);
+  }
+  // laatste feedback-regel (foutmelding in beeld)
+  const fb = $("feedback");
+  if (fb && fb.textContent) lines.push("Last feedback shown: " + fb.textContent.slice(0, 200));
+  // browser
+  lines.push("Browser: " + navigator.userAgent);
+  lines.push("Screen: " + window.innerWidth + "x" + window.innerHeight);
+  return lines.join("\n");
+}
+
 function sendFeedback() {
   const message = $("feedback-text").value;
   if (!message.trim()) {
@@ -110,7 +153,8 @@ function sendFeedback() {
   const payload = {
     message,
     identity: Identity.get(),
-    category: $("feedback-category").value
+    category: $("feedback-category").value,
+    context: ($("feedback-snapshot") && $("feedback-snapshot").checked) ? buildSnapshot() : null
   };
   fetch("/api/feedback", {
     method: "POST",
@@ -121,7 +165,7 @@ function sendFeedback() {
       if (!r.ok) throw new Error();
       $("feedback-modal").style.display = "none";
       $("feedback-text").value = "";
-      toast("Bedankt voor je feedback!");
+      toast("Thanks for your feedback!");
     })
     .catch(() => {
       $("feedback-msg").textContent = "Sending failed — please try again later.";

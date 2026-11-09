@@ -270,9 +270,13 @@
         <label>Message
           <textarea id="feedback-text" rows="4" placeholder="What would you like to tell us?" spellcheck="false"></textarea>
         </label>
+        <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.82rem;margin:0.6rem 0">
+          <input type="checkbox" id="feedback-snapshot" checked>
+          <span>📷 Attach my current page info (view, exercise, my answer) — helps the admin find the problem</span>
+        </label>
         <div class="btnrow">
           <button id="feedback-send">Send</button>
-          <button id="feedback-cancel" class="secondary">Annuleren</button>
+          <button id="feedback-cancel" class="secondary">Cancel</button>
         </div>
         <p id="feedback-msg" class="context"></p>
       </div>

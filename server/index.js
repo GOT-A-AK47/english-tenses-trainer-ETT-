@@ -456,7 +456,7 @@ async function handleApi(req, res) {
 
   // --- feedback (openbaar posten, docenten lezen) ---
   if (req.method === "POST" && url === "/api/feedback") {
-    const { message, identity, category } = (await readJson(req));
+    const { message, identity, category, context } = (await readJson(req));
     if (!message || !String(message).trim()) {
       return respond(res, 400, { error: "bericht is leeg" });
     }
@@ -464,6 +464,7 @@ async function handleApi(req, res) {
     feedback.push({
       id: "f" + Date.now().toString(36),
       message: String(message).trim().slice(0, 2000),
+      context: context ? String(context).slice(0, 3000) : null,
       category: ["bug", "idee", "klacht", "anders"].includes(category) ? category : "anders",
       from: identity ? `${sanitizeName(identity.name)} (${sanitizeName(identity.klas)})` : "anoniem",
       createdAt: new Date().toISOString(),

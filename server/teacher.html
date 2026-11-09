@@ -276,6 +276,7 @@
           <strong>${esc(f.from)}</strong> <span class="chip">${esc(f.category)}</span>
           <span class="last">${new Date(f.createdAt).toLocaleString("en-GB")}</span>
           <p style="margin:0.4rem 0">${esc(f.message)}</p>
+          ${f.context ? `<details style="margin:0.35rem 0"><summary style="cursor:pointer;font-size:0.75rem;color:var(--muted)">📷 Page info attached</summary><pre style="background:#f4f4f0;padding:0.5rem;border-radius:6px;font-size:0.7rem;white-space:pre-wrap;overflow-x:auto">${esc(f.context)}</pre></details>` : ""}
           <div class="row">
             ${f.read ? "" : `<button class="secondary" onclick="markRead('${f.id}')">Mark as read</button>`}
             <button class="danger" onclick="delFeedback('${f.id}')">Delete</button>
