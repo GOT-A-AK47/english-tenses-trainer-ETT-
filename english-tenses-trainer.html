@@ -951,8 +951,12 @@ header h1::after {
         <h2 class="section-title">More</h2>
         <div class="grid">
           <button class="tile" data-action="custom">
-            <span class="tile-name">Zelf kiezen</span>
+            <span class="tile-name">Custom mix</span>
             <span class="tile-desc">Choose yourself which tenses to mix</span>
+          </button>
+          <button class="tile" data-view="detective">
+            <span class="tile-name">🕵️ Tense detective</span>
+            <span class="tile-desc">Read the story and find the right tense yourself</span>
           </button>
           <button class="tile" id="mistake-tile" data-action="repeat" style="display:none">
             <span class="tile-name">Repeat mistakes <span class="badge" id="mistake-badge"></span></span>
@@ -1229,6 +1233,26 @@ header h1::after {
           <button id="vocab-next" class="secondary" style="display:none">Next</button>
         </div>
         <p id="vocab-feedback" class="context"></p>
+      </div>
+    </section>
+
+    <!-- DETECTIVE (V3.3) -->
+    <section id="view-detective" class="view">
+      <div class="view-head">
+        <button class="back" data-view="home">← Home</button>
+        <h2>🕵️ Tense detective</h2>
+      </div>
+
+      <div class="card">
+        <p class="context" style="margin-bottom:0.75rem">Read the sentence carefully. The <strong>time words</strong> tell you which tense you need — we won't say which one!</p>
+        <p class="lead" id="detective-sentence"></p>
+        <input type="text" id="detective-answer" placeholder="Type the missing verb form..." autocomplete="off" spellcheck="false">
+        <div class="btnrow">
+          <button id="detective-check">Check</button>
+          <button id="detective-hint" class="secondary">Hint</button>
+          <button id="detective-next" class="secondary" style="display:none">Next</button>
+        </div>
+        <p id="detective-feedback" class="context"></p>
       </div>
     </section>
 
@@ -2520,6 +2544,166 @@ const VocabTrainer = {
 };
 
 ;
+// V3.3: Detective mode — leerlingen lezen een zin met context (tijdsmarkers)
+// en moeten zelf afleiden WELKE tijd ze nodig hebben. De zin vertelt het:
+// "every day" -> present simple, "yesterday" -> past simple, enz.
+// Na het antwoord onthult de feedback welke tijd het was en waarom.
+
+const DETECTIVE_SENTENCES = [
+  // --- present simple (gewoontes, feiten) ---
+  { tenseId: "present-simple", answer: "goes",
+    sentence: "Anna ______ to school by bike every single day.",
+    why: "'every day' = a habit -> present simple." },
+  { tenseId: "present-simple", answer: "works",
+    sentence: "My father ______ in a hospital. He is a nurse.",
+    why: "A fact that is true now -> present simple." },
+  { tenseId: "present-simple", answer: "rains",
+    sentence: "It often ______ in Belgium, so bring an umbrella.",
+    why: "'often' = a habit -> present simple." },
+
+  // --- present continuous (nu bezig) ---
+  { tenseId: "present-continuous", answer: "is watching",
+    sentence: "Be quiet! The baby ______ television right now.",
+    why: "'right now' = happening at this moment -> present continuous." },
+  { tenseId: "present-continuous", answer: "are playing",
+    sentence: "Look! The children ______ football in the garden at the moment.",
+    why: "'Look!' + 'at the moment' = now -> present continuous." },
+
+  // --- past simple (afgerond verleden) ---
+  { tenseId: "past-simple", answer: "visited",
+    sentence: "Last summer, we ______ our grandparents in Italy.",
+    why: "'last summer' = finished past -> past simple." },
+  { tenseId: "past-simple", answer: "watched",
+    sentence: "Yesterday evening, I ______ a great film on TV.",
+    why: "'yesterday' = finished past -> past simple." },
+
+  // --- past continuous (bezig in het verleden) ---
+  { tenseId: "past-continuous", answer: "was cooking",
+    sentence: "The phone rang while she ______ dinner in the kitchen.",
+    why: "'while' + an action in progress in the past -> past continuous." },
+  { tenseId: "past-continuous", answer: "were playing",
+    sentence: "At eight o'clock last night, the kids ______ in their room.",
+    why: "An action in progress at a past moment -> past continuous." },
+
+  // --- present perfect (verleden met relevantie nu) ---
+  { tenseId: "present-perfect", answer: "has lost",
+    sentence: "Oh no! Tom ______ his keys, so he can't get into the house.",
+    why: "The past matters now (he can't get in) -> present perfect." },
+  { tenseId: "present-perfect", answer: "have never been",
+    sentence: "I ______ to London, but I would love to go someday.",
+    why: "Life experience up to now -> present perfect." },
+
+  // --- present perfect continuous (duur tot nu) ---
+  { tenseId: "present-perfect-continuous", answer: "has been studying",
+    sentence: "Emma ______ for three hours already, and she's still going.",
+    why: "Started in the past, still going on ('for three hours') -> present perfect continuous." },
+
+  // --- past perfect (eerder dan iets anders) ---
+  { tenseId: "past-perfect", answer: "had left",
+    sentence: "When we arrived at the station, the train ______ already.",
+    why: "The train left BEFORE we arrived -> past perfect." },
+  { tenseId: "past-perfect", answer: "had eaten",
+    sentence: "I wasn't hungry because I ______ just before the party started.",
+    why: "Eating happened before the other past action -> past perfect." },
+
+  // --- past perfect continuous (duur vóór iets in het verleden) ---
+  { tenseId: "past-perfect-continuous", answer: "had been waiting",
+    sentence: "The bus finally came. We ______ for forty minutes in the rain.",
+    why: "A duration before another past moment -> past perfect continuous." },
+
+  // --- future simple (belofte/voorspelling) ---
+  { tenseId: "future-simple", answer: "will help",
+    sentence: "Don't worry, I ______ you with your homework tomorrow.",
+    why: "A promise about the future -> future simple (will)." },
+  { tenseId: "future-simple", answer: "will rain",
+    sentence: "Look at those dark clouds! It ______ soon.",
+    why: "A prediction about the future -> future simple (will)." },
+
+  // --- future continuous (bezig in de toekomst) ---
+  { tenseId: "future-continuous", answer: "will be flying",
+    sentence: "This time tomorrow, we ______ to New York on holiday.",
+    why: "An action in progress at a future moment -> future continuous." },
+
+  // --- future perfect (afgerond vóór toekomstig moment) ---
+  { tenseId: "future-perfect", answer: "will have finished",
+    sentence: "By the end of this year, I ______ all twelve tenses.",
+    why: "Completed before a future moment ('by...') -> future perfect." },
+
+  // --- future perfect continuous (duur tot toekomstig moment) ---
+  { tenseId: "future-perfect-continuous", answer: "will have been living",
+    sentence: "In June, my parents ______ in this house for twenty years.",
+    why: "A duration up to a future moment -> future perfect continuous." }
+];
+
+;
+// V3.3: DetectiveTrainer — de leerling ziet een zin met context en moet
+// zelf bepalen welke tijd nodig is. Geen tijd-label in beeld; pas na het
+// antwoord wordt onthuld welke tijd het was en welke marker dat verraadde.
+
+const DetectiveTrainer = {
+  pool: [],
+  index: 0,
+  current: null,
+  attempts: 0,
+
+  init() {
+    this.pool = [...DETECTIVE_SENTENCES].sort(() => Math.random() - 0.5);
+    this.index = 0;
+  },
+
+  next() {
+    if (this.index >= this.pool.length) {
+      this.pool.sort(() => Math.random() - 0.5);
+      this.index = 0;
+    }
+    this.current = this.pool[this.index++];
+    this.attempts = 0;
+    return this.current;
+  },
+
+  check(input) {
+    const norm = s => s.trim().toLowerCase().replace(/\s+/g, " ")
+      .replace(/[.!?,;]+$/, "");
+    return norm(input) === norm(this.current.answer);
+  },
+
+  // feedback-escalatie zoals de normale oefening (V2.4)
+  feedback(ok, tenseName) {
+    if (ok) {
+      return {
+        className: "ok",
+        text: this.attempts > 1
+          ? `Correct! "${this.current.answer}" — well done for persisting! This was: ${tenseName}. ${this.current.why}`
+          : `Correct! "${this.current.answer}" — this was: ${tenseName}. ${this.current.why}`
+      };
+    }
+    this.attempts++;
+    if (this.attempts === 1) {
+      return {
+        className: "nok",
+        text: "Not right — read the sentence again and look for time words (every day, yesterday, while, by...). Which tense do they point to?"
+      };
+    } else if (this.attempts === 2) {
+      return {
+        className: "nok",
+        text: `Still not right. Hint: the answer starts with "${this.current.answer.slice(0, Math.max(1, Math.ceil(this.current.answer.length / 3)))}".`
+      };
+    }
+    return {
+      className: "nok",
+      text: `Tip: it begins with "${this.current.answer.slice(0, Math.max(1, Math.ceil(this.current.answer.length / 3)))}". Or use the hint button!`
+    };
+  },
+
+  reveal() {
+    return {
+      className: "ok",
+      text: `The answer is "${this.current.answer}" — this was: ${TenseRegistry.get(this.current.tenseId).name}. ${this.current.why}`
+    };
+  }
+};
+
+;
 // Werkwoorden-data: regelmatig + onregelmatig.
 // vorm: { base, past, pastParticiple, third (optioneel, voor onregelmatige -s) }
 
@@ -3182,6 +3366,65 @@ function renderSkinPicker() {
   });
 }
 
+// ---- V3.3: Tense detective ----
+function initDetective() {
+  if (!$("detective-check")) return;
+  DetectiveTrainer.init();
+  $("detective-check").addEventListener("click", checkDetective);
+  $("detective-hint").addEventListener("click", () => {
+    const fb = DetectiveTrainer.reveal();
+    $("detective-feedback").textContent = fb.text;
+    $("detective-feedback").className = fb.className;
+    $("detective-next").style.display = "inline-block";
+  });
+  $("detective-next").addEventListener("click", nextDetective);
+  $("detective-answer").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); checkDetective(); }
+  });
+}
+
+function nextDetective() {
+  const item = DetectiveTrainer.next();
+  $("detective-sentence").textContent = item.sentence;
+  $("detective-answer").value = "";
+  $("detective-answer").classList.remove("correct", "wrong");
+  $("detective-answer").focus();
+  $("detective-feedback").textContent = "";
+  $("detective-feedback").className = "";
+  $("detective-next").style.display = "none";
+}
+
+function checkDetective() {
+  const input = $("detective-answer");
+  if (!DetectiveTrainer.current) return;
+  if (input.classList.contains("correct")) { nextDetective(); return; }
+  const ok = DetectiveTrainer.check(input.value);
+  const tenseName = TenseRegistry.get(DetectiveTrainer.current.tenseId).name;
+  const fb = DetectiveTrainer.feedback(ok, tenseName);
+  $("detective-feedback").textContent = fb.text;
+  $("detective-feedback").className = fb.className;
+  input.classList.add(ok ? "correct" : "wrong");
+  if (ok) {
+    input.classList.remove("wrong");
+    $("detective-next").style.display = "inline-block";
+    $("detective-next").focus();
+    Whiskers.react(true, 1, 0, null);
+    Gamification.addXP(12); // detective is moeilijker -> meer XP
+    ProgressStore.record(DetectiveTrainer.current.tenseId, true);
+    ProgressStore.queueAnswer(DetectiveTrainer.current.tenseId, true);
+    ProgressStore.sync();
+    if (!duelState) Calendar.render();
+  } else {
+    input.select();
+    if (DetectiveTrainer.attempts >= 3) $("detective-next").style.display = "inline-block";
+    Whiskers.react(false, 0, DetectiveTrainer.attempts, null);
+    Gamification.addXP(2);
+    ProgressStore.record(DetectiveTrainer.current.tenseId, false);
+    ProgressStore.queueAnswer(DetectiveTrainer.current.tenseId, false);
+    ProgressStore.sync();
+  }
+}
+
 // ---- V2.5: vocabulaire oefenen ----
 function initVocab() {
   const sel = $("vocab-list");
@@ -3510,6 +3753,7 @@ function init() {
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
   initVocab();
+  initDetective();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -3526,6 +3770,7 @@ function showView(id) {
   if (id === "table") renderTable();
   if (id === "social") renderSocial();
   if (id === "vocab") { $("vocab-picker-card").style.display = "block"; $("vocab-practice-card").style.display = "none"; }
+  if (id === "detective") nextDetective();
 }
 
 function bindNavigation() {

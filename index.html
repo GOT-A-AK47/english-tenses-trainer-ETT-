@@ -70,8 +70,12 @@
         <h2 class="section-title">More</h2>
         <div class="grid">
           <button class="tile" data-action="custom">
-            <span class="tile-name">Zelf kiezen</span>
+            <span class="tile-name">Custom mix</span>
             <span class="tile-desc">Choose yourself which tenses to mix</span>
+          </button>
+          <button class="tile" data-view="detective">
+            <span class="tile-name">🕵️ Tense detective</span>
+            <span class="tile-desc">Read the story and find the right tense yourself</span>
           </button>
           <button class="tile" id="mistake-tile" data-action="repeat" style="display:none">
             <span class="tile-name">Repeat mistakes <span class="badge" id="mistake-badge"></span></span>
@@ -351,6 +355,26 @@
       </div>
     </section>
 
+    <!-- DETECTIVE (V3.3) -->
+    <section id="view-detective" class="view">
+      <div class="view-head">
+        <button class="back" data-view="home">← Home</button>
+        <h2>🕵️ Tense detective</h2>
+      </div>
+
+      <div class="card">
+        <p class="context" style="margin-bottom:0.75rem">Read the sentence carefully. The <strong>time words</strong> tell you which tense you need — we won't say which one!</p>
+        <p class="lead" id="detective-sentence"></p>
+        <input type="text" id="detective-answer" placeholder="Type the missing verb form..." autocomplete="off" spellcheck="false">
+        <div class="btnrow">
+          <button id="detective-check">Check</button>
+          <button id="detective-hint" class="secondary">Hint</button>
+          <button id="detective-next" class="secondary" style="display:none">Next</button>
+        </div>
+        <p id="detective-feedback" class="context"></p>
+      </div>
+    </section>
+
     <footer>English Tenses Trainer — schoolproject</footer>
   </div>
 
@@ -363,6 +387,8 @@
   <script src="js/core/social.js"></script>
   <script src="js/data/vocab.js"></script>
   <script src="js/core/vocab.js"></script>
+  <script src="js/data/detective.js"></script>
+  <script src="js/core/detective.js"></script>
   <script src="js/data/verbs.js"></script>
   <script src="js/data/templates.js"></script>
   <script src="js/tenses/_shared.js"></script>

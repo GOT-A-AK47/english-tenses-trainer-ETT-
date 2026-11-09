@@ -207,6 +207,65 @@ function renderSkinPicker() {
   });
 }
 
+// ---- V3.3: Tense detective ----
+function initDetective() {
+  if (!$("detective-check")) return;
+  DetectiveTrainer.init();
+  $("detective-check").addEventListener("click", checkDetective);
+  $("detective-hint").addEventListener("click", () => {
+    const fb = DetectiveTrainer.reveal();
+    $("detective-feedback").textContent = fb.text;
+    $("detective-feedback").className = fb.className;
+    $("detective-next").style.display = "inline-block";
+  });
+  $("detective-next").addEventListener("click", nextDetective);
+  $("detective-answer").addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); checkDetective(); }
+  });
+}
+
+function nextDetective() {
+  const item = DetectiveTrainer.next();
+  $("detective-sentence").textContent = item.sentence;
+  $("detective-answer").value = "";
+  $("detective-answer").classList.remove("correct", "wrong");
+  $("detective-answer").focus();
+  $("detective-feedback").textContent = "";
+  $("detective-feedback").className = "";
+  $("detective-next").style.display = "none";
+}
+
+function checkDetective() {
+  const input = $("detective-answer");
+  if (!DetectiveTrainer.current) return;
+  if (input.classList.contains("correct")) { nextDetective(); return; }
+  const ok = DetectiveTrainer.check(input.value);
+  const tenseName = TenseRegistry.get(DetectiveTrainer.current.tenseId).name;
+  const fb = DetectiveTrainer.feedback(ok, tenseName);
+  $("detective-feedback").textContent = fb.text;
+  $("detective-feedback").className = fb.className;
+  input.classList.add(ok ? "correct" : "wrong");
+  if (ok) {
+    input.classList.remove("wrong");
+    $("detective-next").style.display = "inline-block";
+    $("detective-next").focus();
+    Whiskers.react(true, 1, 0, null);
+    Gamification.addXP(12); // detective is moeilijker -> meer XP
+    ProgressStore.record(DetectiveTrainer.current.tenseId, true);
+    ProgressStore.queueAnswer(DetectiveTrainer.current.tenseId, true);
+    ProgressStore.sync();
+    if (!duelState) Calendar.render();
+  } else {
+    input.select();
+    if (DetectiveTrainer.attempts >= 3) $("detective-next").style.display = "inline-block";
+    Whiskers.react(false, 0, DetectiveTrainer.attempts, null);
+    Gamification.addXP(2);
+    ProgressStore.record(DetectiveTrainer.current.tenseId, false);
+    ProgressStore.queueAnswer(DetectiveTrainer.current.tenseId, false);
+    ProgressStore.sync();
+  }
+}
+
 // ---- V2.5: vocabulaire oefenen ----
 function initVocab() {
   const sel = $("vocab-list");
@@ -535,6 +594,7 @@ function init() {
   $("start-duel").addEventListener("click", startDuel);
   Calendar.render();
   initVocab();
+  initDetective();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -551,6 +611,7 @@ function showView(id) {
   if (id === "table") renderTable();
   if (id === "social") renderSocial();
   if (id === "vocab") { $("vocab-picker-card").style.display = "block"; $("vocab-practice-card").style.display = "none"; }
+  if (id === "detective") nextDetective();
 }
 
 function bindNavigation() {

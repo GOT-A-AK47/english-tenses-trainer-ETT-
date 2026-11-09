@@ -18,6 +18,8 @@ const SCRIPT_ORDER = [
   "js/core/social.js",
   "js/data/vocab.js",
   "js/core/vocab.js",
+  "js/data/detective.js",
+  "js/core/detective.js",
   "js/data/verbs.js",
   "js/data/templates.js",
   "js/tenses/_shared.js",
