@@ -210,7 +210,18 @@ function renderSkinPicker() {
 // ---- V3.3: Tense detective ----
 function initDetective() {
   if (!$("detective-check")) return;
-  DetectiveTrainer.init();
+  // V3.4: tense-keuze (checkboxes per groep, leeg = alles)
+  const picks = $("detective-tense-picks");
+  if (picks) {
+    picks.innerHTML = TENSE_GROUPS.map(g =>
+      `<div class="custom-group"><div class="custom-group-title">${g.name}</div>
+       <div class="custom-options">${g.tenses.map(id => {
+         const t = TenseRegistry.get(id);
+         return `<label><input type="checkbox" value="${id}" class="det-tense-check"> ${t ? t.name : id}</label>`;
+       }).join("")}</div></div>`).join("");
+  }
+  const startBtn = $("detective-start");
+  if (startBtn) startBtn.addEventListener("click", startDetective);
   $("detective-check").addEventListener("click", checkDetective);
   $("detective-hint").addEventListener("click", () => {
     const fb = DetectiveTrainer.reveal();
@@ -222,6 +233,15 @@ function initDetective() {
   $("detective-answer").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); checkDetective(); }
   });
+}
+
+function startDetective() {
+  const chosen = [...document.querySelectorAll(".det-tense-check:checked")].map(i => i.value);
+  DetectiveTrainer.init(chosen.length ? chosen : null);
+  $("detective-picker-card").style.display = "none";
+  $("detective-practice-card").style.display = "block";
+  Whiskers.showCompanion();
+  nextDetective();
 }
 
 function nextDetective() {
@@ -246,8 +266,17 @@ function checkDetective() {
   $("detective-feedback").textContent = fb.text;
   $("detective-feedback").className = fb.className;
   input.classList.add(ok ? "correct" : "wrong");
-  if (ok) {
+  if (ok && DetectiveTrainer.hintUsed) {
+    // antwoord stond al in beeld via de hint -> telt niet als verdienste
     input.classList.remove("wrong");
+    input.classList.add("correct");
+    $("detective-feedback").textContent = `Right — but the answer was already revealed. No points this time. ${fb.text}`;
+    $("detective-feedback").className = "nok";
+    $("detective-next").style.display = "inline-block";
+    $("detective-next").focus();
+  } else if (ok) {
+    input.classList.remove("wrong");
+    input.classList.add("correct");
     $("detective-next").style.display = "inline-block";
     $("detective-next").focus();
     Whiskers.react(true, 1, 0, null);
@@ -322,7 +351,14 @@ function checkVocab() {
   if (input.classList.contains("correct")) { nextVocab(); return; }
   const ok = VocabTrainer.submit(input.value, $("vocab-feedback"));
   input.classList.add(ok ? "correct" : "wrong");
-  if (ok) {
+  if (ok && VocabTrainer.hintUsed) {
+    // antwoord stond al in beeld via de hint -> telt niet als verdienste
+    input.classList.remove("wrong");
+    $("vocab-feedback").textContent = `Right — but the answer was already revealed. No points this time.`;
+    $("vocab-feedback").className = "nok";
+    $("vocab-next").style.display = "inline-block";
+    $("vocab-next").focus();
+  } else if (ok) {
     input.classList.remove("wrong");
     $("vocab-next").style.display = "inline-block";
     $("vocab-next").focus();
@@ -621,7 +657,7 @@ function showView(id) {
   if (id === "table") renderTable();
   if (id === "social") renderSocial();
   if (id === "vocab") { $("vocab-picker-card").style.display = "block"; $("vocab-practice-card").style.display = "none"; }
-  if (id === "detective") nextDetective();
+  if (id === "detective") { $("detective-picker-card").style.display = "block"; $("detective-practice-card").style.display = "none"; }
 }
 
 function bindNavigation() {
@@ -763,7 +799,13 @@ function checkAnswer() {
   const input = $("answer");
   const ok = currentExercise.check(input.value);
   count++;
-  if (ok) {
+  if (ok && currentExercise.hintUsed) {
+    // antwoord was via de hint onthuld -> geen score, geen XP
+    currentExercise.solved = true;
+    input.classList.add("correct");
+    $("feedback").textContent = `Right — but you used the hint, so no points this time.`;
+    $("feedback").className = "nok";
+  } else if (ok) {
     score++;
     currentExercise.solved = true;
     input.classList.add("correct");
@@ -830,6 +872,7 @@ function checkAnswer() {
 
 function showHint() {
   if (!currentExercise) return;
+  currentExercise.hintUsed = true;
   $("feedback").textContent = `Hint: ${currentExercise.hint}`;
   $("feedback").className = "";
 }

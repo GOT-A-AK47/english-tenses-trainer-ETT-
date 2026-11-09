@@ -362,7 +362,13 @@
         <h2>🕵️ Tense detective</h2>
       </div>
 
-      <div class="card">
+      <div class="card" id="detective-picker-card">
+        <p class="context" style="margin-bottom:0.5rem"><strong>Which tenses do you want to practise?</strong> Leave everything unchecked to practise all of them.</p>
+        <div id="detective-tense-picks" class="tense-picks"></div>
+        <div class="btnrow"><button id="detective-start">Start detective</button></div>
+      </div>
+
+      <div class="card" id="detective-practice-card" style="display:none">
         <p class="context" style="margin-bottom:0.75rem">Read the sentence carefully. The <strong>time words</strong> tell you which tense you need — we won't say which one!</p>
         <p class="lead" id="detective-sentence"></p>
         <input type="text" id="detective-answer" placeholder="Type the missing verb form..." autocomplete="off" spellcheck="false">

@@ -7,9 +7,15 @@ const DetectiveTrainer = {
   index: 0,
   current: null,
   attempts: 0,
+  hintUsed: false,
 
-  init() {
-    this.pool = [...DETECTIVE_SENTENCES].sort(() => Math.random() - 0.5);
+  init(tenseIds) {
+    // V3.4: optionele filter — alleen de gekozen tijden oefenen
+    let source = DETECTIVE_SENTENCES;
+    if (Array.isArray(tenseIds) && tenseIds.length) {
+      source = source.filter(s => tenseIds.includes(s.tenseId));
+    }
+    this.pool = [...source].sort(() => Math.random() - 0.5);
     this.index = 0;
   },
 
@@ -20,6 +26,7 @@ const DetectiveTrainer = {
     }
     this.current = this.pool[this.index++];
     this.attempts = 0;
+    this.hintUsed = false;
     return this.current;
   },
 
@@ -58,6 +65,7 @@ const DetectiveTrainer = {
   },
 
   reveal() {
+    this.hintUsed = true;
     return {
       className: "ok",
       text: `The answer is "${this.current.answer}" — this was: ${TenseRegistry.get(this.current.tenseId).name}. ${this.current.why}`

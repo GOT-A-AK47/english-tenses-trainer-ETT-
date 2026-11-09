@@ -5,6 +5,7 @@
 const VocabTrainer = {
   current: null,   // actieve oefening { list, word, answer }
   attempts: 0,
+  hintUsed: false,
 
   pickWord(listId) {
     const list = VOCAB_LISTS.find(l => l.id === listId);
@@ -17,6 +18,7 @@ const VocabTrainer = {
     const word = this.pickWord(listId);
     if (!list || !word) return null;
     this.attempts = 0;
+    this.hintUsed = false;
     this.current = {
       list,
       word,
@@ -54,6 +56,7 @@ const VocabTrainer = {
 
   hint(feedbackEl) {
     if (!this.current) return;
+    this.hintUsed = true;
     feedbackEl.textContent = `Het juiste antwoord is "${this.current.answer}".`;
     feedbackEl.className = "ok";
   }
