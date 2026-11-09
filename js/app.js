@@ -16,6 +16,20 @@ function fetchClassList() {
 // V2.3: bestaat deze leerling nog op de server? Zo niet: opnieuw inloggen.
 // (Offline of geen identiteit: gewoon doorgaan — verwijderd worden merk je
 // alleen als de server expliciet zegt dat je er niet meer bent.)
+// V3.11.1: alle leerling-data lokaal wissen (na verwijdering door de docent).
+// Identiek gebruikt door verifyIdentity (exists=false) en de 410-afhandeling
+// in de sync — beide paden wissen exact hetzelfde.
+function wipeStudentData() {
+  try {
+    Identity.clear();
+    MistakeStore.clear();
+    ProgressStore.reset();
+    localStorage.removeItem("english-tenses-session");
+    localStorage.removeItem("english-tenses-game-v1");
+    localStorage.removeItem("whiskers-skin");
+  } catch {}
+}
+
 function verifyIdentity() {
   const id = Identity.get();
   if (!id) return Promise.resolve(false);
@@ -23,9 +37,7 @@ function verifyIdentity() {
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
       if (data && data.exists === false) {
-        Identity.clear();
-        MistakeStore.clear();
-        try { localStorage.removeItem("english-tenses-session"); } catch {}
+        wipeStudentData();
         toast("Your account no longer exists — please log in again.");
         ensureIdentity();
         return false;
