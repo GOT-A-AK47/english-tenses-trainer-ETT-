@@ -25,8 +25,15 @@ function wipeStudentData() {
     MistakeStore.clear();
     ProgressStore.reset();
     localStorage.removeItem("english-tenses-session");
-    localStorage.removeItem("english-tenses-game-v1");
-    localStorage.removeItem("whiskers-skin");
+    // OOK HET GEHEUGEN: Gamification.state was al geladen vóór de wipe
+    // draaide — zonder reset sync't de oude state meteen weer mee.
+    if (typeof Gamification !== "undefined" && Gamification.resetAll) {
+      Gamification.resetAll(); // verse state, opslaan, skin oranje, re-render
+    } else {
+      localStorage.removeItem("english-tenses-game-v1");
+      localStorage.removeItem("whiskers-skin");
+    }
+    if (typeof Whiskers !== "undefined" && Whiskers.setSkin) Whiskers.setSkin("oranje");
   } catch {}
 }
 
