@@ -1105,7 +1105,21 @@ function toast(msg) {
   setTimeout(() => el.remove(), 2600);
 }
 
+// V3.7: boot-animatie — Whiskers begroet je, klik of wacht tot hij wegfadet
+function initBoot() {
+  const overlay = $("boot-overlay");
+  if (!overlay) return;
+  const cat = $("boot-cat");
+  if (cat && typeof Whiskers !== "undefined" && Whiskers.pixelSVG) {
+    cat.innerHTML = Whiskers.pixelSVG({ size: 96, mood: "happy", id: "boot-cat-svg" });
+  }
+  const finish = () => { overlay.classList.add("done"); };
+  overlay.addEventListener("click", finish);
+  setTimeout(finish, 2100); // vangnet: altijd weg, ook als animatie faalt
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  initBoot();
   init();
   updateMistakeBadge();
   $("check").addEventListener("click", checkAnswer);
