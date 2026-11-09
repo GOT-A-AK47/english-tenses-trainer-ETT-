@@ -1105,46 +1105,19 @@ function toast(msg) {
   setTimeout(() => el.remove(), 2600);
 }
 
-// V3.9: cinematische intro — Whiskers typt achter zijn laptop, de camera
-// zoemt in op zijn scherm, en daarbinnen start de boot. JS-tijdlijn: elke
-// stap krijgt expliciet een klasse/timeout — betrouwbaar i.p.v. CSS-ketens.
-function bootLaptopSVG() {
-  // pixel-laptop: donker frame, gloeiend scherm, knipperende cursor
-  const W = 20, H = 13, px = 4;
-  const grid = Array.from({ length: H }, () => Array(W).fill("."));
-  const set = (x, y, ch) => { if (y >= 0 && y < H && x >= 0 && x < W) grid[y][x] = ch; };
-  const rect = (x, y, w, h, ch) => { for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) set(i, j, ch); };
-  // scherm (frame + bezel + gloed)
-  rect(2, 1, 16, 1, "k"); rect(2, 2, 16, 7, "K");
-  rect(1, 2, 1, 7, "k"); rect(18, 2, 1, 7, "k");
-  rect(3, 3, 14, 5, "G");
-  // inhoud op scherm: kleine EN-balk + cursor
-  rect(5, 4, 4, 1, "b"); rect(5, 6, 2, 1, "c"); rect(8, 6, 1, 1, "c");
-  // basis (keyboard)
-  rect(1, 9, 18, 1, "k"); rect(2, 10, 16, 2, "d");
-  rect(0, 12, 20, 1, "k");
-  const colors = { k: "#21201c", K: "#2b2f3a", G: "#9db8e8", b: "#5b9bff", c: "#e8f0fe", d: "#3a3f4d" };
-  let out = "";
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const ch = grid[y][x];
-    if (ch !== ".") out += `<rect x="${x*px}" y="${y*px}" width="${px}" height="${px}" fill="${colors[ch]}"/>`;
-  }
-  return `<svg viewBox="0 0 80 52" width="200" shape-rendering="crispEdges" aria-hidden="true">${out}</svg>`;
-}
-
+// V3.9.1: boot-intro — badge valt neer, Whiskers glimlacht naar je,
+// titel plopt letter voor letter, laadbalk met pootje. JS-tijdlijn.
 function initBoot() {
   const overlay = $("boot-overlay");
   if (!overlay) return;
 
-  // scène vullen
+  // glimlachende Whiskers (happy = dichte blije ogen + blos)
   const cat = $("boot-cat");
   if (cat && typeof Whiskers !== "undefined" && Whiskers.pixelSVG) {
-    cat.innerHTML = Whiskers.pixelSVG({ size: 120, mood: "idle", id: "boot-cat-svg" });
+    cat.innerHTML = Whiskers.pixelSVG({ size: 110, mood: "happy", id: "boot-cat-svg" });
   }
-  const laptop = $("boot-laptop");
-  if (laptop) laptop.innerHTML = bootLaptopSVG();
 
-  // titel-letters met individuele delays (start zodra het stadium toont)
+  // titel-letters met individuele delays
   const title = $("boot-title");
   if (title) {
     let delay = 700;
@@ -1155,16 +1128,13 @@ function initBoot() {
     }).join("");
   }
 
-  // tijdlijn (ms): t=0 kamer+typen -> 1700 zoom -> 2850 in het scherm -> 4600 exit
+  // tijdlijn (ms): 250 stadium tonen -> 3200/3950 teksten -> 4750 exit
   const stage = $("boot-stage");
-  const scene = $("boot-scene");
   const sub = $("boot-sub");
   let timers = [];
   const at = (ms, fn) => timers.push(setTimeout(fn, ms));
 
-  at(1700, () => scene.classList.add("zoomed"));
-  at(2700, () => scene.classList.add("dark"));
-  at(2850, () => stage.classList.add("show"));
+  at(250, () => stage.classList.add("show"));
   at(3200, () => { if (sub) sub.textContent = "Brushing his fur..."; });
   at(3950, () => { if (sub) sub.textContent = "Sharpening the tenses..."; });
   at(4750, () => finish());
