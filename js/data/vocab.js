@@ -119,5 +119,88 @@ const VOCAB_LISTS = [
       { nl: "gevangenschap", en: "captivity" },
       { nl: "de slang beet zijn slachtoffer", en: "the snake bit its victim" }
     ]
+  },
+  {
+    id: "unit2-entrepreneurs",
+    name: "Unit 2 — Entrepreneurs",
+    desc: "Young entrepreneurs and inspiration (p. 84)",
+    words: [
+      { nl: "een ondernemer", en: "an entrepreneur" },
+      { nl: "ondernemings- (adj.)", en: "entrepreneurial" },
+      { nl: "ondernemingszin", en: "entrepreneurship" },
+      { nl: "steunen", en: "to support" },
+      { nl: "steunend", en: "supportive" },
+      { nl: "een bron van inspiratie", en: "a source of inspiration" },
+      { nl: "inspireren, bezielen", en: "to inspire" },
+      { nl: "inspirerend, stimulerend", en: "inspirational" },
+      { nl: "potentieel, mogelijkheden", en: "potential" }
+    ]
+  },
+  {
+    id: "unit2-business",
+    name: "Unit 2 — Business",
+    desc: "Profit, companies and the market (p. 84)",
+    words: [
+      { nl: "winst maken", en: "to make a profit" },
+      { nl: "verlies maken", en: "to make a loss" },
+      { nl: "winstgevend", en: "profitable" },
+      { nl: "onkosten verminderen", en: "to cut expenses" },
+      { nl: "vaste kosten", en: "overheads" },
+      { nl: "een voordeel", en: "a benefit" },
+      { nl: "voordelig, nuttig", en: "beneficial" },
+      { nl: "een werknemer", en: "an employee" },
+      { nl: "een werkgever", en: "an employer" },
+      { nl: "de CEO, de president-directeur", en: "the CEO" },
+      { nl: "een salaris", en: "a salary" },
+      { nl: "een maximum-salaris", en: "a maximum wage" },
+      { nl: "grondstoffen", en: "raw materials" },
+      { nl: "een pas opgericht (internet)bedrijf", en: "a start-up" },
+      { nl: "een bedrijf stichten", en: "to found a company" },
+      { nl: "de stichter", en: "the founder" },
+      { nl: "een concurrent", en: "a competitor" },
+      { nl: "concurreren", en: "to compete" },
+      { nl: "concurrerend", en: "competitive" },
+      { nl: "met geld steunen", en: "to subsidize" },
+      { nl: "overheidssteun", en: "a subsidy" },
+      { nl: "vraag en aanbod", en: "supply and demand" },
+      { nl: "een aandeelhouder", en: "a stockholder" },
+      { nl: "een aandeelhouder (Brits)", en: "a shareholder" },
+      { nl: "aandelen", en: "shares" },
+      { nl: "de aandelenmarkt", en: "the stock market" },
+      { nl: "investeren, beleggen", en: "to invest" },
+      { nl: "investering, belegging", en: "an investment" },
+      { nl: "een investeerder, een belegger", en: "an investor" }
+    ]
+  },
+  {
+    id: "unit2-crowds",
+    name: "Unit 2 — Crowds",
+    desc: "Communities and crowdsourcing (p. 85)",
+    words: [
+      { nl: "een gemeenschap", en: "a community" },
+      { nl: "een koor", en: "a choir" },
+      { nl: "een meute, een lawaaierige menigte", en: "a mob" },
+      { nl: "samenkomen, zich verzamelen", en: "to gather" },
+      { nl: "collectief, gemeenschappelijk", en: "collective" },
+      { nl: "crowdfunding", en: "crowdfunding" },
+      { nl: "crowdsourcing", en: "crowdsourcing" },
+      { nl: "verslavend", en: "addictive" }
+    ]
+  },
+  {
+    id: "unit2-working-together",
+    name: "Unit 2 — Working together",
+    desc: "Participation, volunteering and collaboration (p. 85)",
+    words: [
+      { nl: "een deelnemer", en: "a participant" },
+      { nl: "een toeschouwer", en: "a bystander" },
+      { nl: "participeren, deelnemen", en: "to participate" },
+      { nl: "een vrijwilliger", en: "a volunteer" },
+      { nl: "zich vrijwillig aanbieden", en: "to volunteer" },
+      { nl: "samenwerken", en: "to collaborate" },
+      { nl: "samenwerking", en: "collaboration" },
+      { nl: "bijdragen", en: "to contribute" },
+      { nl: "een bijdrage", en: "a contribution" }
+    ]
   }
 ];
