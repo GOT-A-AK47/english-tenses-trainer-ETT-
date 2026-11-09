@@ -78,6 +78,20 @@ const ProgressStore = {
       body: JSON.stringify(payload)
     })
       .then(r => {
+        // V3.11: account verwijderd door de docent -> lokale state wissen
+        if (r.status === 410) {
+          try {
+            Identity.clear();
+            localStorage.removeItem(ProgressStore.KEY);
+            localStorage.removeItem("english-tenses-game-v1");
+            localStorage.removeItem("whiskers-skin");
+            localStorage.removeItem("english-tenses-session");
+            localStorage.removeItem("english-tenses-mistakes");
+          } catch {}
+          toast && toast("Your account was removed — please log in again.");
+          setTimeout(() => location.reload(), 900);
+          return null;
+        }
         if (!r.ok) throw new Error("sync mislukt: " + r.status);
         return r.json();
       })

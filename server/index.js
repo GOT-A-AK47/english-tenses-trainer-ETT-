@@ -18,6 +18,7 @@ const FRIENDS_FILE = path.join(DATA_DIR, "friends.json");
 const REQUESTS_FILE = path.join(DATA_DIR, "friend-requests.json");
 const DUELS_FILE = path.join(DATA_DIR, "duels.json");
 const CALENDAR_FILE = path.join(DATA_DIR, "calendar.json");
+const DELETED_FILE = path.join(DATA_DIR, "deleted.json");
 const PORT = process.env.PORT || 3000;
 
 // V2.2: basislijsten voor duel-vragen (gesynchroniseerd met de client-engine)
@@ -58,6 +59,10 @@ const loadDuels = () => loadJson(DUELS_FILE, []);
 const saveDuels = d => saveJson(DUELS_FILE, d);
 const loadCalendar = () => loadJson(CALENDAR_FILE, {});
 const saveCalendar = d => saveJson(CALENDAR_FILE, d);
+// V3.11: tombstones — verwijderde leerlingen mogen niet resurrecten door
+// een sync van een apparaat dat de verwijdering nog niet weet
+const loadDeleted = () => loadJson(DELETED_FILE, {});
+const saveDeleted = d => saveJson(DELETED_FILE, d);
 
 function studentKey(identity) {
   return `${identity.name}|${identity.klas}`;
@@ -297,6 +302,10 @@ async function handleApi(req, res) {
     if (!identity.name || !identity.klas) {
       return respond(res, 400, { error: "ongeldige naam of klas" });
     }
+    // V3.11: verwijderde leerling? Sync weigeren — anders resurrectie
+    if (loadDeleted()[studentKey(identity)]) {
+      return respond(res, 410, { error: "account removed", removed: true });
+    }
     const newAnswers = Array.isArray(payload.newAnswers) ? payload.newAnswers : [];
     // V2.2: dagelijkse kalender per leerling
     const today = new Date().toISOString().slice(0, 10);
@@ -473,12 +482,26 @@ async function handleApi(req, res) {
     ));
   }
 
+  // --- her-registratie (V3.11): tombstone wissen na expliciete login ---
+  if (req.method === "POST" && url === "/api/student/register") {
+    const { name, klas } = (await readJson(req));
+    if (!name || !klas) return respond(res, 400, { error: "naam en klas verplicht" });
+    const deleted = loadDeleted();
+    const who = sanitizeName(name) + "|" + sanitizeName(klas);
+    if (deleted[who]) {
+      delete deleted[who];
+      saveDeleted(deleted);
+    }
+    return respond(res, 200, { ok: true });
+  }
+
   // --- bestaan-check leerling (V2.3; maakt niks aan) ---
   if (req.method === "GET" && url === "/api/student/exists") {
     const name = new URL(req.url, "http://x").searchParams.get("name");
     const klas = new URL(req.url, "http://x").searchParams.get("klas");
     if (!name || !klas) return respond(res, 400, { error: "naam en klas verplicht" });
-    const exists = !!loadProgress()[name + "|" + klas];
+    const who = name + "|" + klas;
+    const exists = !!loadProgress()[who] && !loadDeleted()[who];
     return respond(res, 200, { exists });
   }
 
@@ -549,6 +572,11 @@ async function handleApi(req, res) {
     saveFriends(friends);
 
     saveDuels(loadDuels().filter(d => !d.players.includes(who)));
+
+    // V3.11: tombstone — syncs van oude apparaten worden voortaan geweigerd
+    const deleted = loadDeleted();
+    deleted[who] = new Date().toISOString();
+    saveDeleted(deleted);
 
     return respond(res, 200, { ok: true });
   }

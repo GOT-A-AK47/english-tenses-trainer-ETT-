@@ -18,8 +18,8 @@ function fetchClassList() {
 // alleen als de server expliciet zegt dat je er niet meer bent.)
 function verifyIdentity() {
   const id = Identity.get();
-  if (!id) return;
-  fetch(`/api/student/exists?name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`)
+  if (!id) return Promise.resolve(false);
+  return fetch(`/api/student/exists?name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`)
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
       if (data && data.exists === false) {
@@ -28,9 +28,11 @@ function verifyIdentity() {
         try { localStorage.removeItem("english-tenses-session"); } catch {}
         toast("Your account no longer exists — please log in again.");
         ensureIdentity();
+        return false;
       }
+      return true;
     })
-    .catch(() => { /* server onbereikbaar: lokaal verder */ });
+    .catch(() => true); // server onbereikbaar: lokaal verder (sync faalt dan toch zacht)
 }
 
 function ensureIdentity() {
@@ -68,8 +70,15 @@ function saveIdentity() {
   Identity.save(name, klas);
   $("identity-modal").style.display = "none";
   updateIdentityLabel();
-  ProgressStore.sync();
-  loadTasks();
+  // V3.11: expliciete (her-)registratie — ruimt een eventuele tombstone op
+  fetch("/api/student/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: name.trim(), klas })
+  }).catch(() => {}).finally(() => {
+    ProgressStore.sync();
+    loadTasks();
+  });
   toast(`Welcome, ${name.trim()}!`);
 }
 
@@ -666,7 +675,11 @@ function init() {
   Gamification.init();
   Whiskers.trackEyes();
   maybeShowIntro();
-  verifyIdentity();
+  // V3.11: eerst verifiëren dat het account nog bestaat, DAARNA syncen —
+  // anders zou de sync een verwijderd account met lokale data resurrecten
+  verifyIdentity().then(exists => {
+    if (exists && Identity.get()) ProgressStore.sync();
+  });
   $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", () => {
     const home = document.getElementById("view-home");
@@ -685,9 +698,6 @@ function init() {
   Calendar.render();
   initVocab();
   initDetective();
-  // V3.10: direct syncen bij openen — Whiskers-state en voortgang van de
-  // server worden opgehaald zonder eerst een vraag te moeten beantwoorden
-  if (Identity.get()) ProgressStore.sync();
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
