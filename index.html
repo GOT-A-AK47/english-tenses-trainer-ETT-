@@ -7,13 +7,20 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- BOOT-ANIMATIE (V3.7) -->
+    <!-- BOOT-ANIMATIE (V3.8: cinematische intro) -->
     <div id="boot-overlay" title="Click to skip">
-      <div class="boot-badge">EN</div>
-      <div class="boot-title">English Tenses Trainer</div>
-      <div class="boot-sub">Loading your tenses...</div>
-      <div id="boot-cat"></div>
-      <div class="boot-bar"></div>
+      <div class="boot-stars" aria-hidden="true">
+        <span>✦</span><span>✧</span><span>✦</span><span>✧</span><span>✦</span>
+        <span>✧</span><span>✦</span><span>✧</span><span>✦</span><span>✧</span>
+      </div>
+      <div class="boot-stage">
+        <div class="boot-badge">EN</div>
+        <div id="boot-cat"></div>
+        <div class="boot-title" id="boot-title"></div>
+        <div class="boot-sub" id="boot-sub">Whiskers is waking up...</div>
+        <div class="boot-bar"><div class="boot-bar-fill"></div><span class="boot-paw">🐾</span></div>
+      </div>
+      <div class="boot-skip">tap anywhere to skip</div>
     </div>
 
   <div class="app">

@@ -1105,17 +1105,46 @@ function toast(msg) {
   setTimeout(() => el.remove(), 2600);
 }
 
-// V3.7: boot-animatie — Whiskers begroet je, klik of wacht tot hij wegfadet
+// V3.8: cinematische boot-intro — badge valt in, Whiskers wandelt op,
+// letters ploppen, laadbalk met pootje, zoom-out naar de app.
 function initBoot() {
   const overlay = $("boot-overlay");
   if (!overlay) return;
   const cat = $("boot-cat");
   if (cat && typeof Whiskers !== "undefined" && Whiskers.pixelSVG) {
-    cat.innerHTML = Whiskers.pixelSVG({ size: 96, mood: "happy", id: "boot-cat-svg" });
+    cat.innerHTML = Whiskers.pixelSVG({ size: 110, mood: "happy", id: "boot-cat-svg" });
   }
-  const finish = () => { overlay.classList.add("done"); };
+  // titel: letters ploppen één voor één
+  const title = $("boot-title");
+  if (title) {
+    const text = "English Tenses Trainer";
+    let delay = 1150;
+    title.innerHTML = [...text].map(ch => {
+      const d = delay;
+      delay += ch === " " ? 40 : 55;
+      return `<span style="animation-delay:${d}ms">${ch === " " ? "&nbsp;" : ch}</span>`;
+    }).join("");
+  }
+  // wisselende status-teksten
+  const sub = $("boot-sub");
+  const msgs = ["Whiskers is waking up...", "Brushing his fur...", "Sharpening the tenses..."];
+  let mi = 0;
+  const msgTimer = setInterval(() => {
+    mi++;
+    if (mi < msgs.length && sub) sub.textContent = msgs[mi];
+    else clearInterval(msgTimer);
+  }, 750);
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearInterval(msgTimer);
+    overlay.classList.add("boot-out");
+    setTimeout(() => overlay.classList.add("done"), 460);
+  };
   overlay.addEventListener("click", finish);
-  setTimeout(finish, 2100); // vangnet: altijd weg, ook als animatie faalt
+  setTimeout(finish, 3200); // vangnet: altijd weg, ook als animatie faalt
 }
 
 document.addEventListener("DOMContentLoaded", () => {
