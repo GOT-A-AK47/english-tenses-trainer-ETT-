@@ -75,6 +75,10 @@ h1 {
   letter-spacing: -0.01em;
 }
 
+/* Fix: h2/h3 hadden browser-default marges (~21px boven+onder) die de
+   view-heads opbliezen — de 'lege ruimte boven de oefening'. */
+h2, h3 { margin: 0; }
+
 /* Startscherm */
 .lead { font-size: 0.95rem; margin: 0 0 1rem; color: var(--muted); }
 
@@ -876,4 +880,88 @@ header h1::after {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   font-weight: 600;
+}
+
+
+/* ===== Boot-animatie (V3.7) ===== */
+#boot-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  animation: bootFadeOut 0.5s ease 1.5s forwards;
+  cursor: pointer;
+}
+#boot-overlay.done { display: none; }
+@keyframes bootFadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
+.boot-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  animation: bootPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  box-shadow: 0 8px 24px rgba(47, 111, 237, 0.35);
+}
+.boot-title {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--ink);
+  animation: bootSlideUp 0.5s ease 0.25s both;
+}
+.boot-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  animation: bootSlideUp 0.5s ease 0.45s both;
+}
+#boot-cat {
+  animation: bootBounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.65s both;
+}
+@keyframes bootPop {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes bootSlideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@keyframes bootBounceIn {
+  0% { transform: scale(0) rotate(-12deg); opacity: 0; }
+  70% { transform: scale(1.1) rotate(4deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.boot-bar {
+  width: 160px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 0.4rem;
+  animation: bootSlideUp 0.5s ease 0.55s both;
+}
+.boot-bar::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+  animation: bootProgress 1s ease 0.6s forwards;
+}
+@keyframes bootProgress {
+  from { width: 10%; }
+  to { width: 100%; }
 }
