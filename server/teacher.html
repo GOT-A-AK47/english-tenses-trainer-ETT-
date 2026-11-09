@@ -99,6 +99,7 @@
         </div>
         <p class="sub" style="margin:0.4rem 0 0">Tick which tenses the students should practise:</p>
         <div class="tense-picks" id="task-tenses"></div>
+        <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>Mode:</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-detective"> 🕵️ practise as Tense detective (students find the tense themselves)</label></p>
         <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>For whom?</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-whole-class" checked> whole class</label></p>
         <div id="task-students" class="student-picks" style="display:none"></div>
         <div class="row"><button onclick="addTask()">Assign task</button></div>
@@ -369,7 +370,8 @@
       }
       const m = document.getElementById("task-msg");
       try {
-        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds, students }) });
+        const mode = document.getElementById("task-detective").checked ? "detective" : "practice";
+        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds, students, mode }) });
         m.textContent = "Task assigned!"; m.className = "msg ok";
         document.getElementById("task-title").value = "";
         document.querySelectorAll("#task-tenses input:checked").forEach(i => i.checked = false);
@@ -381,7 +383,7 @@
       const tasks = await api("/api/teacher/tasks");
       document.getElementById("task-list").innerHTML = tasks.length
         ? tasks.map(t => `<div class="card" style="margin:0.5rem 0">
-            <strong>${esc(t.title)}</strong> <span class="chip">${esc(t.klas)}</span>
+            <strong>${esc(t.title)}</strong> <span class="chip">${esc(t.klas)}</span>${t.mode === "detective" ? ' <span class="chip">🕵️ detective</span>' : ""}
             <div>${t.tenseIds.map(x => `<span class="task-tense">${esc(x.replace(/-/g, " "))}</span>`).join("")}</div>
             <div class="row"><button class="danger" onclick="delTask('${t.id}')">Delete</button></div>
           </div>`).join("")

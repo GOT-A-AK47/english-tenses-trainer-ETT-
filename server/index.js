@@ -403,7 +403,7 @@ async function handleApi(req, res) {
 
   if (req.method === "POST" && url === "/api/teacher/tasks") {
     if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
-    const { title, klas, tenseIds, students: payloadStudents } = (await readJson(req));
+    const { title, klas, tenseIds, students: payloadStudents, mode } = (await readJson(req));
     if (!title || !klas || !Array.isArray(tenseIds) || !tenseIds.length) {
       return respond(res, 400, { error: "title, klas en tenseIds zijn verplicht" });
     }
@@ -421,6 +421,8 @@ async function handleApi(req, res) {
       students: Array.isArray(payloadStudents) && payloadStudents.length
         ? payloadStudents.map(n => String(n).trim())
         : null,
+      // V3.6: oefenmodus — "detective" = leerlingen leiden de tijd zelf af
+      mode: mode === "detective" ? "detective" : "practice",
       createdAt: new Date().toISOString()
     };
     tasks.push(task);

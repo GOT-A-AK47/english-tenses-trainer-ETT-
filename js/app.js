@@ -85,9 +85,9 @@ function loadTasks() {
       if (!tasks || !tasks.length) { wrap.style.display = "none"; return; }
       wrap.style.display = "block";
       grid.innerHTML = tasks.map(t => `
-        <button class="tile task-tile" data-task-mix="${t.tenseIds.join(",")}">
-          <span class="tile-name">${t.title}</span>
-          <span class="tile-desc">${t.tenseIds.length} tijd${t.tenseIds.length === 1 ? "" : "en"} door elkaar</span>
+        <button class="tile task-tile" data-task-mix="${t.tenseIds.join(",")}" ${t.mode === "detective" ? `data-task-detective="1"` : ""}>
+          <span class="tile-name">${t.title}${t.mode === "detective" ? " 🕵️" : ""}</span>
+          <span class="tile-desc">${t.mode === "detective" ? "Tense detective" : t.tenseIds.length + " tenses mixed"}</span>
         </button>`).join("");
     })
     .catch(() => { $("home-tasks").style.display = "none"; });
@@ -261,7 +261,7 @@ function initDetective() {
       `<div class="custom-group"><div class="custom-group-title">${g.name}</div>
        <div class="custom-options">${g.tenses.map(id => {
          const t = TenseRegistry.get(id);
-         return `<label><input type="checkbox" value="${id}" class="det-tense-check"> ${t ? t.name : id}</label>`;
+         return `<label class="check"><input type="checkbox" value="${id}" class="det-tense-check"> ${t ? t.name : id}</label>`;
        }).join("")}</div></div>`).join("");
   }
   const startBtn = $("detective-start");
@@ -279,7 +279,13 @@ function initDetective() {
   });
 }
 
-function startDetective() {
+function startDetective(preselect) {
+  if (Array.isArray(preselect)) {
+    // taak-modus: zet de gevraagde tijden aan
+    document.querySelectorAll(".det-tense-check").forEach(cb => {
+      cb.checked = preselect.includes(cb.value);
+    });
+  }
   const chosen = [...document.querySelectorAll(".det-tense-check:checked")].map(i => i.value);
   DetectiveTrainer.init(chosen.length ? chosen : null);
   $("detective-picker-card").style.display = "none";
@@ -323,8 +329,11 @@ function checkDetective() {
     input.classList.add("correct");
     $("detective-next").style.display = "inline-block";
     $("detective-next").focus();
-    Whiskers.react(true, 1, 0, null);
-    Gamification.addXP(12); // detective is moeilijker -> meer XP
+    // V3.6: volledige Whiskers-integratie — quest, energie, streaks en
+    // XP lopen via hetzelfde onAnswer-systeem als alle oefeningen;
+    // detective geeft 2 XP extra bovenop de standaard 10.
+    Gamification.onAnswer(DetectiveTrainer.current.tenseId, true);
+    Gamification.addXP(2);
     ProgressStore.record(DetectiveTrainer.current.tenseId, true);
     ProgressStore.queueAnswer(DetectiveTrainer.current.tenseId, true);
     ProgressStore.sync();
@@ -332,8 +341,7 @@ function checkDetective() {
   } else {
     input.select();
     if (DetectiveTrainer.attempts >= 3) $("detective-next").style.display = "inline-block";
-    Whiskers.react(false, 0, DetectiveTrainer.attempts, null);
-    Gamification.addXP(2);
+    Gamification.onAnswer(DetectiveTrainer.current.tenseId, false);
     ProgressStore.record(DetectiveTrainer.current.tenseId, false);
     ProgressStore.queueAnswer(DetectiveTrainer.current.tenseId, false);
     ProgressStore.sync();
@@ -760,7 +768,12 @@ document.addEventListener("click", e => {
   }
   const taskTile = e.target.closest("[data-task-mix]");
   if (taskTile && taskTile.dataset.taskMix) {
-    startPractice("mix", taskTile.dataset.taskMix.split(","));
+    if (taskTile.dataset.taskDetective) {
+      showView("detective");
+      startDetective(taskTile.dataset.taskMix.split(","));
+    } else {
+      startPractice("mix", taskTile.dataset.taskMix.split(","));
+    }
   }
 });
 
