@@ -230,6 +230,7 @@ function nextDetective() {
   $("detective-answer").value = "";
   $("detective-answer").classList.remove("correct", "wrong");
   $("detective-answer").focus();
+  $("detective-answer").scrollIntoView({ block: "center" });
   $("detective-feedback").textContent = "";
   $("detective-feedback").className = "";
   $("detective-next").style.display = "none";
@@ -308,6 +309,7 @@ function nextVocab() {
   $("vocab-answer").value = "";
   $("vocab-answer").classList.remove("correct", "wrong");
   $("vocab-answer").focus();
+  $("vocab-answer").scrollIntoView({ block: "center" });
   $("vocab-feedback").textContent = "";
   $("vocab-feedback").className = "";
   $("vocab-next").style.display = "none";
@@ -605,8 +607,16 @@ function showView(id) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   $("view-" + id).classList.add("active");
   window.scrollTo(0, 0);
-  if (id === "practice") $("answer").focus();
-  if (id === "irregular") $("irr-past").focus();
+  // Focus + centreren: focus() alleen scrollt het veld naar de onderrand;
+  // block center zet de oefening mooi in beeld.
+  if (id === "practice") {
+    $("answer").focus();
+    $("answer").scrollIntoView({ block: "center" });
+  }
+  if (id === "irregular") {
+    $("irr-past").focus();
+    $("irr-past").scrollIntoView({ block: "center" });
+  }
   if (id === "progress") renderProgress();
   if (id === "table") renderTable();
   if (id === "social") renderSocial();
