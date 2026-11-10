@@ -21,6 +21,10 @@ const CALENDAR_FILE = path.join(DATA_DIR, "calendar.json");
 const DELETED_FILE = path.join(DATA_DIR, "deleted.json");
 const PORT = process.env.PORT || 3000;
 
+// V3.16.2: bij elke server-wijziging dit ophogen — het dashboard toont
+// deze versie zodat je direct ziet of de productie-server vers is.
+const SERVER_VERSION = "3.16.2";
+
 // V2.2: basislijsten voor duel-vragen (gesynchroniseerd met de client-engine)
 const TENSE_IDS = [
   "present-simple", "present-continuous", "present-perfect", "present-perfect-continuous",
@@ -286,6 +290,10 @@ async function handleApi(req, res) {
   }
 
   // --- publiek ---
+  // V3.16.2: versie-check — toont welke servercode er DAADWERKELIJK draait
+  if (req.method === "GET" && url === "/api/version") {
+    return respond(res, 200, { version: SERVER_VERSION });
+  }
   if (req.method === "GET" && url === "/api/classes/list") {
     // openbare lijst voor leerlingen: alleen klasnamen
     return respond(res, 200, loadClasses().map(c => c.name));

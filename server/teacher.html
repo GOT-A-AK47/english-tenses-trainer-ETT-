@@ -62,7 +62,7 @@
 
     <!-- LOGIN -->
     <div id="login-box" class="card">
-      <h1>Teacher dashboard</h1>
+      <h1>Teacher dashboard <span id="server-version" style="font-size:0.65rem;color:var(--muted);font-weight:400"></span></h1>
       <p class="sub">Enter your teacher code.</p>
       <div class="row">
         <input type="password" id="code" placeholder="Docentencode" autocomplete="off">
@@ -74,7 +74,7 @@
 
     <!-- DASHBOARD -->
     <div id="dash" class="hidden">
-      <h1>Teacher dashboard</h1>
+      <h1>Teacher dashboard <span id="server-version" style="font-size:0.65rem;color:var(--muted);font-weight:400"></span></h1>
       <div class="row">
         <button class="secondary" onclick="refreshAll()">Refresh</button>
         <button class="secondary" onclick="loadCSV()">📤 Download progress (CSV)</button>
@@ -456,6 +456,13 @@
       return String(s).replace(/[&<>"']/g, c =>
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
+
+    // V3.16.2: server-versie tonen — klopt hij niet met de changelog,
+    // dan draait de container nog oude code en is een herstart nodig.
+    fetch("/api/version").then(r => r.json()).then(v => {
+      const el = document.getElementById("server-version");
+      if (el) el.textContent = "· server v" + v.version;
+    }).catch(() => {});
 
     if (token) { showDash(); refreshAll(); } else showLogin();
     document.getElementById("code").addEventListener("keydown", e => {
