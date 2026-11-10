@@ -3944,7 +3944,7 @@ function initDetective() {
   });
   $("detective-next").addEventListener("click", nextDetective);
   $("detective-answer").addEventListener("keydown", e => {
-    if (e.key === "Enter") { e.preventDefault(); checkDetective(); }
+    if (e.key === "Enter" && !e.repeat) { e.preventDefault(); checkDetective(); }
   });
 }
 
@@ -3979,6 +3979,12 @@ function checkDetective() {
   const input = $("detective-answer");
   if (!DetectiveTrainer.current) return;
   if (input.classList.contains("correct")) { nextDetective(); return; }
+  // V3.15: leeg antwoord = geen XP (anti-farm)
+  if (!input.value.trim()) {
+    $("detective-feedback").textContent = "Type an answer first!";
+    $("detective-feedback").className = "nok";
+    return;
+  }
   const ok = DetectiveTrainer.check(input.value);
   const tenseName = TenseRegistry.get(DetectiveTrainer.current.tenseId).name;
   const fb = DetectiveTrainer.feedback(ok, tenseName);
@@ -4033,7 +4039,7 @@ function initVocab() {
   });
   $("vocab-next").addEventListener("click", nextVocab);
   $("vocab-answer").addEventListener("keydown", e => {
-    if (e.key === "Enter") { e.preventDefault(); checkVocab(); }
+    if (e.key === "Enter" && !e.repeat) { e.preventDefault(); checkVocab(); }
   });
 }
 
@@ -4070,6 +4076,12 @@ function checkVocab() {
   if (!VocabTrainer.current) return;
   // al goed? volgende
   if (input.classList.contains("correct")) { nextVocab(); return; }
+  // V3.15: leeg antwoord = geen XP (anti-farm)
+  if (!input.value.trim()) {
+    $("vocab-feedback").textContent = "Type an answer first!";
+    $("vocab-feedback").className = "nok";
+    return;
+  }
   const ok = VocabTrainer.submit(input.value, $("vocab-feedback"));
   input.classList.add(ok ? "correct" : "wrong");
   if (ok && VocabTrainer.hintUsed) {
@@ -4291,6 +4303,12 @@ function nextDuelQuestion() {
   $("answer").value = "";
   $("answer").classList.remove("correct", "wrong");
   $("answer").focus();
+  // V3.15: focus() duwt het veld naar de onderrand — alleen bijscrollen
+  // als het veld (deels) uit beeld is, anders verspringt het scherm
+  const r = $("answer").getBoundingClientRect();
+  if (r.top < 60 || r.bottom > window.innerHeight - 60) {
+    $("answer").scrollIntoView({ block: "center" });
+  }
   $("feedback").textContent = "";
   $("feedback").className = "";
 }
@@ -4517,6 +4535,12 @@ function newExercise() {
   $("answer").value = "";
   $("answer").classList.remove("correct", "wrong");
   $("answer").focus();
+  // V3.15: focus() duwt het veld naar de onderrand — alleen bijscrollen
+  // als het veld (deels) uit beeld is, anders verspringt het scherm
+  const r = $("answer").getBoundingClientRect();
+  if (r.top < 60 || r.bottom > window.innerHeight - 60) {
+    $("answer").scrollIntoView({ block: "center" });
+  }
   $("feedback").textContent = "";
   $("feedback").className = "";
 }
@@ -4527,6 +4551,13 @@ function checkAnswer() {
   if (currentExercise.solved) { newExercise(); return; }
   const isRepeat = !!currentExercise.isRepeat;
   const input = $("answer");
+  // V3.15: leeg antwoord = geen XP, geen voortgang (anti-farm)
+  if (!input.value.trim()) {
+    $("feedback").textContent = "Type an answer first!";
+    $("feedback").className = "nok";
+    input.focus();
+    return;
+  }
   const ok = currentExercise.check(input.value);
   count++;
   if (ok && currentExercise.hintUsed) {
@@ -4845,7 +4876,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // V3.12: alléén checkAnswer — die springt zelf door zodra de vraag
     // solved is. De oude extra newExercise() veegde de herkansing (V2.4)
     // direct weg: fout antwoord -> meteen volgende vraag.
-    if (e.key === "Enter") { e.preventDefault(); checkAnswer(); }
+    // V3.15: !e.repeat stopt Enter-indrukken-farmen (auto-herhaling).
+    if (e.key === "Enter" && !e.repeat) { e.preventDefault(); checkAnswer(); }
   });
   ["irr-past", "irr-pp"].forEach(id => {
     $(id).addEventListener("keydown", e => {
