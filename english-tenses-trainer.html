@@ -4685,7 +4685,10 @@ document.addEventListener("DOMContentLoaded", () => {
     toast("Progress cleared");
   });
   $("answer").addEventListener("keydown", e => {
-    if (e.key === "Enter") { e.preventDefault(); checkAnswer(); newExercise(); }
+    // V3.12: alléén checkAnswer — die springt zelf door zodra de vraag
+    // solved is. De oude extra newExercise() veegde de herkansing (V2.4)
+    // direct weg: fout antwoord -> meteen volgende vraag.
+    if (e.key === "Enter") { e.preventDefault(); checkAnswer(); }
   });
   ["irr-past", "irr-pp"].forEach(id => {
     $(id).addEventListener("keydown", e => {
