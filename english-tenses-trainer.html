@@ -1111,6 +1111,32 @@ header h1::after {
   background: #fff;
 }
 
+/* V3.16.1: moeilijkheids-chips in de oefen-view */
+.diff-switch {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--line);
+  padding: 2px;
+  border-radius: 999px;
+}
+.diff-chip {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 0;
+}
+.diff-chip.active {
+  background: #fff;
+  color: var(--accent-dark);
+  box-shadow: 0 1px 3px rgba(16, 26, 51, 0.12);
+}
+
 </style>
 </head>
 <body>
@@ -1142,23 +1168,7 @@ header h1::after {
     <main>
       <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
       <section id="view-home" class="view active">
-        <p class="lead">Choose a difficulty or a tense:</p>
-        <div class="grid big" id="difficulty-grid">
-          <button class="tile big-tile" data-difficulty="easy">
-            <span class="tile-name">🟢 Easy</span>
-            <span class="tile-desc">3 basic tenses, regular verbs only</span>
-          </button>
-          <button class="tile big-tile" data-difficulty="medium">
-            <span class="tile-name">🟠 Medium</span>
-            <span class="tile-desc">6 common tenses, all verbs</span>
-          </button>
-          <button class="tile big-tile" data-difficulty="hard">
-            <span class="tile-name">🔴 Hard</span>
-            <span class="tile-desc">All 12 tenses, everything mixed</span>
-          </button>
-        </div>
-
-        <p class="lead">Or choose a tense:</p>
+        <p class="lead">Choose a tense:</p>
 
         <div class="grid big" id="group-grid">
           <button class="tile big-tile" data-group="present">
@@ -1271,6 +1281,11 @@ header h1::after {
           <div class="controls">
             <label for="tense-select">Tense:</label>
             <select id="tense-select"></select>
+            <span class="diff-switch" title="Verb difficulty for this tense">
+              <button class="diff-chip" data-diff="easy">Easy</button>
+              <button class="diff-chip active" data-diff="medium">Medium</button>
+              <button class="diff-chip" data-diff="hard">Hard</button>
+            </span>
           </div>
         </div>
 
@@ -3592,8 +3607,9 @@ const ExerciseEngine = {
   // Genereert één oefenvraag: kiest eerst een sjabloon en daarna een
   // werkwoord dat bij dat sjabloon past (andersom kan "They rain every day"
   // ontstaan). mixIds = array van tense-ids (mix-modus).
-  // V3.16: moeilijkheidsgraad — "easy" gebruikt alleen regelmatige
-  // werkwoorden (de tijden-mix regelt de rest van de moeilijkheid).
+  // V3.16.1: moeilijkheid per gekozen tijd/mix — de verbMode bepaalt
+  // welke werkwoorden langskomen: "regular" (easy), "irregular" (hard)
+  // of alles (medium). De tijdenkeuze blijft helemaal aan de leerling.
   generate(tenseId, mixIds, opts = {}) {
     let actualId = tenseId;
     if (mixIds && mixIds.length) {
@@ -3601,19 +3617,22 @@ const ExerciseEngine = {
     }
     const templates = TEMPLATES[actualId] || [];
     const tpl = templates[Math.floor(Math.random() * templates.length)];
+    const mode = opts.verbMode; // "regular" | "irregular" | undefined
     let verb;
     if (tpl.verbs) {
       let pool = tpl.verbs;
-      if (opts.regularOnly) {
-        // filter onregelmatige eruit; leeg -> willekeurig regelmatig werkwoord
+      if (mode === "regular") {
         pool = tpl.verbs.filter(v => !IRREGULAR_MAP[v]);
         if (!pool.length) pool = REGULAR_VERBS;
+      } else if (mode === "irregular") {
+        pool = tpl.verbs.filter(v => IRREGULAR_MAP[v]);
+        if (!pool.length) pool = IRREGULAR_VERBS.map(v => v.base);
       }
       verb = pool[Math.floor(Math.random() * pool.length)];
     } else {
-      verb = opts.regularOnly
-        ? REGULAR_VERBS[Math.floor(Math.random() * REGULAR_VERBS.length)]
-        : randomVerb();
+      if (mode === "regular") verb = REGULAR_VERBS[Math.floor(Math.random() * REGULAR_VERBS.length)];
+      else if (mode === "irregular") verb = IRREGULAR_VERBS[Math.floor(Math.random() * IRREGULAR_VERBS.length)].base;
+      else verb = randomVerb();
     }
     return this.build(actualId, randomSubject(), verb);
   }
@@ -4451,6 +4470,10 @@ function init() {
   Calendar.render();
   initVocab();
   initDetective();
+  // V3.16.1: moeilijkheids-chips in de oefen-view
+  document.querySelectorAll(".diff-chip").forEach(c => {
+    c.addEventListener("click", () => setDifficulty(c.dataset.diff));
+  });
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -4532,11 +4555,6 @@ document.addEventListener("click", e => {
     startPractice("mix", mixTile.dataset.mix.split(","));
     return;
   }
-  const diffTile = e.target.closest("[data-difficulty]");
-  if (diffTile && diffTile.dataset.difficulty) {
-    startDifficulty(diffTile.dataset.difficulty);
-    return;
-  }
   const taskTile = e.target.closest("[data-task-mix]");
   if (taskTile && taskTile.dataset.taskMix) {
     if (taskTile.dataset.taskDetective) {
@@ -4548,28 +4566,23 @@ document.addEventListener("click", e => {
   }
 });
 
-// ---- Moeilijkheidsgraad (V3.16, idee van Tijs) ----
-// easy: 3 basistijden + alleen regelmatige werkwoorden
-// medium: 6 gangbare tijden, alle werkwoorden
-// hard: alle 12 tijden, alle werkwoorden
-const DIFFICULTY = {
-  easy:   { tenses: ["present-simple", "past-simple", "future-simple"], regularOnly: true, label: "Easy" },
-  medium: { tenses: ["present-simple", "present-continuous", "past-simple", "past-continuous", "present-perfect", "future-simple"], regularOnly: false, label: "Medium" },
-  hard:   { tenses: null, regularOnly: false, label: "Hard" } // null = alle 12
+// ---- Moeilijkheid per tijd (V3.16.1, idee van Tijs) ----
+// De leerling kiest een tijd (of mix) en dáárboveen een graad:
+// easy = regelmatige werkwoorden, medium = alles, hard = onregelmatige.
+const DIFFICULTY_LEVELS = {
+  easy:   { verbMode: "regular",   label: "Easy" },
+  medium: { verbMode: null,        label: "Medium" },
+  hard:   { verbMode: "irregular", label: "Hard" }
 };
-let currentRegularOnly = false;
+let currentDifficulty = "medium";
 
-function startDifficulty(level) {
-  const d = DIFFICULTY[level];
-  if (!d) return;
-  currentRegularOnly = d.regularOnly;
-  const mix = d.tenses || TenseRegistry.all().map(t => t.id);
-  $("tense-select").value = "mix";
-  currentMix = mix;
-  newExercise();
-  showView("practice");
-  Whiskers.showCompanion();
-  Whiskers.say(d.label === "Easy" ? "Nice and steady — good luck!" : d.label === "Medium" ? "Time to level up!" : "Hard mode! Whiskers believes in you!", 4500);
+function setDifficulty(level) {
+  if (!DIFFICULTY_LEVELS[level]) return;
+  currentDifficulty = level;
+  document.querySelectorAll(".diff-chip").forEach(c => {
+    c.classList.toggle("active", c.dataset.diff === level);
+  });
+  newExercise(); // meteen een nieuwe vraag in de gekozen moeilijkheid
 }
 
 // ---- Whiskers metgezel (V1.8) ----
@@ -4581,7 +4594,6 @@ function whiskersExplain() {
 
 function startPractice(tenseId, mixIds) {
   currentMix = mixIds;
-  currentRegularOnly = false; // V3.16: expliciete keuze overschrijft moeilijkheid
   if (mixIds) {
     $("tense-select").value = "mix";
   } else {
@@ -4631,7 +4643,7 @@ function newExercise() {
         ? currentMix
         : TenseRegistry.all().map(t => t.id);
     }
-    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds, { regularOnly: currentRegularOnly });
+    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds, { verbMode: DIFFICULTY_LEVELS[currentDifficulty].verbMode });
     currentExercise.isRepeat = false;
   }
   $("tense-info").textContent = currentExercise.tense.name;

@@ -1103,3 +1103,29 @@ header h1::after {
   border-left: 3px solid var(--accent);
   background: #fff;
 }
+
+/* V3.16.1: moeilijkheids-chips in de oefen-view */
+.diff-switch {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--line);
+  padding: 2px;
+  border-radius: 999px;
+}
+.diff-chip {
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  cursor: pointer;
+  min-height: 0;
+}
+.diff-chip.active {
+  background: #fff;
+  color: var(--accent-dark);
+  box-shadow: 0 1px 3px rgba(16, 26, 51, 0.12);
+}

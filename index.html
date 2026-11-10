@@ -35,23 +35,7 @@
     <main>
       <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
       <section id="view-home" class="view active">
-        <p class="lead">Choose a difficulty or a tense:</p>
-        <div class="grid big" id="difficulty-grid">
-          <button class="tile big-tile" data-difficulty="easy">
-            <span class="tile-name">🟢 Easy</span>
-            <span class="tile-desc">3 basic tenses, regular verbs only</span>
-          </button>
-          <button class="tile big-tile" data-difficulty="medium">
-            <span class="tile-name">🟠 Medium</span>
-            <span class="tile-desc">6 common tenses, all verbs</span>
-          </button>
-          <button class="tile big-tile" data-difficulty="hard">
-            <span class="tile-name">🔴 Hard</span>
-            <span class="tile-desc">All 12 tenses, everything mixed</span>
-          </button>
-        </div>
-
-        <p class="lead">Or choose a tense:</p>
+        <p class="lead">Choose a tense:</p>
 
         <div class="grid big" id="group-grid">
           <button class="tile big-tile" data-group="present">
@@ -164,6 +148,11 @@
           <div class="controls">
             <label for="tense-select">Tense:</label>
             <select id="tense-select"></select>
+            <span class="diff-switch" title="Verb difficulty for this tense">
+              <button class="diff-chip" data-diff="easy">Easy</button>
+              <button class="diff-chip active" data-diff="medium">Medium</button>
+              <button class="diff-chip" data-diff="hard">Hard</button>
+            </span>
           </div>
         </div>
 

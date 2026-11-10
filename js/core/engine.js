@@ -32,8 +32,9 @@ const ExerciseEngine = {
   // Genereert één oefenvraag: kiest eerst een sjabloon en daarna een
   // werkwoord dat bij dat sjabloon past (andersom kan "They rain every day"
   // ontstaan). mixIds = array van tense-ids (mix-modus).
-  // V3.16: moeilijkheidsgraad — "easy" gebruikt alleen regelmatige
-  // werkwoorden (de tijden-mix regelt de rest van de moeilijkheid).
+  // V3.16.1: moeilijkheid per gekozen tijd/mix — de verbMode bepaalt
+  // welke werkwoorden langskomen: "regular" (easy), "irregular" (hard)
+  // of alles (medium). De tijdenkeuze blijft helemaal aan de leerling.
   generate(tenseId, mixIds, opts = {}) {
     let actualId = tenseId;
     if (mixIds && mixIds.length) {
@@ -41,19 +42,22 @@ const ExerciseEngine = {
     }
     const templates = TEMPLATES[actualId] || [];
     const tpl = templates[Math.floor(Math.random() * templates.length)];
+    const mode = opts.verbMode; // "regular" | "irregular" | undefined
     let verb;
     if (tpl.verbs) {
       let pool = tpl.verbs;
-      if (opts.regularOnly) {
-        // filter onregelmatige eruit; leeg -> willekeurig regelmatig werkwoord
+      if (mode === "regular") {
         pool = tpl.verbs.filter(v => !IRREGULAR_MAP[v]);
         if (!pool.length) pool = REGULAR_VERBS;
+      } else if (mode === "irregular") {
+        pool = tpl.verbs.filter(v => IRREGULAR_MAP[v]);
+        if (!pool.length) pool = IRREGULAR_VERBS.map(v => v.base);
       }
       verb = pool[Math.floor(Math.random() * pool.length)];
     } else {
-      verb = opts.regularOnly
-        ? REGULAR_VERBS[Math.floor(Math.random() * REGULAR_VERBS.length)]
-        : randomVerb();
+      if (mode === "regular") verb = REGULAR_VERBS[Math.floor(Math.random() * REGULAR_VERBS.length)];
+      else if (mode === "irregular") verb = IRREGULAR_VERBS[Math.floor(Math.random() * IRREGULAR_VERBS.length)].base;
+      else verb = randomVerb();
     }
     return this.build(actualId, randomSubject(), verb);
   }

@@ -776,6 +776,10 @@ function init() {
   Calendar.render();
   initVocab();
   initDetective();
+  // V3.16.1: moeilijkheids-chips in de oefen-view
+  document.querySelectorAll(".diff-chip").forEach(c => {
+    c.addEventListener("click", () => setDifficulty(c.dataset.diff));
+  });
   $("id-name").addEventListener("keydown", e => {
     if (e.key === "Enter") { e.preventDefault(); saveIdentity(); }
   });
@@ -857,11 +861,6 @@ document.addEventListener("click", e => {
     startPractice("mix", mixTile.dataset.mix.split(","));
     return;
   }
-  const diffTile = e.target.closest("[data-difficulty]");
-  if (diffTile && diffTile.dataset.difficulty) {
-    startDifficulty(diffTile.dataset.difficulty);
-    return;
-  }
   const taskTile = e.target.closest("[data-task-mix]");
   if (taskTile && taskTile.dataset.taskMix) {
     if (taskTile.dataset.taskDetective) {
@@ -873,28 +872,23 @@ document.addEventListener("click", e => {
   }
 });
 
-// ---- Moeilijkheidsgraad (V3.16, idee van Tijs) ----
-// easy: 3 basistijden + alleen regelmatige werkwoorden
-// medium: 6 gangbare tijden, alle werkwoorden
-// hard: alle 12 tijden, alle werkwoorden
-const DIFFICULTY = {
-  easy:   { tenses: ["present-simple", "past-simple", "future-simple"], regularOnly: true, label: "Easy" },
-  medium: { tenses: ["present-simple", "present-continuous", "past-simple", "past-continuous", "present-perfect", "future-simple"], regularOnly: false, label: "Medium" },
-  hard:   { tenses: null, regularOnly: false, label: "Hard" } // null = alle 12
+// ---- Moeilijkheid per tijd (V3.16.1, idee van Tijs) ----
+// De leerling kiest een tijd (of mix) en dáárboveen een graad:
+// easy = regelmatige werkwoorden, medium = alles, hard = onregelmatige.
+const DIFFICULTY_LEVELS = {
+  easy:   { verbMode: "regular",   label: "Easy" },
+  medium: { verbMode: null,        label: "Medium" },
+  hard:   { verbMode: "irregular", label: "Hard" }
 };
-let currentRegularOnly = false;
+let currentDifficulty = "medium";
 
-function startDifficulty(level) {
-  const d = DIFFICULTY[level];
-  if (!d) return;
-  currentRegularOnly = d.regularOnly;
-  const mix = d.tenses || TenseRegistry.all().map(t => t.id);
-  $("tense-select").value = "mix";
-  currentMix = mix;
-  newExercise();
-  showView("practice");
-  Whiskers.showCompanion();
-  Whiskers.say(d.label === "Easy" ? "Nice and steady — good luck!" : d.label === "Medium" ? "Time to level up!" : "Hard mode! Whiskers believes in you!", 4500);
+function setDifficulty(level) {
+  if (!DIFFICULTY_LEVELS[level]) return;
+  currentDifficulty = level;
+  document.querySelectorAll(".diff-chip").forEach(c => {
+    c.classList.toggle("active", c.dataset.diff === level);
+  });
+  newExercise(); // meteen een nieuwe vraag in de gekozen moeilijkheid
 }
 
 // ---- Whiskers metgezel (V1.8) ----
@@ -906,7 +900,6 @@ function whiskersExplain() {
 
 function startPractice(tenseId, mixIds) {
   currentMix = mixIds;
-  currentRegularOnly = false; // V3.16: expliciete keuze overschrijft moeilijkheid
   if (mixIds) {
     $("tense-select").value = "mix";
   } else {
@@ -956,7 +949,7 @@ function newExercise() {
         ? currentMix
         : TenseRegistry.all().map(t => t.id);
     }
-    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds, { regularOnly: currentRegularOnly });
+    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds, { verbMode: DIFFICULTY_LEVELS[currentDifficulty].verbMode });
     currentExercise.isRepeat = false;
   }
   $("tense-info").textContent = currentExercise.tense.name;
