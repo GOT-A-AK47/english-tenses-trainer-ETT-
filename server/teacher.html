@@ -100,6 +100,11 @@
         <p class="sub" style="margin:0.4rem 0 0">Tick which tenses the students should practise:</p>
         <div class="tense-picks" id="task-tenses"></div>
         <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>Mode:</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-detective"> 🕵️ practise as Tense detective (students find the tense themselves)</label></p>
+        <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>Deadline &amp; goal</strong> (optional):</p>
+        <div class="row" style="gap:0.6rem;margin-bottom:0.4rem">
+          <label style="flex:1;font-weight:400">Due date <input type="date" id="task-deadline" style="width:100%"></label>
+          <label style="flex:1;font-weight:400">Questions to complete <input type="number" id="task-goal" min="1" step="1" placeholder="e.g. 10" style="width:100%"></label>
+        </div>
         <p class="sub" style="margin:0.6rem 0 0.2rem"><strong>For whom?</strong> <label style="display:inline-flex;align-items:center;gap:0.3rem;font-weight:400"><input type="checkbox" id="task-whole-class" checked> whole class</label></p>
         <div id="task-students" class="student-picks" style="display:none"></div>
         <div class="row"><button onclick="addTask()">Assign task</button></div>
@@ -371,7 +376,10 @@
       const m = document.getElementById("task-msg");
       try {
         const mode = document.getElementById("task-detective").checked ? "detective" : "practice";
-        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds, students, mode }) });
+        const deadline = document.getElementById("task-deadline").value || null;
+        const goalRaw = document.getElementById("task-goal").value;
+        const goal = goalRaw ? Math.max(1, Math.floor(Number(goalRaw))) : null;
+        await api("/api/teacher/tasks", { method: "POST", body: JSON.stringify({ title, klas, tenseIds, students, mode, deadline, goal }) });
         m.textContent = "Task assigned!"; m.className = "msg ok";
         document.getElementById("task-title").value = "";
         document.querySelectorAll("#task-tenses input:checked").forEach(i => i.checked = false);

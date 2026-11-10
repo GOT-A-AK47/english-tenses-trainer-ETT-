@@ -325,6 +325,20 @@ async function handleApi(req, res) {
     if (payload.game && typeof payload.game === "object") {
       all[key]._game = mergeGame(all[key]._game || null, payload.game);
     }
+    // V3.14: antwoorden tellen mee voor taken (goal-tracking)
+    if (newAnswers.length) {
+      const tasksForClass = loadTasks().filter(t => t.klas === identity.klas);
+      const today = new Date().toISOString().slice(0, 10);
+      let taskProg = all[key]._taskProgress || {};
+      for (const t of tasksForClass) {
+        // alleen taken die voor deze leerling gelden en niet verlopen zijn
+        if (t.students && !t.students.includes(identity.name)) continue;
+        if (t.deadline && t.deadline < today) continue;
+        const hits = newAnswers.filter(a => t.tenseIds.includes(a.tenseId)).length;
+        if (hits) taskProg[t.id] = (taskProg[t.id] || 0) + hits;
+      }
+      if (Object.keys(taskProg).length) all[key]._taskProgress = taskProg;
+    }
     all[key]._identity = { name: identity.name, klas: identity.klas, lastSeen: new Date().toISOString() };
     saveProgress(all);
     trackUsage(identity, newAnswers);
@@ -438,7 +452,7 @@ async function handleApi(req, res) {
 
   if (req.method === "POST" && url === "/api/teacher/tasks") {
     if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
-    const { title, klas, tenseIds, students: payloadStudents, mode } = (await readJson(req));
+    const { title, klas, tenseIds, students: payloadStudents, mode, deadline, goal } = (await readJson(req));
     if (!title || !klas || !Array.isArray(tenseIds) || !tenseIds.length) {
       return respond(res, 400, { error: "title, klas en tenseIds zijn verplicht" });
     }
@@ -458,6 +472,9 @@ async function handleApi(req, res) {
         : null,
       // V3.6: oefenmodus — "detective" = leerlingen leiden de tijd zelf af
       mode: mode === "detective" ? "detective" : "practice",
+      // V3.14: deadline (YYYY-MM-DD) en doel (aantal vragen) voor de taak
+      deadline: typeof deadline === "string" && /^\d{4}-\d{2}-\d{2}$/.test(deadline) ? deadline : null,
+      goal: Number.isFinite(Number(goal)) && Number(goal) >= 1 ? Math.floor(Number(goal)) : null,
       createdAt: new Date().toISOString()
     };
     tasks.push(task);
@@ -477,9 +494,16 @@ async function handleApi(req, res) {
     const klas = new URL(req.url, "http://x").searchParams.get("klas");
     const name = new URL(req.url, "http://x").searchParams.get("name");
     if (!klas) return respond(res, 400, { error: "klas verplicht" });
+    const all = loadProgress();
+    const entry = name ? all[name + "|" + klas] : null;
+    const progMap = (entry && entry._taskProgress) || {};
     return respond(res, 200, loadTasks().filter(t =>
       t.klas === klas && (!t.students || !name || t.students.includes(name))
-    ));
+    ).map(t => ({
+      ...t,
+      progress: progMap[t.id] || 0,
+      completed: t.goal ? (progMap[t.id] || 0) >= t.goal : false
+    })));
   }
 
   // --- her-registratie (V3.11): tombstone wissen na expliciete login ---
