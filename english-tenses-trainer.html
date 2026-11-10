@@ -1097,6 +1097,20 @@ header h1::after {
 .task-tile.task-done .task-progress-fill { background: var(--ok); }
 .task-tile.task-expired { opacity: 0.65; }
 
+/* V3.16: feedback-replies */
+.feedback-reply {
+  padding: 0.5rem 0.6rem;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 0.4rem;
+  font-size: 0.85rem;
+}
+.feedback-reply.unread {
+  border-left: 3px solid var(--accent);
+  background: #fff;
+}
+
 </style>
 </head>
 <body>
@@ -1128,7 +1142,23 @@ header h1::after {
     <main>
       <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
       <section id="view-home" class="view active">
-        <p class="lead">Choose a tense:</p>
+        <p class="lead">Choose a difficulty or a tense:</p>
+        <div class="grid big" id="difficulty-grid">
+          <button class="tile big-tile" data-difficulty="easy">
+            <span class="tile-name">🟢 Easy</span>
+            <span class="tile-desc">3 basic tenses, regular verbs only</span>
+          </button>
+          <button class="tile big-tile" data-difficulty="medium">
+            <span class="tile-name">🟠 Medium</span>
+            <span class="tile-desc">6 common tenses, all verbs</span>
+          </button>
+          <button class="tile big-tile" data-difficulty="hard">
+            <span class="tile-name">🔴 Hard</span>
+            <span class="tile-desc">All 12 tenses, everything mixed</span>
+          </button>
+        </div>
+
+        <p class="lead">Or choose a tense:</p>
 
         <div class="grid big" id="group-grid">
           <button class="tile big-tile" data-group="present">
@@ -1379,6 +1409,7 @@ header h1::after {
         <label>Message
           <textarea id="feedback-text" rows="4" placeholder="What would you like to tell us?" spellcheck="false"></textarea>
         </label>
+        <div id="feedback-replies" style="display:none;margin:0.6rem 0;padding:0.7rem;background:var(--accent-soft);border-radius:8px"></div>
         <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.82rem;margin:0.6rem 0">
           <input type="checkbox" id="feedback-snapshot" checked>
           <span>📷 Attach my current page info (view, exercise, my answer) — helps the admin find the problem</span>
@@ -3561,16 +3592,29 @@ const ExerciseEngine = {
   // Genereert één oefenvraag: kiest eerst een sjabloon en daarna een
   // werkwoord dat bij dat sjabloon past (andersom kan "They rain every day"
   // ontstaan). mixIds = array van tense-ids (mix-modus).
-  generate(tenseId, mixIds) {
+  // V3.16: moeilijkheidsgraad — "easy" gebruikt alleen regelmatige
+  // werkwoorden (de tijden-mix regelt de rest van de moeilijkheid).
+  generate(tenseId, mixIds, opts = {}) {
     let actualId = tenseId;
     if (mixIds && mixIds.length) {
       actualId = mixIds[Math.floor(Math.random() * mixIds.length)];
     }
     const templates = TEMPLATES[actualId] || [];
     const tpl = templates[Math.floor(Math.random() * templates.length)];
-    const verb = tpl.verbs
-      ? tpl.verbs[Math.floor(Math.random() * tpl.verbs.length)]
-      : randomVerb();
+    let verb;
+    if (tpl.verbs) {
+      let pool = tpl.verbs;
+      if (opts.regularOnly) {
+        // filter onregelmatige eruit; leeg -> willekeurig regelmatig werkwoord
+        pool = tpl.verbs.filter(v => !IRREGULAR_MAP[v]);
+        if (!pool.length) pool = REGULAR_VERBS;
+      }
+      verb = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      verb = opts.regularOnly
+        ? REGULAR_VERBS[Math.floor(Math.random() * REGULAR_VERBS.length)]
+        : randomVerb();
+    }
     return this.build(actualId, randomSubject(), verb);
   }
 };
@@ -3763,7 +3807,38 @@ function loadTasks() {
 }
 
 // ---- Feedback (V1.5) ----
+// V3.16: antwoorden van de docent op jouw feedback ophalen en tonen
+async function loadFeedbackReplies() {
+  const id = Identity.get();
+  const holder = $("feedback-replies");
+  if (!holder) return;
+  if (!id) { holder.style.display = "none"; return; }
+  try {
+    const who = encodeURIComponent(id.name + "|" + id.klas);
+    const r = await fetch(`/api/feedback/replies?who=${who}`);
+    if (!r.ok) throw new Error();
+    const replies = await r.json();
+    if (!replies.length) { holder.style.display = "none"; return; }
+    holder.style.display = "block";
+    holder.innerHTML = `<p class="context" style="margin-bottom:0.3rem"><strong>💬 Replies to your feedback:</strong></p>` +
+      replies.map(rep => `
+        <div class="feedback-reply ${rep.read ? "" : "unread"}">
+          <p class="context" style="margin:0 0 0.25rem">"${esc(rep.message.slice(0, 80))}${rep.message.length > 80 ? "..." : ""}"</p>
+          <p style="margin:0"><strong>↩ ${esc(rep.reply)}</strong></p>
+        </div>`).join("");
+    // ongelezen markeren als gelezen na het tonen
+    replies.filter(rep => !rep.read).forEach(rep => {
+      fetch("/api/feedback/reply-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: rep.id })
+      }).catch(() => {});
+    });
+  } catch { holder.style.display = "none"; }
+}
+
 function openFeedback() {
+  loadFeedbackReplies();
   $("feedback-modal").style.display = "block";
   const id = Identity.get();
   $("feedback-from").textContent = id ? `Verstuurd als ${id.name} (${id.klas})` : "Verstuurd anoniem";
@@ -4457,6 +4532,11 @@ document.addEventListener("click", e => {
     startPractice("mix", mixTile.dataset.mix.split(","));
     return;
   }
+  const diffTile = e.target.closest("[data-difficulty]");
+  if (diffTile && diffTile.dataset.difficulty) {
+    startDifficulty(diffTile.dataset.difficulty);
+    return;
+  }
   const taskTile = e.target.closest("[data-task-mix]");
   if (taskTile && taskTile.dataset.taskMix) {
     if (taskTile.dataset.taskDetective) {
@@ -4468,6 +4548,30 @@ document.addEventListener("click", e => {
   }
 });
 
+// ---- Moeilijkheidsgraad (V3.16, idee van Tijs) ----
+// easy: 3 basistijden + alleen regelmatige werkwoorden
+// medium: 6 gangbare tijden, alle werkwoorden
+// hard: alle 12 tijden, alle werkwoorden
+const DIFFICULTY = {
+  easy:   { tenses: ["present-simple", "past-simple", "future-simple"], regularOnly: true, label: "Easy" },
+  medium: { tenses: ["present-simple", "present-continuous", "past-simple", "past-continuous", "present-perfect", "future-simple"], regularOnly: false, label: "Medium" },
+  hard:   { tenses: null, regularOnly: false, label: "Hard" } // null = alle 12
+};
+let currentRegularOnly = false;
+
+function startDifficulty(level) {
+  const d = DIFFICULTY[level];
+  if (!d) return;
+  currentRegularOnly = d.regularOnly;
+  const mix = d.tenses || TenseRegistry.all().map(t => t.id);
+  $("tense-select").value = "mix";
+  currentMix = mix;
+  newExercise();
+  showView("practice");
+  Whiskers.showCompanion();
+  Whiskers.say(d.label === "Easy" ? "Nice and steady — good luck!" : d.label === "Medium" ? "Time to level up!" : "Hard mode! Whiskers believes in you!", 4500);
+}
+
 // ---- Whiskers metgezel (V1.8) ----
 function whiskersExplain() {
   const t = currentExercise ? TenseRegistry.get(currentExercise.tense.id) : null;
@@ -4477,6 +4581,7 @@ function whiskersExplain() {
 
 function startPractice(tenseId, mixIds) {
   currentMix = mixIds;
+  currentRegularOnly = false; // V3.16: expliciete keuze overschrijft moeilijkheid
   if (mixIds) {
     $("tense-select").value = "mix";
   } else {
@@ -4526,7 +4631,7 @@ function newExercise() {
         ? currentMix
         : TenseRegistry.all().map(t => t.id);
     }
-    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds);
+    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds, { regularOnly: currentRegularOnly });
     currentExercise.isRepeat = false;
   }
   $("tense-info").textContent = currentExercise.tense.name;

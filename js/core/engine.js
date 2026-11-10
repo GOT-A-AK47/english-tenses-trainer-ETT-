@@ -32,16 +32,29 @@ const ExerciseEngine = {
   // Genereert één oefenvraag: kiest eerst een sjabloon en daarna een
   // werkwoord dat bij dat sjabloon past (andersom kan "They rain every day"
   // ontstaan). mixIds = array van tense-ids (mix-modus).
-  generate(tenseId, mixIds) {
+  // V3.16: moeilijkheidsgraad — "easy" gebruikt alleen regelmatige
+  // werkwoorden (de tijden-mix regelt de rest van de moeilijkheid).
+  generate(tenseId, mixIds, opts = {}) {
     let actualId = tenseId;
     if (mixIds && mixIds.length) {
       actualId = mixIds[Math.floor(Math.random() * mixIds.length)];
     }
     const templates = TEMPLATES[actualId] || [];
     const tpl = templates[Math.floor(Math.random() * templates.length)];
-    const verb = tpl.verbs
-      ? tpl.verbs[Math.floor(Math.random() * tpl.verbs.length)]
-      : randomVerb();
+    let verb;
+    if (tpl.verbs) {
+      let pool = tpl.verbs;
+      if (opts.regularOnly) {
+        // filter onregelmatige eruit; leeg -> willekeurig regelmatig werkwoord
+        pool = tpl.verbs.filter(v => !IRREGULAR_MAP[v]);
+        if (!pool.length) pool = REGULAR_VERBS;
+      }
+      verb = pool[Math.floor(Math.random() * pool.length)];
+    } else {
+      verb = opts.regularOnly
+        ? REGULAR_VERBS[Math.floor(Math.random() * REGULAR_VERBS.length)]
+        : randomVerb();
+    }
     return this.build(actualId, randomSubject(), verb);
   }
 };

@@ -35,7 +35,23 @@
     <main>
       <!-- STARTSCHERM: eenvoudig, 3 grote keuzes -->
       <section id="view-home" class="view active">
-        <p class="lead">Choose a tense:</p>
+        <p class="lead">Choose a difficulty or a tense:</p>
+        <div class="grid big" id="difficulty-grid">
+          <button class="tile big-tile" data-difficulty="easy">
+            <span class="tile-name">🟢 Easy</span>
+            <span class="tile-desc">3 basic tenses, regular verbs only</span>
+          </button>
+          <button class="tile big-tile" data-difficulty="medium">
+            <span class="tile-name">🟠 Medium</span>
+            <span class="tile-desc">6 common tenses, all verbs</span>
+          </button>
+          <button class="tile big-tile" data-difficulty="hard">
+            <span class="tile-name">🔴 Hard</span>
+            <span class="tile-desc">All 12 tenses, everything mixed</span>
+          </button>
+        </div>
+
+        <p class="lead">Or choose a tense:</p>
 
         <div class="grid big" id="group-grid">
           <button class="tile big-tile" data-group="present">
@@ -286,6 +302,7 @@
         <label>Message
           <textarea id="feedback-text" rows="4" placeholder="What would you like to tell us?" spellcheck="false"></textarea>
         </label>
+        <div id="feedback-replies" style="display:none;margin:0.6rem 0;padding:0.7rem;background:var(--accent-soft);border-radius:8px"></div>
         <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.82rem;margin:0.6rem 0">
           <input type="checkbox" id="feedback-snapshot" checked>
           <span>📷 Attach my current page info (view, exercise, my answer) — helps the admin find the problem</span>

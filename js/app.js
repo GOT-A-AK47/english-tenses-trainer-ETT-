@@ -132,7 +132,38 @@ function loadTasks() {
 }
 
 // ---- Feedback (V1.5) ----
+// V3.16: antwoorden van de docent op jouw feedback ophalen en tonen
+async function loadFeedbackReplies() {
+  const id = Identity.get();
+  const holder = $("feedback-replies");
+  if (!holder) return;
+  if (!id) { holder.style.display = "none"; return; }
+  try {
+    const who = encodeURIComponent(id.name + "|" + id.klas);
+    const r = await fetch(`/api/feedback/replies?who=${who}`);
+    if (!r.ok) throw new Error();
+    const replies = await r.json();
+    if (!replies.length) { holder.style.display = "none"; return; }
+    holder.style.display = "block";
+    holder.innerHTML = `<p class="context" style="margin-bottom:0.3rem"><strong>💬 Replies to your feedback:</strong></p>` +
+      replies.map(rep => `
+        <div class="feedback-reply ${rep.read ? "" : "unread"}">
+          <p class="context" style="margin:0 0 0.25rem">"${esc(rep.message.slice(0, 80))}${rep.message.length > 80 ? "..." : ""}"</p>
+          <p style="margin:0"><strong>↩ ${esc(rep.reply)}</strong></p>
+        </div>`).join("");
+    // ongelezen markeren als gelezen na het tonen
+    replies.filter(rep => !rep.read).forEach(rep => {
+      fetch("/api/feedback/reply-read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: rep.id })
+      }).catch(() => {});
+    });
+  } catch { holder.style.display = "none"; }
+}
+
 function openFeedback() {
+  loadFeedbackReplies();
   $("feedback-modal").style.display = "block";
   const id = Identity.get();
   $("feedback-from").textContent = id ? `Verstuurd als ${id.name} (${id.klas})` : "Verstuurd anoniem";
@@ -826,6 +857,11 @@ document.addEventListener("click", e => {
     startPractice("mix", mixTile.dataset.mix.split(","));
     return;
   }
+  const diffTile = e.target.closest("[data-difficulty]");
+  if (diffTile && diffTile.dataset.difficulty) {
+    startDifficulty(diffTile.dataset.difficulty);
+    return;
+  }
   const taskTile = e.target.closest("[data-task-mix]");
   if (taskTile && taskTile.dataset.taskMix) {
     if (taskTile.dataset.taskDetective) {
@@ -837,6 +873,30 @@ document.addEventListener("click", e => {
   }
 });
 
+// ---- Moeilijkheidsgraad (V3.16, idee van Tijs) ----
+// easy: 3 basistijden + alleen regelmatige werkwoorden
+// medium: 6 gangbare tijden, alle werkwoorden
+// hard: alle 12 tijden, alle werkwoorden
+const DIFFICULTY = {
+  easy:   { tenses: ["present-simple", "past-simple", "future-simple"], regularOnly: true, label: "Easy" },
+  medium: { tenses: ["present-simple", "present-continuous", "past-simple", "past-continuous", "present-perfect", "future-simple"], regularOnly: false, label: "Medium" },
+  hard:   { tenses: null, regularOnly: false, label: "Hard" } // null = alle 12
+};
+let currentRegularOnly = false;
+
+function startDifficulty(level) {
+  const d = DIFFICULTY[level];
+  if (!d) return;
+  currentRegularOnly = d.regularOnly;
+  const mix = d.tenses || TenseRegistry.all().map(t => t.id);
+  $("tense-select").value = "mix";
+  currentMix = mix;
+  newExercise();
+  showView("practice");
+  Whiskers.showCompanion();
+  Whiskers.say(d.label === "Easy" ? "Nice and steady — good luck!" : d.label === "Medium" ? "Time to level up!" : "Hard mode! Whiskers believes in you!", 4500);
+}
+
 // ---- Whiskers metgezel (V1.8) ----
 function whiskersExplain() {
   const t = currentExercise ? TenseRegistry.get(currentExercise.tense.id) : null;
@@ -846,6 +906,7 @@ function whiskersExplain() {
 
 function startPractice(tenseId, mixIds) {
   currentMix = mixIds;
+  currentRegularOnly = false; // V3.16: expliciete keuze overschrijft moeilijkheid
   if (mixIds) {
     $("tense-select").value = "mix";
   } else {
@@ -895,7 +956,7 @@ function newExercise() {
         ? currentMix
         : TenseRegistry.all().map(t => t.id);
     }
-    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds);
+    currentExercise = ExerciseEngine.generate(sel === "mix" ? null : sel, mixIds, { regularOnly: currentRegularOnly });
     currentExercise.isRepeat = false;
   }
   $("tense-info").textContent = currentExercise.tense.name;

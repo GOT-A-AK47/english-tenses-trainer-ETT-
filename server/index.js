@@ -529,6 +529,44 @@ async function handleApi(req, res) {
     return respond(res, 200, { exists });
   }
 
+  // --- V3.16: docent antwoordt op feedback ---
+  if (req.method === "POST" && url === "/api/teacher/feedback/reply") {
+    if (!isTeacher(req)) return respond(res, 401, { error: "niet ingelogd" });
+    const { id, reply } = (await readJson(req));
+    if (!id || !reply || !String(reply).trim()) {
+      return respond(res, 400, { error: "id en reply verplicht" });
+    }
+    const feedback = loadFeedback();
+    const item = feedback.find(f => f.id === id);
+    if (!item) return respond(res, 404, { error: "feedback bestaat niet" });
+    item.reply = String(reply).trim().slice(0, 1000);
+    item.repliedAt = new Date().toISOString();
+    saveFeedback(feedback);
+    // V3.16: id meegeven zodat de client (en tests) het item kunnen vinden
+    return respond(res, 200, { ok: true, id: feedback[feedback.length - 1].id });
+  }
+
+  // --- V3.16: leerling leest antwoorden op zijn/haar feedback ---
+  if (req.method === "GET" && url === "/api/feedback/replies") {
+    const who = new URL(req.url, "http://x").searchParams.get("who");
+    if (!who) return respond(res, 400, { error: "who verplicht" });
+    const feedback = loadFeedback();
+    const replies = feedback
+      .filter(f => f.reply && (f.fromWho === who || f.from === who))
+      .map(f => ({ id: f.id, message: f.message, reply: f.reply, repliedAt: f.repliedAt, read: !!f.replyRead }));
+    return respond(res, 200, replies);
+  }
+
+  // --- V3.16: leerling markeert een antwoord als gelezen ---
+  if (req.method === "POST" && url === "/api/feedback/reply-read") {
+    const { id } = (await readJson(req));
+    if (!id) return respond(res, 400, { error: "id verplicht" });
+    const feedback = loadFeedback();
+    const item = feedback.find(f => f.id === id);
+    if (item) { item.replyRead = true; saveFeedback(feedback); }
+    return respond(res, 200, { ok: true });
+  }
+
   // --- feedback (openbaar posten, docenten lezen) ---
   if (req.method === "POST" && url === "/api/feedback") {
     const { message, identity, category, context } = (await readJson(req));
@@ -542,11 +580,13 @@ async function handleApi(req, res) {
       context: context ? String(context).slice(0, 3000) : null,
       category: ["bug", "idee", "klacht", "anders"].includes(category) ? category : "anders",
       from: identity ? `${sanitizeName(identity.name)} (${sanitizeName(identity.klas)})` : "anoniem",
+      fromWho: identity ? `${sanitizeName(identity.name)}|${sanitizeName(identity.klas)}` : null,
       createdAt: new Date().toISOString(),
       read: false
     });
     saveFeedback(feedback);
-    return respond(res, 200, { ok: true });
+    // V3.16: id meegeven zodat de client (en tests) het item kunnen vinden
+    return respond(res, 200, { ok: true, id: feedback[feedback.length - 1].id });
   }
 
   if (req.method === "GET" && url === "/api/teacher/feedback") {

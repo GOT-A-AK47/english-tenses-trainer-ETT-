@@ -283,6 +283,7 @@
           <span class="last">${new Date(f.createdAt).toLocaleString("en-GB")}</span>
           <p style="margin:0.4rem 0">${esc(f.message)}</p>
           ${f.context ? `<details style="margin:0.35rem 0"><summary style="cursor:pointer;font-size:0.75rem;color:var(--muted)">📷 Page info attached</summary><pre style="background:#f4f4f0;padding:0.5rem;border-radius:6px;font-size:0.7rem;white-space:pre-wrap;overflow-x:auto">${esc(f.context)}</pre></details>` : ""}
+          ${f.reply ? `<p style="margin:0.4rem 0;padding:0.5rem 0.7rem;background:#e8f0fe;border-radius:6px;font-size:0.82rem"><strong>↩ Your reply:</strong> ${esc(f.reply)}</p>` : `<button class="secondary" style="margin:0.4rem 0" onclick="replyFeedback('${f.id}')">↩ Reply</button>`}
           <div class="row">
             ${f.read ? "" : `<button class="secondary" onclick="markRead('${f.id}')">Mark as read</button>`}
             <button class="danger" onclick="delFeedback('${f.id}')">Delete</button>
@@ -293,6 +294,15 @@
     async function markRead(id) {
       await api("/api/teacher/feedback/" + id + "/read", { method: "POST" });
       loadFeedback();
+    }
+
+    async function replyFeedback(id) {
+      const reply = prompt("Your reply to this feedback:");
+      if (!reply || !reply.trim()) return;
+      try {
+        await api("/api/teacher/feedback/reply", { method: "POST", body: JSON.stringify({ id, reply }) });
+        loadFeedback();
+      } catch (e) { alert("Reply failed: " + e.message); }
     }
 
     async function delFeedback(id) {
