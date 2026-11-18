@@ -97,6 +97,7 @@ function saveIdentity() {
   }).catch(() => {}).finally(() => {
     ProgressStore.sync();
     loadTasks();
+    loadAiAdvice(); // V3.18: Whiskers-advies tonen
   });
   toast(`Welcome, ${name.trim()}!`);
 }
@@ -744,6 +745,14 @@ function init() {
   restoreSession();
   $("id-save").addEventListener("click", saveIdentity);
   $("feedback-btn").addEventListener("click", openFeedback);
+  // V3.18: Whiskers-advies
+  const aiAsk = $("ai-ask");
+  if (aiAsk) aiAsk.addEventListener("click", askAiAdvice);
+  const aiPractise = $("ai-advice-practise");
+  if (aiPractise) aiPractise.addEventListener("click", () => {
+    const weak = $("ai-advice-card").dataset.weakTense;
+    if (weak) startPractice(weak, null);
+  });
   $("feedback-send").addEventListener("click", sendFeedback);
   $("feedback-cancel").addEventListener("click", () => $("feedback-modal").style.display = "none");
   $("feedback-text").addEventListener("keydown", e => {
@@ -756,7 +765,10 @@ function init() {
   // V3.11: eerst verifiëren dat het account nog bestaat, DAARNA syncen —
   // anders zou de sync een verwijderd account met lokale data resurrecten
   verifyIdentity().then(exists => {
-    if (exists && Identity.get()) ProgressStore.sync();
+    if (exists && Identity.get()) {
+      ProgressStore.sync();
+      loadAiAdvice(); // V3.18: Whiskers-advies tonen
+    }
   });
   $("intro-close").addEventListener("click", closeIntro);
   $("whiskers").addEventListener("click", () => {
@@ -889,6 +901,60 @@ function setDifficulty(level) {
     c.classList.toggle("active", c.dataset.diff === level);
   });
   newExercise(); // meteen een nieuwe vraag in de gekozen moeilijkheid
+}
+
+// ---- Whiskers AI-advies (V3.18) ----
+// De analyse draait server-side (traag maar asynchroon); hier alleen
+// cache lezen, genereren aanvragen, en de resultaat-kaart tonen.
+function renderAiAdvice(rec) {
+  const card = $("ai-advice-card");
+  if (!card) return;
+  if (rec && rec.advice && rec.weak_tense_id) {
+    $("ai-advice-text").textContent = rec.advice;
+    card.dataset.weakTense = rec.weak_tense_id;
+    card.style.display = "block";
+  }
+}
+
+async function loadAiAdvice() {
+  const id = Identity.get();
+  if (!id || !$("ai-advice-card")) return;
+  try {
+    const who = `name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`;
+    const r = await fetch(`/api/ai/advice?${who}`);
+    if (!r.ok) return;
+    renderAiAdvice(await r.json());
+  } catch {}
+}
+
+function askAiAdvice() {
+  const id = Identity.get();
+  if (!id) return;
+  toast("Whiskers is thinking over your results... 🐱");
+  fetch("/api/ai/advice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identity: id })
+  }).then(r => r.json()).then(res => {
+    if (res.status === "no-data") { toast("Practise a few questions first — then ask me!"); return; }
+    if (res.status === "cached") { renderAiAdvice(res.advice); return; }
+    // generating/busy: de NAS is traag — nettoetsen tot Whiskers klaar is
+    let pogingen = 0;
+    const poll = setInterval(async () => {
+      pogingen++;
+      try {
+        const who = `name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`;
+        const r = await fetch(`/api/ai/advice?${who}`);
+        const rec = await r.json();
+        if (rec && rec.generatedAt && Date.now() - rec.generatedAt < 10 * 60 * 1000) {
+          clearInterval(poll);
+          renderAiAdvice(rec);
+          toast("Whiskers has a new tip for you! 💡");
+        }
+      } catch {}
+      if (pogingen >= 20) clearInterval(poll); // ~6-7 min bij 20 s interval
+    }, 20000);
+  }).catch(() => toast("Could not reach Whiskers — try again later."));
 }
 
 // ---- Whiskers metgezel (V1.8) ----

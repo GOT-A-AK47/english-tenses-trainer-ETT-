@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 3000;
 
 // V3.16.2: bij elke server-wijziging dit ophogen — het dashboard toont
 // deze versie zodat je direct ziet of de productie-server vers is.
-const SERVER_VERSION = "3.16.2";
+const SERVER_VERSION = "3.18";
 
 // V2.2: basislijsten voor duel-vragen (gesynchroniseerd met de client-engine)
 const TENSE_IDS = [
@@ -67,6 +67,99 @@ const saveCalendar = d => saveJson(CALENDAR_FILE, d);
 // een sync van een apparaat dat de verwijdering nog niet weet
 const loadDeleted = () => loadJson(DELETED_FILE, {});
 const saveDeleted = d => saveJson(DELETED_FILE, d);
+
+// ===== V3.18: Whiskers AI (lokale Ollama) =====
+const AI_ADVICE_FILE = path.join(DATA_DIR, "ai-advice.json");
+const loadAiAdvice = () => loadJson(AI_ADVICE_FILE, {});
+const saveAiAdvice = d => saveJson(AI_ADVICE_FILE, d);
+const AI_MODEL = process.env.AI_MODEL || "mistral-nemo:12b";
+const AI_URL = (process.env.OLLAMA_URL || "http://127.0.0.1:11434").replace(/\/$/, "");
+let aiBusy = false; // de NAS kan maar 1 generatie tegelijk: nette wachtrij
+
+// korte, gestructureerde voortgangssamenvatting voor de prompt
+function aiStatsText(entry) {
+  return Object.keys(entry || {})
+    .filter(k => !k.startsWith("_") && entry[k] && typeof entry[k].total === "number")
+    .map(k => k + ": " + (entry[k].correct || 0) + "/" + entry[k].total)
+    .join(", ") || "no practice data yet";
+}
+
+// heuristic-fallback: geen AI nodig — slechtste tijd (met minstens 3 pogingen)
+function heuristicAdvice(entry, tenseNames) {
+  let worst = null, worstRate = Infinity;
+  for (const k of Object.keys(entry || {})) {
+    if (k.startsWith("_") || !entry[k] || typeof entry[k].total !== "number") continue;
+    if (entry[k].total >= 3) {
+      const rate = entry[k].correct / entry[k].total;
+      if (rate < worstRate) { worstRate = rate; worst = k; }
+    }
+  }
+  if (!worst) return null;
+  const nm = (tenseNames && tenseNames[worst]) || worst;
+  return {
+    weak_tense_id: worst,
+    advice: "Whiskers noticed " + nm + " is your trickiest one — " +
+      Math.round(worstRate * 100) + "% correct so far. A short practice round now will help a lot!",
+    source: "heuristic"
+  };
+}
+
+async function callOllama(statsText) {
+  const body = JSON.stringify({
+    model: AI_MODEL,
+    stream: false,
+    options: { temperature: 0.4, num_predict: 140 },
+    messages: [
+      { role: "user", content:
+        "You are Whiskers, a friendly study cat in a school English app. " +
+        "A student's tense practice stats (tense_id: correct/total): " + statsText + ". " +
+        "Pick the tense that clearly needs practice and reply with ONLY this JSON, no other words: " +
+        '{"weak_tense_id": "<the tense_id>", "advice": "<max 25 friendly words of encouragement with one concrete tip>"}' }
+    ]
+  });
+  const r = await fetch(AI_URL + "/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    signal: AbortSignal.timeout(300000) // de NAS is traag: 5 min max
+  });
+  if (!r.ok) throw new Error("ollama " + r.status);
+  const data = await r.json();
+  const m = (data.message && data.message.content || "").match(/\{[\s\S]*\}/);
+  if (!m) throw new Error("gepurede AI-output");
+  return { ...JSON.parse(m[0]), source: "ai" };
+}
+
+// analyse genereren (async, resultaat wordt gecached)
+function generateAiAdvice(who, entry, tenseNames) {
+  if (aiBusy) return false; // probeer later opnieuw
+  aiBusy = true;
+  const statsText = aiStatsText(entry);
+  callOllama(statsText)
+    .then(advice => {
+      const all = loadAiAdvice();
+      all[who] = { ...adviceValidated(advice, entry, tenseNames), date: new Date().toISOString().slice(0, 10), generatedAt: Date.now() };
+      saveAiAdvice(all);
+    })
+    .catch(() => {
+      // AI plat/traag/onsinde: heuristic-fallback bewaart de belofte
+      const advice = heuristicAdvice(entry, tenseNames) || { weak_tense_id: null, advice: null, source: "heuristic" };
+      const all = loadAiAdvice();
+      all[who] = { ...advice, date: new Date().toISOString().slice(0, 10), generatedAt: Date.now() };
+      saveAiAdvice(all);
+    })
+    .finally(() => { aiBusy = false; });
+  return true;
+}
+
+// validatie: is de AI-output bruikbaar? anders heuristic
+function adviceValidated(advice, entry, tenseNames) {
+  const ids = Object.keys(entry || {}).filter(k => !k.startsWith("_") && entry[k] && typeof entry[k].total === "number");
+  if (!advice || !advice.weak_tense_id || !ids.includes(advice.weak_tense_id) || !advice.advice || typeof advice.advice !== "string") {
+    return heuristicAdvice(entry, tenseNames) || { weak_tense_id: null, advice: null, source: "heuristic" };
+  }
+  return { weak_tense_id: advice.weak_tense_id, advice: String(advice.advice).slice(0, 300), source: advice.source || "ai" };
+}
 
 function studentKey(identity) {
   return `${identity.name}|${identity.klas}`;
@@ -512,6 +605,48 @@ async function handleApi(req, res) {
       progress: progMap[t.id] || 0,
       completed: t.goal ? (progMap[t.id] || 0) >= t.goal : false
     })));
+  }
+
+  // --- V3.18: Whiskers-advies lezen (cache) ---
+  if (req.method === "GET" && url === "/api/ai/advice") {
+    const name = new URL(req.url, "http://x").searchParams.get("name");
+    const klas = new URL(req.url, "http://x").searchParams.get("klas");
+    if (!name || !klas) return respond(res, 400, { error: "naam en klas verplicht" });
+    const rec = loadAiAdvice()[sanitizeName(name) + "|" + sanitizeName(klas)];
+    return respond(res, 200, rec || null);
+  }
+
+  // --- V3.18: Whiskers-advies genereren (async, met cooldown + wachtrij) ---
+  if (req.method === "POST" && url === "/api/ai/advice") {
+    const payload = await readJson(req);
+    const identity = payload && payload.identity;
+    if (!identity || !identity.name || !identity.klas) {
+      return respond(res, 400, { error: "identity verplicht" });
+    }
+    if (loadDeleted()[studentKey(identity)]) {
+      return respond(res, 410, { error: "account removed", removed: true });
+    }
+    const who = studentKey(identity);
+    const adv = loadAiAdvice();
+    const mine = adv[who];
+    const today = new Date().toISOString().slice(0, 10);
+    // 30 min cooldown: de NAS is traag, drie keer klikken moet niet laden
+    if (mine && mine.generatedAt && Date.now() - mine.generatedAt < 30 * 60 * 1000 && mine.date === today) {
+      return respond(res, 200, { status: "cached", advice: mine });
+    }
+    const entry = loadProgress()[who] || {};
+    // let-op: aiStatsText geeft bij lege data de tekst 'no practice data yet'
+    // terug (truthy!) — data-aanwezigheid apart en expliciet checken.
+    const heeftData = Object.keys(entry).some(k => !k.startsWith("_") && entry[k] && typeof entry[k].total === "number");
+    if (!heeftData) {
+      return respond(res, 200, { status: "no-data", advice: null }); // eerst wat oefenen
+    }
+    const tenseNames = {};
+    (TENSE_IDS || []).forEach(id => tenseNames[id] = id);
+    if (!generateAiAdvice(who, entry, tenseNames)) {
+      return respond(res, 200, { status: "busy" });
+    }
+    return respond(res, 200, { status: "generating" });
   }
 
   // --- her-registratie (V3.11): tombstone wissen na expliciete login ---
