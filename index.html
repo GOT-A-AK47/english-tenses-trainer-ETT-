@@ -240,89 +240,6 @@
           </div>
         </div>
       </section>
-    </main>
-
-    <!-- INTRODUCTIE WHISKERS (V1.9, eerste bezoek) -->
-    <div id="intro-modal" style="display:none">
-      <div class="card identity-card">
-        <div class="intro-cat" id="intro-cat"></div>
-        <span class="chip">🐱 Meet Whiskers!</span>
-        <p class="context">This is <strong>Whiskers</strong>, your pet companion while practising English tenses.</p>
-        <ul class="intro-list">
-          <li>🐟 <strong>Keep him alive:</strong> he gets hungrier every day. 5 correct answers in a row = a fish!</li>
-          <li>⭐ <strong>Earn XP</strong> and Whiskers grows from kitten to legendary lion.</li>
-          <li>🏅 <strong>Badges</strong> for special achievements — click Whiskers to see them.</li>
-          <li>🎨 <strong>Dress him up:</strong> higher levels unlock new fur colours.</li>
-        </ul>
-        <div class="btnrow">
-          <button id="intro-close">Let's practise!</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- WHISKERS / BADGES (V1.7) -->
-    <div id="badges-modal" style="display:none">
-      <div class="card identity-card">
-        <span class="chip">🐱 Whiskers</span>
-        <p id="badges-xp" class="context"></p>
-        <p class="context" style="margin-bottom:0.2rem"><strong>Whiskers' fur</strong> — switch below:</p>
-        <div id="skin-picker" class="skin-picker"></div>
-        <div id="badges-grid" class="badges-grid"></div>
-        <div class="btnrow">
-          <button id="badges-reset" class="secondary">Start over with Whiskers</button>
-          <button id="badges-close" class="secondary">Close</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- FEEDBACK (V1.5) -->
-    <div id="feedback-modal" style="display:none">
-      <div class="card identity-card">
-        <span class="chip">Feedback</span>
-        <p class="context" id="feedback-from"></p>
-        <label>Category
-          <select id="feedback-category">
-            <option value="idee">Idea</option>
-            <option value="bug">Bug</option>
-            <option value="klacht">Complaint</option>
-            <option value="anders">Other</option>
-          </select>
-        </label>
-        <label>Message
-          <textarea id="feedback-text" rows="4" placeholder="What would you like to tell us?" spellcheck="false"></textarea>
-        </label>
-        <div id="feedback-replies" style="display:none;margin:0.6rem 0;padding:0.7rem;background:var(--accent-soft);border-radius:8px"></div>
-        <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.82rem;margin:0.6rem 0">
-          <input type="checkbox" id="feedback-snapshot" checked>
-          <span>📷 Attach my current page info (view, exercise, my answer) — helps the admin find the problem</span>
-        </label>
-        <div class="btnrow">
-          <button id="feedback-send">Send</button>
-          <button id="feedback-cancel" class="secondary">Cancel</button>
-        </div>
-        <p id="feedback-msg" class="context"></p>
-      </div>
-    </div>
-
-    <!-- IDENTITEIT (V1. naam + klas) -->
-    <div id="identity-modal" style="display:none">
-      <div class="card identity-card">
-        <span class="chip">Wie ben jij?</span>
-        <p class="context">Enter your name and class so your progress is saved.</p>
-        <label>Name
-          <input type="text" id="id-name" placeholder="e.g. Anna" autocomplete="off" spellcheck="false">
-        </label>
-        <label>Class
-          <select id="id-klas"></select>
-        </label>
-        <div class="btnrow">
-          <button id="id-save">Start</button>
-        </div>
-        <p id="id-feedback" class="context"></p>
-      </div>
-    </div>
-
-    <!-- SOCIAL (V2.2) -->
     <section id="view-social" class="view">
       <div class="view-head">
         <button class="back" data-view="home">← Home</button>
@@ -407,6 +324,89 @@
       </div>
     </section>
 
+    </main>
+
+    <!-- INTRODUCTIE WHISKERS (V1.9, eerste bezoek) -->
+    <div id="intro-modal" style="display:none">
+      <div class="card identity-card">
+        <div class="intro-cat" id="intro-cat"></div>
+        <span class="chip">🐱 Meet Whiskers!</span>
+        <p class="context">This is <strong>Whiskers</strong>, your pet companion while practising English tenses.</p>
+        <ul class="intro-list">
+          <li>🐟 <strong>Keep him alive:</strong> he gets hungrier every day. 5 correct answers in a row = a fish!</li>
+          <li>⭐ <strong>Earn XP</strong> and Whiskers grows from kitten to legendary lion.</li>
+          <li>🏅 <strong>Badges</strong> for special achievements — click Whiskers to see them.</li>
+          <li>🎨 <strong>Dress him up:</strong> higher levels unlock new fur colours.</li>
+        </ul>
+        <div class="btnrow">
+          <button id="intro-close">Let's practise!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHISKERS / BADGES (V1.7) -->
+    <div id="badges-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">🐱 Whiskers</span>
+        <p id="badges-xp" class="context"></p>
+        <p class="context" style="margin-bottom:0.2rem"><strong>Whiskers' fur</strong> — switch below:</p>
+        <div id="skin-picker" class="skin-picker"></div>
+        <div id="badges-grid" class="badges-grid"></div>
+        <div class="btnrow">
+          <button id="badges-reset" class="secondary">Start over with Whiskers</button>
+          <button id="badges-close" class="secondary">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK (V1.5) -->
+    <div id="feedback-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">Feedback</span>
+        <p class="context" id="feedback-from"></p>
+        <label>Category
+          <select id="feedback-category">
+            <option value="idee">Idea</option>
+            <option value="bug">Bug</option>
+            <option value="klacht">Complaint</option>
+            <option value="anders">Other</option>
+          </select>
+        </label>
+        <label>Message
+          <textarea id="feedback-text" rows="4" placeholder="What would you like to tell us?" spellcheck="false"></textarea>
+        </label>
+        <div id="feedback-replies" style="display:none;margin:0.6rem 0;padding:0.7rem;background:var(--accent-soft);border-radius:8px"></div>
+        <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.82rem;margin:0.6rem 0">
+          <input type="checkbox" id="feedback-snapshot" checked>
+          <span>📷 Attach my current page info (view, exercise, my answer) — helps the admin find the problem</span>
+        </label>
+        <div class="btnrow">
+          <button id="feedback-send">Send</button>
+          <button id="feedback-cancel" class="secondary">Cancel</button>
+        </div>
+        <p id="feedback-msg" class="context"></p>
+      </div>
+    </div>
+
+    <!-- IDENTITEIT (V1. naam + klas) -->
+    <div id="identity-modal" style="display:none">
+      <div class="card identity-card">
+        <span class="chip">Wie ben jij?</span>
+        <p class="context">Enter your name and class so your progress is saved.</p>
+        <label>Name
+          <input type="text" id="id-name" placeholder="e.g. Anna" autocomplete="off" spellcheck="false">
+        </label>
+        <label>Class
+          <select id="id-klas"></select>
+        </label>
+        <div class="btnrow">
+          <button id="id-save">Start</button>
+        </div>
+        <p id="id-feedback" class="context"></p>
+      </div>
+    </div>
+
+    <!-- SOCIAL (V2.2) -->
     <footer>English Tenses Trainer — schoolproject</footer>
   </div>
 

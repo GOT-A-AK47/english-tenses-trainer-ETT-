@@ -202,5 +202,45 @@ const VOCAB_LISTS = [
       { nl: "bijdragen", en: "to contribute" },
       { nl: "een bijdrage", en: "a contribution" }
     ]
+  },
+  {
+    id: "prepositions-place-movement",
+    name: "Unit 7 — Prepositions (place & movement)",
+    desc: "Relations in space between things and people (NEW ACE 4, p. 31)",
+    words: [
+      { nl: "boven", en: "above" },
+      { nl: "over (van de ene naar de andere kant)", en: "across" },
+      { nl: "langs", en: "along" },
+      { nl: "rond", en: "(a)round" },
+      { nl: "aan, bij", en: "at" },
+      { nl: "achter", en: "behind" },
+      { nl: "naast", en: "beside" },
+      { nl: "tussen", en: "between" },
+      { nl: "achter (ver weg)", en: "beyond" },
+      { nl: "nabij", en: "by" },
+      { nl: "naar beneden", en: "down" },
+      { nl: "in", en: "in" },
+      { nl: "in, binnen", en: "inside (of)" },
+      { nl: "voor (plaats!)", en: "in front of" },
+      { nl: "in (beweging naar binnen)", en: "into" },
+      { nl: "naast", en: "next to" },
+      { nl: "nabij", en: "near" },
+      { nl: "van ... af", en: "off" },
+      { nl: "op", en: "on" },
+      { nl: "op (beweging erop)", en: "onto" },
+      { nl: "bovenop", en: "on top of" },
+      { nl: "buiten", en: "outside (of)" },
+      { nl: "tegenover", en: "opposite" },
+      { nl: "over (erboven)", en: "over" },
+      { nl: "voorbij", en: "past" },
+      { nl: "door (heen)", en: "through" },
+      { nl: "naar (toe)", en: "towards" },
+      { nl: "onder", en: "under(neath)" },
+      { nl: "onder", en: "beneath" },
+      { nl: "naar boven", en: "up" },
+      { nl: "naar (richting)", en: "to" },
+      { nl: "voor (tijd!) i.p.v. in front of", en: "before" },
+      { nl: "na (tijd!) i.p.v. behind", en: "after" }
+    ]
   }
 ];
