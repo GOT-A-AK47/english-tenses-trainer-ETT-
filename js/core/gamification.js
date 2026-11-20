@@ -148,8 +148,9 @@ const Gamification = {
       this.renderWhiskers(this._mistakes >= 3 ? "sleepy" : "sad");
     }
 
-    // dagelijkse quest
-    if (!this.state.questDone) {
+    // dagelijkse quest (V3.19: alleen correcte antwoorden — anti-farm,
+    // anders was "10 vragen" te halen door opnieuw Enter-spammen)
+    if (!this.state.questDone && correct) {
       this.state.quest.answered++;
       if (this.state.quest.answered >= QUEST_GOAL) {
         this.state.questDone = true;
@@ -164,11 +165,17 @@ const Gamification = {
     // badges
     if (correct && this._rowStreak === 1) this.earnBadge("first-correct");
     if (this._rowStreak >= 10) this.earnBadge("streak-10");
-    const total = Object.values(ProgressStore.all()).reduce((a, t) => a + (t.total || 0), 0);
-    if (total >= 100) this.earnBadge("answers-100");
-    if (total >= 500) this.earnBadge("answers-500");
-    const tensesSeen = Object.keys(ProgressStore.all()).filter(k => !k.startsWith("_")).length;
-    if (tensesSeen >= 12) this.earnBadge("all-tenses");
+    // V3.19: volume-badges tellen alleen CORRECTE antwoorden —
+    // foute pogingen spammen mag geen "Persistent/Climber" opleveren.
+    const correctTotal = Object.values(ProgressStore.all())
+      .filter(t => t && typeof t.correct === "number")
+      .reduce((a, t) => a + t.correct, 0);
+    if (correctTotal >= 100) this.earnBadge("answers-100");
+    if (correctTotal >= 500) this.earnBadge("answers-500");
+    // all-tenses: alleen tijden waarin minstens 1 antwoord GOOD was
+    const tensesMastered = Object.keys(ProgressStore.all())
+      .filter(k => !k.startsWith("_") && ProgressStore.all()[k] && (ProgressStore.all()[k].correct || 0) > 0).length;
+    if (tensesMastered >= 12) this.earnBadge("all-tenses");
     if (this._mistakes >= 3 && this._sinceMistakeStreak >= 5) this.earnBadge("comeback");
 
     // muis-mini-game: 5 op rij
@@ -236,7 +243,7 @@ const Gamification = {
     const q = this.state.quest;
     chip.innerHTML = this.state.questDone
       ? "🐟 Quest complete — Whiskers is happy!"
-      : `🎣 Daily quest: ${q.answered}/${QUEST_GOAL} questions`;
+      : `🎣 Daily quest: ${q.answered}/${QUEST_GOAL} correct answers`;
   },
 
   // ---- Whiskers (8-bit pixelkat) ----

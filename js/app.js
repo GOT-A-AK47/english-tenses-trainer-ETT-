@@ -919,6 +919,11 @@ function renderAiAdvice(rec) {
 async function loadAiAdvice() {
   const id = Identity.get();
   if (!id || !$("ai-advice-card")) return;
+  // V3.19: de vraag-knop is ALTIJD zichtbaar zodra je ingelogd bent
+  // (hiervoor zat hij in de verborgen kaart — kip-en-ei: geen advies
+  // zonder knop, geen knop zonder advies!)
+  const askRow = $("ai-ask-row");
+  if (askRow) askRow.style.display = "flex";
   try {
     const who = `name=${encodeURIComponent(id.name)}&klas=${encodeURIComponent(id.klas)}`;
     const r = await fetch(`/api/ai/advice?${who}`);
