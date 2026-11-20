@@ -1209,6 +1209,7 @@ header h1::after {
     <div id="ai-advice-card" class="card ai-advice-card" style="display:none">
       <span class="chip">💡 Whiskers' advice</span>
       <p id="ai-advice-text" class="context" style="margin:0.5rem 0"></p>
+      <p id="ai-advice-meta" class="context" style="font-size:0.75rem;color:var(--muted);margin:0 0 0.4rem"></p>
       <div class="btnrow">
         <button id="ai-advice-practise" class="secondary">Practise this tense</button>
       </div>
@@ -4668,6 +4669,14 @@ function renderAiAdvice(rec) {
     $("ai-advice-text").textContent = rec.advice;
     card.dataset.weakTense = rec.weak_tense_id;
     card.style.display = "block";
+    // V3.19.1: denktijd tonen — ook eerlijk als Whiskers de heuristic greep
+    const meta = $("ai-advice-meta");
+    if (meta) {
+      const sec = rec.durationMs ? Math.round(rec.durationMs / 1000) : null;
+      meta.textContent = rec.source === "ai"
+        ? `🐾 Whiskers thought about it for ${sec} s`
+        : `🐾 Whiskers looked at your scores${sec ? " (" + sec + " s)" : ""}`;
+    }
   }
 }
 

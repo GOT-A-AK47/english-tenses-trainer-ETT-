@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 3000;
 
 // V3.16.2: bij elke server-wijziging dit ophogen — het dashboard toont
 // deze versie zodat je direct ziet of de productie-server vers is.
-const SERVER_VERSION = "3.18";
+const SERVER_VERSION = "3.19.1";
 
 // V2.2: basislijsten voor duel-vragen (gesynchroniseerd met de client-engine)
 const TENSE_IDS = [
@@ -135,17 +135,18 @@ function generateAiAdvice(who, entry, tenseNames) {
   if (aiBusy) return false; // probeer later opnieuw
   aiBusy = true;
   const statsText = aiStatsText(entry);
+  const t0 = Date.now(); // V3.19.1: hoe lang Whiskers moest denken
   callOllama(statsText)
     .then(advice => {
       const all = loadAiAdvice();
-      all[who] = { ...adviceValidated(advice, entry, tenseNames), date: new Date().toISOString().slice(0, 10), generatedAt: Date.now() };
+      all[who] = { ...adviceValidated(advice, entry, tenseNames), date: new Date().toISOString().slice(0, 10), generatedAt: Date.now(), durationMs: Date.now() - t0, model: AI_MODEL };
       saveAiAdvice(all);
     })
     .catch(() => {
       // AI plat/traag/onsinde: heuristic-fallback bewaart de belofte
       const advice = heuristicAdvice(entry, tenseNames) || { weak_tense_id: null, advice: null, source: "heuristic" };
       const all = loadAiAdvice();
-      all[who] = { ...advice, date: new Date().toISOString().slice(0, 10), generatedAt: Date.now() };
+      all[who] = { ...advice, date: new Date().toISOString().slice(0, 10), generatedAt: Date.now(), durationMs: Date.now() - t0, model: "fallback" };
       saveAiAdvice(all);
     })
     .finally(() => { aiBusy = false; });

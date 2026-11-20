@@ -913,6 +913,14 @@ function renderAiAdvice(rec) {
     $("ai-advice-text").textContent = rec.advice;
     card.dataset.weakTense = rec.weak_tense_id;
     card.style.display = "block";
+    // V3.19.1: denktijd tonen — ook eerlijk als Whiskers de heuristic greep
+    const meta = $("ai-advice-meta");
+    if (meta) {
+      const sec = rec.durationMs ? Math.round(rec.durationMs / 1000) : null;
+      meta.textContent = rec.source === "ai"
+        ? `🐾 Whiskers thought about it for ${sec} s`
+        : `🐾 Whiskers looked at your scores${sec ? " (" + sec + " s)" : ""}`;
+    }
   }
 }
 
