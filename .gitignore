@@ -1,0 +1,9 @@
+# Runtime data de leerling-informatie (namen, voortgang, codes) - nooit committen
+server/data/
+
+# Dependencies
+node_modules/
+
+# OS rotzooi
+.DS_Store
+Thumbs.db
